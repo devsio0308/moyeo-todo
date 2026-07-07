@@ -1,0 +1,31 @@
+# electron-builder 설정 (명세서 §7)
+appId: com.hrjin.homework-dashboard
+productName: HomeworkDashboard
+directories:
+  output: dist
+
+files:
+  - out/**/*
+  - package.json
+
+# PyInstaller로 빌드된 캡처 엔진을 설치 패키지에 동봉
+# (빌드 순서: npm run build:engine 이 resources/engine/ 에 복사해 둠)
+extraResources:
+  - from: resources/engine/
+    to: engine/
+
+win:
+  target:
+    - nsis
+nsis:
+  oneClick: false
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: always
+  shortcutName: 숙제 대시보드
+
+mac:
+  target:
+    - dmg
+  category: public.app-category.utilities
+
+npmRebuild: false
