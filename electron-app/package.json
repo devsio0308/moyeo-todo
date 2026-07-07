@@ -12,7 +12,10 @@
     "typecheck:node": "tsc --noEmit -p tsconfig.node.json --composite false",
     "typecheck:web": "tsc --noEmit -p tsconfig.web.json --composite false",
     "typecheck": "npm run typecheck:node && npm run typecheck:web",
-    "test": "vitest run"
+    "test": "vitest run",
+    "build:engine": "node scripts/build-engine.mjs",
+    "build:all": "npm run build:engine && electron-vite build && electron-builder",
+    "dist:dir": "electron-vite build && electron-builder --dir"
   },
   "dependencies": {
     "@electron-toolkit/utils": "^3.0.0",
