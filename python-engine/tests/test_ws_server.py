@@ -37,6 +37,10 @@ class FakeEngine:
     def reload_config(self):
         self.reload_count += 1
 
+    def screenshot(self):
+        # 1x1 PNG 흉내 — 실제 인코딩 없이 형식만 검증
+        return "aGVsbG8=", 800, 600
+
     def close(self):
         pass
 
@@ -117,6 +121,53 @@ def test_client_messages_control_engine():
                 # 서버 생존 확인 — 여전히 하트비트가 온다
                 msg = json.loads(await asyncio.wait_for(client.recv(), timeout=6))
                 assert msg["type"] in ("heartbeat", "task_detected")
+        finally:
+            await teardown()
+
+    asyncio.run(scenario())
+
+
+def test_capture_screenshot_roundtrip():
+    async def scenario():
+        engine = FakeEngine()
+        server = EngineServer(engine, port=TEST_PORT + 3)
+        teardown = await _start(server)
+        try:
+            async with connect(
+                f"ws://127.0.0.1:{TEST_PORT + 3}", max_size=32 * 1024 * 1024
+            ) as client:
+                await client.send(json.dumps({"type": "capture_screenshot"}))
+                while True:
+                    msg = json.loads(await asyncio.wait_for(client.recv(), timeout=3))
+                    if msg["type"] == "screenshot":
+                        break
+                assert msg["image"] == "aGVsbG8="
+                assert msg["width"] == 800
+                assert msg["height"] == 600
+        finally:
+            await teardown()
+
+    asyncio.run(scenario())
+
+
+def test_screenshot_failure_returns_error():
+    async def scenario():
+        engine = FakeEngine()
+
+        def broken():
+            raise RuntimeError("no permission")
+
+        engine.screenshot = broken
+        server = EngineServer(engine, port=TEST_PORT + 4)
+        teardown = await _start(server)
+        try:
+            async with connect(f"ws://127.0.0.1:{TEST_PORT + 4}") as client:
+                await client.send(json.dumps({"type": "capture_screenshot"}))
+                while True:
+                    msg = json.loads(await asyncio.wait_for(client.recv(), timeout=3))
+                    if msg["type"] == "screenshot":
+                        break
+                assert "error" in msg
         finally:
             await teardown()
 

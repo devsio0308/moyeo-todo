@@ -75,11 +75,38 @@ export interface SetPausedMessage {
   paused: boolean
 }
 
+export interface CaptureScreenshotMessage {
+  type: 'capture_screenshot'
+}
+
+/** Python → Electron: capture_screenshot 응답 (요청자에게만 전송) */
+export interface ScreenshotMessage {
+  type: 'screenshot'
+  image?: string // base64 PNG — 실패 시 없음
+  width?: number
+  height?: number
+  error?: string
+}
+
 /** Python → Electron */
-export type EngineMessage = TaskDetectedMessage | HeartbeatMessage
+export type EngineMessage = TaskDetectedMessage | HeartbeatMessage | ScreenshotMessage
 
 /** Electron → Python */
-export type ClientMessage = ActiveCharacterMessage | ReloadConfigMessage | SetPausedMessage
+export type ClientMessage =
+  | ActiveCharacterMessage
+  | ReloadConfigMessage
+  | SetPausedMessage
+  | CaptureScreenshotMessage
+
+/** 엔진 스크린샷 (픽커 UI에 전달) — 좌표계는 mss 이미지 픽셀 */
+export interface Screenshot {
+  image: string // base64 PNG
+  width: number
+  height: number
+}
+
+/** 캐릭터별 등록된 템플릿 task id 목록 */
+export type TemplateIndex = Record<string, string[]>
 
 /** 엔진 연결 상태 (UI 배지 표시용) */
 export type EngineStatus = 'connected' | 'disconnected' | 'failed'

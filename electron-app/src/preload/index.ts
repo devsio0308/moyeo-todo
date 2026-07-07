@@ -1,11 +1,14 @@
 import { contextBridge, ipcRenderer } from 'electron'
 import type {
+  CaptureRegion,
   EngineStatus,
+  Screenshot,
   Settings,
   StoreShape,
   TaskMode,
   TaskPeriod,
-  TaskState
+  TaskState,
+  TemplateIndex
 } from '../shared/types'
 
 /** 렌더러에 노출하는 최소 API 표면 */
@@ -65,6 +68,33 @@ const api = {
       ipcRenderer.on('store:changed', listener)
       return () => ipcRenderer.removeListener('store:changed', listener)
     }
+  },
+  flows: {
+    /** 캡처 리전 드래그 지정. 취소 시 null */
+    pickRegion: (): Promise<StoreShape | null> => ipcRenderer.invoke('flow:pick-region'),
+    clearRegion: (): Promise<StoreShape> => ipcRenderer.invoke('flow:clear-region'),
+    /** 스크린샷 크롭으로 템플릿 등록. 취소 시 null, 성공 시 최신 템플릿 목록 */
+    registerTemplate: (characterId: string, taskId: string): Promise<TemplateIndex | null> =>
+      ipcRenderer.invoke('flow:register-template', characterId, taskId)
+  },
+  templates: {
+    list: (): Promise<TemplateIndex> => ipcRenderer.invoke('template:list'),
+    remove: (characterId: string, taskId: string): Promise<TemplateIndex> =>
+      ipcRenderer.invoke('template:delete', characterId, taskId)
+  },
+  picker: {
+    onInit: (
+      cb: (payload: { screenshot: Screenshot; message: string }) => void
+    ): (() => void) => {
+      const listener = (
+        _e: Electron.IpcRendererEvent,
+        payload: { screenshot: Screenshot; message: string }
+      ): void => cb(payload)
+      ipcRenderer.on('picker:init', listener)
+      return () => ipcRenderer.removeListener('picker:init', listener)
+    },
+    done: (rect: CaptureRegion): void => ipcRenderer.send('picker:done', rect),
+    cancel: (): void => ipcRenderer.send('picker:cancel')
   }
 }
 

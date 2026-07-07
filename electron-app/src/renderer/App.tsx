@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import type { EngineStatus } from '../shared/types'
 import CharacterTabs from './components/CharacterTabs'
+import SettingsPanel from './components/SettingsPanel'
 import TaskChecklist from './components/TaskChecklist'
 import { useDashboardStore } from './store/useDashboardStore'
 
@@ -17,6 +18,7 @@ export default function App(): React.JSX.Element {
   const applyState = useDashboardStore((s) => s.applyState)
   const activeCharacterId = useDashboardStore((s) => s.activeCharacterId)
   const [engineStatus, setEngineStatus] = useState<EngineStatus>('disconnected')
+  const [showSettings, setShowSettings] = useState(false)
 
   useEffect(() => {
     void init()
@@ -47,6 +49,13 @@ export default function App(): React.JSX.Element {
         {capturePaused && <span className="badge badge-paused">캡처 정지됨</span>}
         <div className="titlebar-buttons">
           <button
+            className={`titlebar-btn ${showSettings ? 'titlebar-btn-active' : ''}`}
+            title="설정"
+            onClick={() => setShowSettings((v) => !v)}
+          >
+            ⚙
+          </button>
+          <button
             className="titlebar-btn"
             title="숨기기 (트레이로)"
             onClick={() => window.api.window.hide()}
@@ -59,9 +68,7 @@ export default function App(): React.JSX.Element {
         </div>
       </header>
       <CharacterTabs />
-      <main className="content">
-        <TaskChecklist />
-      </main>
+      <main className="content">{showSettings ? <SettingsPanel /> : <TaskChecklist />}</main>
     </div>
   )
 }
