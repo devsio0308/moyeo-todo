@@ -1,0 +1,18 @@
+# Node / Electron
+node_modules/
+electron-app/out/
+electron-app/dist/
+electron-app/resources/engine/
+
+# Python
+__pycache__/
+*.pyc
+python-engine/build/
+python-engine/dist/
+.venv/
+venv/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+*.log
