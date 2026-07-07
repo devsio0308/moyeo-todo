@@ -1,0 +1,122 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "homework-dashboard/shared/schema.json",
+  "title": "숙제 대시보드 공용 스키마",
+  "description": "Electron ↔ Python 간 공유되는 데이터/메시지 스키마. 통신 스펙은 HOMEWORK_DASHBOARD_BRIEF.md §2 참고.",
+  "$defs": {
+    "taskState": {
+      "type": "object",
+      "properties": {
+        "done": { "type": "boolean" },
+        "mode": { "enum": ["auto", "manual"] },
+        "lastDoneAt": { "type": ["integer", "null"], "description": "unix epoch (초)" },
+        "displayName": { "type": "string" },
+        "period": { "enum": ["daily", "weekly"] },
+        "threshold": {
+          "type": ["number", "null"],
+          "minimum": 0,
+          "maximum": 1,
+          "description": "매칭 threshold 개별 오버라이드. null이면 전역값 사용"
+        }
+      },
+      "required": ["done", "mode", "lastDoneAt", "displayName", "period"]
+    },
+    "character": {
+      "type": "object",
+      "properties": {
+        "displayName": { "type": "string" },
+        "tasks": {
+          "type": "object",
+          "additionalProperties": { "$ref": "#/$defs/taskState" }
+        }
+      },
+      "required": ["displayName", "tasks"]
+    },
+    "captureRegion": {
+      "type": ["object", "null"],
+      "description": "숙제 완료 팝업이 뜨는 화면 영역 (물리 픽셀 좌표)",
+      "properties": {
+        "left": { "type": "integer" },
+        "top": { "type": "integer" },
+        "width": { "type": "integer", "minimum": 1 },
+        "height": { "type": "integer", "minimum": 1 }
+      },
+      "required": ["left", "top", "width", "height"]
+    },
+    "settings": {
+      "type": "object",
+      "properties": {
+        "captureIntervalSec": { "type": "number", "minimum": 0.5 },
+        "weeklyResetDay": { "type": "integer", "minimum": 0, "maximum": 6, "description": "0=일요일 ... 6=토요일" },
+        "dailyResetHour": { "type": "integer", "minimum": 0, "maximum": 23 },
+        "matchThreshold": { "type": "number", "minimum": 0, "maximum": 1, "description": "전역 기본 threshold" },
+        "captureRegion": { "$ref": "#/$defs/captureRegion" }
+      },
+      "required": ["captureIntervalSec", "weeklyResetDay", "dailyResetHour"]
+    },
+    "storeShape": {
+      "type": "object",
+      "properties": {
+        "characters": {
+          "type": "object",
+          "additionalProperties": { "$ref": "#/$defs/character" }
+        },
+        "characterOrder": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "탭 표시 순서 (characters의 키 목록)"
+        },
+        "settings": { "$ref": "#/$defs/settings" },
+        "lastDailyResetAt": { "type": ["integer", "null"] },
+        "lastWeeklyResetAt": { "type": ["integer", "null"] }
+      },
+      "required": ["characters", "characterOrder", "settings"]
+    },
+    "wsMessage": {
+      "description": "WebSocket 메시지 (ws://127.0.0.1:47231, Python=서버 / Electron=클라이언트)",
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "type": { "const": "task_detected" },
+            "character": { "type": "string" },
+            "task": { "type": "string" },
+            "confidence": { "type": "number" },
+            "timestamp": { "type": "integer" }
+          },
+          "required": ["type", "character", "task", "confidence", "timestamp"]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": { "const": "heartbeat" },
+            "timestamp": { "type": "integer" }
+          },
+          "required": ["type", "timestamp"]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": { "const": "active_character" },
+            "character": { "type": "string" }
+          },
+          "required": ["type", "character"]
+        },
+        {
+          "type": "object",
+          "properties": { "type": { "const": "reload_config" } },
+          "required": ["type"]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": { "const": "set_paused" },
+            "paused": { "type": "boolean" }
+          },
+          "required": ["type", "paused"],
+          "description": "Electron → Python: 캡처 일시정지/재개 (트레이 메뉴 연동)"
+        }
+      ]
+    }
+  }
+}

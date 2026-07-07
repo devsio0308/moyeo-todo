@@ -1,0 +1,88 @@
+/**
+ * 공용 타입 정의 — shared/schema.json 과 1:1 대응.
+ * main / preload / renderer 모두에서 import 한다.
+ */
+
+export type TaskMode = 'auto' | 'manual'
+export type TaskPeriod = 'daily' | 'weekly'
+
+export interface TaskState {
+  done: boolean
+  mode: TaskMode
+  lastDoneAt: number | null // unix epoch (초)
+  displayName: string
+  period: TaskPeriod
+  /** 매칭 threshold 개별 오버라이드. null이면 전역값 사용 */
+  threshold: number | null
+}
+
+export interface Character {
+  displayName: string
+  tasks: Record<string, TaskState>
+}
+
+export interface CaptureRegion {
+  left: number
+  top: number
+  width: number
+  height: number
+}
+
+export interface Settings {
+  captureIntervalSec: number
+  /** 0=일요일 ... 6=토요일 */
+  weeklyResetDay: number
+  dailyResetHour: number
+  /** 전역 기본 매칭 threshold */
+  matchThreshold: number
+  captureRegion: CaptureRegion | null
+}
+
+export interface StoreShape {
+  characters: Record<string, Character>
+  characterOrder: string[]
+  settings: Settings
+  lastDailyResetAt: number | null
+  lastWeeklyResetAt: number | null
+}
+
+// ── WebSocket 메시지 (명세서 §2) ─────────────────────────────
+
+export interface TaskDetectedMessage {
+  type: 'task_detected'
+  character: string
+  task: string
+  confidence: number
+  timestamp: number
+}
+
+export interface HeartbeatMessage {
+  type: 'heartbeat'
+  timestamp: number
+}
+
+export interface ActiveCharacterMessage {
+  type: 'active_character'
+  character: string
+}
+
+export interface ReloadConfigMessage {
+  type: 'reload_config'
+}
+
+export interface SetPausedMessage {
+  type: 'set_paused'
+  paused: boolean
+}
+
+/** Python → Electron */
+export type EngineMessage = TaskDetectedMessage | HeartbeatMessage
+
+/** Electron → Python */
+export type ClientMessage = ActiveCharacterMessage | ReloadConfigMessage | SetPausedMessage
+
+/** 엔진 연결 상태 (UI 배지 표시용) */
+export type EngineStatus = 'connected' | 'disconnected' | 'failed'
+
+export const WS_PORT = 47231
+export const WS_URL = `ws://127.0.0.1:${WS_PORT}`
