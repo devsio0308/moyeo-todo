@@ -2,12 +2,20 @@ import { BrowserWindow, ipcMain } from 'electron'
 import { dashboardStore } from './store'
 import type { Settings, TaskMode, TaskPeriod, TaskState } from '../shared/types'
 
+interface IpcCallbacks {
+  /** settings mutation 직후 호출 — 엔진 설정 파일 갱신/리로드용 */
+  onSettingsChanged?: () => void
+}
+
 /**
  * renderer ↔ main IPC.
  * 모든 store mutation은 최신 전체 상태를 반환하고,
  * 동시에 'store:changed'로 브로드캐스트한다 (자동 감지 등 main발 변경도 동일 경로로 수신).
  */
-export function registerIpcHandlers(getWindow: () => BrowserWindow | null): void {
+export function registerIpcHandlers(
+  getWindow: () => BrowserWindow | null,
+  callbacks: IpcCallbacks = {}
+): void {
   const broadcast = (): void => {
     getWindow()?.webContents.send('store:changed', dashboardStore.getState())
   }
@@ -78,6 +86,7 @@ export function registerIpcHandlers(getWindow: () => BrowserWindow | null): void
 
   ipcMain.handle('store:update-settings', (_e, patch: Partial<Settings>) => {
     const state = dashboardStore.updateSettings(patch)
+    callbacks.onSettingsChanged?.()
     broadcast()
     return state
   })
