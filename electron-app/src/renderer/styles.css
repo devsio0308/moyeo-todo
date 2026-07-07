@@ -93,3 +93,267 @@ body {
   text-align: center;
   margin-top: 40px;
 }
+
+/* ── 캐릭터 탭 ─────────────────────────────────── */
+.character-tabs {
+  display: flex;
+  gap: 4px;
+  padding: 8px 10px 0;
+  flex-wrap: wrap;
+  flex-shrink: 0;
+}
+
+.tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.06);
+  color: #b6b6c2;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.tab:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.tab-active {
+  background: rgba(94, 129, 255, 0.22);
+  border-color: rgba(94, 129, 255, 0.5);
+  color: #fff;
+}
+
+.tab-dragging {
+  opacity: 0.4;
+}
+
+.tab-add {
+  font-weight: 700;
+  padding: 5px 12px;
+}
+
+.tab-delete {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  font-size: 12px;
+  line-height: 1;
+  color: #9a9aa8;
+}
+
+.tab-delete:hover {
+  background: rgba(255, 255, 255, 0.18);
+  color: #fff;
+}
+
+.tab-delete-confirm {
+  background: #e5484d;
+  color: #fff;
+}
+
+.tab-edit-input {
+  width: 110px;
+  padding: 5px 8px;
+  border: 1px solid rgba(94, 129, 255, 0.6);
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.35);
+  color: #fff;
+  font-size: 12px;
+  outline: none;
+}
+
+/* ── 진행률 ────────────────────────────────────── */
+.progress-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.progress-bar {
+  flex: 1;
+  height: 6px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #5e81ff, #7ec8ff);
+  transition: width 0.25s ease;
+}
+
+.progress-text {
+  font-size: 11px;
+  color: #9a9aa8;
+  min-width: 32px;
+  text-align: right;
+}
+
+/* ── 숙제 목록 ─────────────────────────────────── */
+.task-section {
+  margin-bottom: 14px;
+}
+
+.section-title {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #7a7a88;
+  margin-bottom: 6px;
+}
+
+.task-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.task-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 8px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.task-item:hover {
+  background: rgba(255, 255, 255, 0.07);
+}
+
+.task-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  cursor: pointer;
+  min-width: 0;
+}
+
+.task-label input[type='checkbox'] {
+  accent-color: #5e81ff;
+  width: 15px;
+  height: 15px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.task-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.task-done .task-name {
+  color: #6f6f7e;
+  text-decoration: line-through;
+}
+
+.period-badge {
+  flex-shrink: 0;
+  padding: 1px 7px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.period-daily {
+  background: rgba(94, 129, 255, 0.16);
+  color: #8fa6ff;
+}
+
+.period-weekly {
+  background: rgba(190, 125, 255, 0.16);
+  color: #cf9fff;
+}
+
+.mode-icon {
+  flex-shrink: 0;
+  font-size: 12px;
+}
+
+.task-delete {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: transparent;
+  font-size: 13px;
+  cursor: pointer;
+  line-height: 1;
+}
+
+.task-item:hover .task-delete {
+  color: #8a8a98;
+}
+
+.task-delete:hover {
+  background: rgba(229, 72, 77, 0.2);
+  color: #ff6b70 !important;
+}
+
+/* ── 숙제 추가 폼 ──────────────────────────────── */
+.add-task-form {
+  display: flex;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.add-task-input {
+  flex: 1;
+  min-width: 0;
+  padding: 7px 10px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.3);
+  color: #fff;
+  font-size: 12px;
+  outline: none;
+}
+
+.add-task-input:focus {
+  border-color: rgba(94, 129, 255, 0.6);
+}
+
+.add-task-period {
+  padding: 7px 6px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  background: rgba(30, 30, 38, 0.9);
+  color: #d0d0da;
+  font-size: 12px;
+  outline: none;
+}
+
+.add-task-btn {
+  padding: 7px 12px;
+  border: none;
+  border-radius: 8px;
+  background: #5e81ff;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.add-task-btn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.add-task-btn:not(:disabled):hover {
+  background: #7093ff;
+}

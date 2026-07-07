@@ -1,11 +1,23 @@
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
+import CharacterTabs from './components/CharacterTabs'
+import TaskChecklist from './components/TaskChecklist'
+import { useDashboardStore } from './store/useDashboardStore'
 
 export default function App(): React.JSX.Element {
-  const [capturePaused, setCapturePaused] = useState(false)
+  const capturePaused = useDashboardStore((s) => s.capturePaused)
+  const setCapturePaused = useDashboardStore((s) => s.setCapturePaused)
+  const init = useDashboardStore((s) => s.init)
+  const applyState = useDashboardStore((s) => s.applyState)
 
   useEffect(() => {
-    return window.api.capture.onPausedChanged(setCapturePaused)
-  }, [])
+    void init()
+    const offPaused = window.api.capture.onPausedChanged(setCapturePaused)
+    const offChanged = window.api.store.onChanged(applyState)
+    return () => {
+      offPaused()
+      offChanged()
+    }
+  }, [init, applyState, setCapturePaused])
 
   return (
     <div className="overlay-root">
@@ -25,8 +37,9 @@ export default function App(): React.JSX.Element {
           </button>
         </div>
       </header>
+      <CharacterTabs />
       <main className="content">
-        <p className="placeholder">캐릭터/숙제 목록이 여기에 표시됩니다.</p>
+        <TaskChecklist />
       </main>
     </div>
   )
