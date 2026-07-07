@@ -115,6 +115,24 @@
           },
           "required": ["type", "paused"],
           "description": "Electron → Python: 캡처 일시정지/재개 (트레이 메뉴 연동)"
+        },
+        {
+          "type": "object",
+          "properties": { "type": { "const": "capture_screenshot" } },
+          "required": ["type"],
+          "description": "Electron → Python: 전체 화면 스크린샷 요청 (리전 지정/템플릿 등록 UI용)"
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": { "const": "screenshot" },
+            "image": { "type": "string", "description": "base64 PNG (성공 시)" },
+            "width": { "type": "integer" },
+            "height": { "type": "integer" },
+            "error": { "type": "string", "description": "실패 사유 (실패 시)" }
+          },
+          "required": ["type"],
+          "description": "Python → Electron: capture_screenshot 응답 (요청자에게만). 좌표계는 mss 이미지 픽셀"
         }
       ]
     }

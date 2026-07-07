@@ -49,6 +49,10 @@ if (!app.requestSingleInstanceLock()) {
         // 설정이 바뀌면 엔진 설정 파일 갱신 후 리로드 지시 (명세서 §2)
         writeEngineConfig()
         wsClient?.send({ type: 'reload_config' })
+      },
+      requestScreenshot: () => {
+        if (!wsClient) return Promise.reject(new Error('엔진이 초기화되지 않았습니다'))
+        return wsClient.requestScreenshot()
       }
     })
 

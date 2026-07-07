@@ -1,6 +1,11 @@
 import { EventEmitter } from 'events'
 import WebSocket from 'ws'
-import { WS_URL, type ClientMessage, type EngineMessage } from '../shared/types'
+import {
+  WS_URL,
+  type ClientMessage,
+  type EngineMessage,
+  type Screenshot
+} from '../shared/types'
 
 const BACKOFF_INITIAL_MS = 1_000
 const BACKOFF_MAX_MS = 10_000
@@ -48,6 +53,10 @@ export class EngineWsClient extends EventEmitter {
         this.resetWatchdog()
         return
       }
+      if (msg.type === 'screenshot') {
+        this.resolveScreenshot(msg)
+        return
+      }
       this.emit('message', msg)
     })
 
@@ -59,6 +68,50 @@ export class EngineWsClient extends EventEmitter {
     }
     ws.on('close', onGone)
     ws.on('error', onGone)
+  }
+
+  // ── 스크린샷 요청/응답 (리전 지정/템플릿 등록 UI용) ────────
+
+  private pendingScreenshot: {
+    resolve: (s: Screenshot) => void
+    reject: (e: Error) => void
+    timer: NodeJS.Timeout
+  } | null = null
+
+  /** 엔진에 전체 화면 스크린샷 요청. 연결 없음/실패/10초 초과 시 reject. */
+  requestScreenshot(): Promise<Screenshot> {
+    return new Promise((resolve, reject) => {
+      if (this.pendingScreenshot) {
+        reject(new Error('이미 스크린샷 요청이 진행 중입니다'))
+        return
+      }
+      if (!this.send({ type: 'capture_screenshot' })) {
+        reject(new Error('캡처 엔진이 연결되어 있지 않습니다'))
+        return
+      }
+      const timer = setTimeout(() => {
+        this.pendingScreenshot = null
+        reject(new Error('스크린샷 응답 시간 초과'))
+      }, 10_000)
+      this.pendingScreenshot = { resolve, reject, timer }
+    })
+  }
+
+  private resolveScreenshot(msg: {
+    image?: string
+    width?: number
+    height?: number
+    error?: string
+  }): void {
+    const pending = this.pendingScreenshot
+    if (!pending) return
+    this.pendingScreenshot = null
+    clearTimeout(pending.timer)
+    if (msg.error || !msg.image || !msg.width || !msg.height) {
+      pending.reject(new Error(msg.error ?? '스크린샷 실패'))
+    } else {
+      pending.resolve({ image: msg.image, width: msg.width, height: msg.height })
+    }
   }
 
   /** Electron → Python. 연결이 없으면 조용히 버린다 (재접속 시 상태 재동기화가 이를 보완). */

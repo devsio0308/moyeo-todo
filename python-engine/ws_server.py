@@ -48,14 +48,14 @@ class EngineServer:
                 json.dumps({"type": "heartbeat", "timestamp": int(time.time())})
             )
             async for raw in websocket:
-                self._handle_message(raw)
+                await self._handle_message(websocket, raw)
         except Exception as e:  # 연결 예외로 서버가 죽으면 안 됨
             log.debug("연결 종료(%s): %s", peer, e)
         finally:
             self.connections.discard(websocket)
             log.info("클라이언트 해제: %s (총 %d)", peer, len(self.connections))
 
-    def _handle_message(self, raw: str | bytes) -> None:
+    async def _handle_message(self, websocket: Any, raw: str | bytes) -> None:
         try:
             msg = json.loads(raw)
         except (json.JSONDecodeError, UnicodeDecodeError):
@@ -71,6 +71,23 @@ class EngineServer:
         elif msg_type == "set_paused":
             self.engine.paused = bool(msg.get("paused"))
             log.info("캡처 %s", "일시정지" if self.engine.paused else "재개")
+        elif msg_type == "capture_screenshot":
+            # 리전 지정/템플릿 등록 UI용 전체 화면 스크린샷 (요청자에게만 응답)
+            loop = asyncio.get_running_loop()
+            try:
+                image_b64, width, height = await loop.run_in_executor(
+                    self._executor, self.engine.screenshot
+                )
+                response = {
+                    "type": "screenshot",
+                    "image": image_b64,
+                    "width": width,
+                    "height": height,
+                }
+            except Exception as e:
+                log.error("스크린샷 실패: %s", e)
+                response = {"type": "screenshot", "error": str(e)}
+            await websocket.send(json.dumps(response))
         else:
             log.warning("알 수 없는 메시지 타입: %s", msg_type)
 
