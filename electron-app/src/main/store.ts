@@ -193,6 +193,11 @@ export class DashboardStore {
     return this.getState()
   }
 
+  /** 최초 실행 시 리셋 기준점만 기록 (리셋 없이) — reset-scheduler에서 사용 */
+  markResetBaseline(period: TaskPeriod, at: number): void {
+    this.store.set(period === 'daily' ? 'lastDailyResetAt' : 'lastWeeklyResetAt', at)
+  }
+
   // ── 내부 유틸 ────────────────────────────────────────────
 
   /** character_01, task_03 형태의 순차 id 생성 (템플릿 폴더명과 일치해야 하므로 사람이 읽기 쉬운 형태 유지) */

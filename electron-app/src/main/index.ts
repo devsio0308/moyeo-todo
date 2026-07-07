@@ -6,11 +6,13 @@ import { registerIpcHandlers } from './ipc-handlers'
 import { PythonBridge, writeEngineConfig } from './python-bridge'
 import { EngineWsClient } from './ws-client'
 import { dashboardStore } from './store'
+import { ResetScheduler } from './reset-scheduler'
 import type { EngineMessage, EngineStatus } from '../shared/types'
 
 let mainWindow: BrowserWindow | null = null
 let bridge: PythonBridge | null = null
 let wsClient: EngineWsClient | null = null
+let resetScheduler: ResetScheduler | null = null
 
 /** 마지막으로 renderer가 알려준 활성 캐릭터 — 재접속 시 재동기화용 */
 let activeCharacter: string | null = null
@@ -58,9 +60,17 @@ if (!app.requestSingleInstanceLock()) {
 
     startEngine()
 
+    // 리셋 스케줄러 — 시작/포커스/절전복귀 시 day-boundary 체크 (명세서 §6)
+    resetScheduler = new ResetScheduler(() => {
+      mainWindow?.webContents.send('store:changed', dashboardStore.getState())
+    })
+    resetScheduler.start()
+    resetScheduler.attachWindow(mainWindow)
+
     app.on('activate', () => {
       if (BrowserWindow.getAllWindows().length === 0) {
         mainWindow = createMainWindow()
+        if (mainWindow) resetScheduler?.attachWindow(mainWindow)
       } else {
         mainWindow?.show()
       }
@@ -69,6 +79,7 @@ if (!app.requestSingleInstanceLock()) {
 
   app.on('before-quit', () => {
     // python 프로세스 SIGTERM 정리 — 좀비 방지 (명세서 §3)
+    resetScheduler?.stop()
     wsClient?.stop()
     bridge?.stop()
   })
