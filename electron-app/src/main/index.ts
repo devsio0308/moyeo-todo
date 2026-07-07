@@ -5,6 +5,7 @@ import { createTray } from './tray'
 import { registerIpcHandlers } from './ipc-handlers'
 import { PythonBridge, writeEngineConfig } from './python-bridge'
 import { EngineWsClient } from './ws-client'
+import { dashboardStore } from './store'
 import type { EngineMessage, EngineStatus } from '../shared/types'
 
 let mainWindow: BrowserWindow | null = null
@@ -96,8 +97,10 @@ function startEngine(): void {
 
   wsClient.on('message', (msg: EngineMessage) => {
     if (msg.type === 'task_detected') {
-      // TODO(feature/auto-detect): 스토어 반영 + UI 갱신
       console.log('[engine] task_detected:', msg.character, msg.task, msg.confidence)
+      if (dashboardStore.applyDetection(msg.character, msg.task, msg.timestamp)) {
+        mainWindow?.webContents.send('store:changed', dashboardStore.getState())
+      }
     }
   })
 

@@ -130,19 +130,41 @@ export class DashboardStore {
     return this.getState()
   }
 
-  /** 체크 상태 변경. done=true일 때만 mode/lastDoneAt 갱신 */
-  setTaskDone(characterId: string, taskId: string, done: boolean, mode: TaskMode): StoreShape {
+  /** 체크 상태 변경. done=true일 때만 mode/lastDoneAt 갱신. at: unix epoch(초), 기본 현재 시각 */
+  setTaskDone(
+    characterId: string,
+    taskId: string,
+    done: boolean,
+    mode: TaskMode,
+    at?: number
+  ): StoreShape {
     const task = this.store.get('characters')[characterId]?.tasks[taskId]
     if (task) {
       const next: TaskState = {
         ...task,
         done,
         mode: done ? mode : task.mode,
-        lastDoneAt: done ? Math.floor(Date.now() / 1000) : null
+        lastDoneAt: done ? (at ?? Math.floor(Date.now() / 1000)) : null
       }
       this.store.set(`characters.${characterId}.tasks.${taskId}`, next)
     }
     return this.getState()
+  }
+
+  /**
+   * 자동 감지 이벤트 반영 (명세서 §5).
+   * 존재하지 않는 조합이거나 이미 완료된 숙제(수동 체크 포함)는 건드리지 않는다.
+   * @returns 상태가 실제로 바뀌었는지
+   */
+  applyDetection(characterId: string, taskId: string, timestamp: number): boolean {
+    const task = this.store.get('characters')[characterId]?.tasks[taskId]
+    if (!task) {
+      console.warn(`[store] 알 수 없는 감지 이벤트 무시: ${characterId}/${taskId}`)
+      return false
+    }
+    if (task.done) return false // 이미 완료 — 수동 체크를 auto로 덮어쓰지 않음
+    this.setTaskDone(characterId, taskId, true, 'auto', timestamp)
+    return true
   }
 
   // ── 설정 ─────────────────────────────────────────────────
