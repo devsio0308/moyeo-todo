@@ -1,5 +1,6 @@
 import { contextBridge, ipcRenderer } from 'electron'
 import type {
+  EngineStatus,
   Settings,
   StoreShape,
   TaskMode,
@@ -19,6 +20,16 @@ const api = {
       const listener = (_e: Electron.IpcRendererEvent, paused: boolean): void => cb(paused)
       ipcRenderer.on('capture:paused-changed', listener)
       return () => ipcRenderer.removeListener('capture:paused-changed', listener)
+    }
+  },
+  engine: {
+    /** 활성 캐릭터 알림 — 엔진이 매칭 대상을 좁힐 수 있게 (명세서 §2, 선택사항) */
+    setActiveCharacter: (character: string | null): void =>
+      ipcRenderer.send('engine:set-active-character', character),
+    onStatus: (cb: (status: EngineStatus) => void): (() => void) => {
+      const listener = (_e: Electron.IpcRendererEvent, status: EngineStatus): void => cb(status)
+      ipcRenderer.on('engine:status', listener)
+      return () => ipcRenderer.removeListener('engine:status', listener)
     }
   },
   store: {
