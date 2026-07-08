@@ -1,0 +1,183 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "homework-dashboard/shared/schema.json",
+  "title": "숙제 대시보드 공용 스키마",
+  "description": "Electron ↔ Python 간 공유되는 데이터/메시지 스키마. 통신 스펙은 HOMEWORK_DASHBOARD_BRIEF.md §2 참고.",
+  "$defs": {
+    "taskState": {
+      "type": "object",
+      "properties": {
+        "done": { "type": "boolean" },
+        "mode": { "enum": ["auto", "manual"] },
+        "lastDoneAt": { "type": ["integer", "null"], "description": "unix epoch (초)" },
+        "displayName": { "type": "string" },
+        "period": { "enum": ["daily", "weekly"] },
+        "threshold": {
+          "type": ["number", "null"],
+          "minimum": 0,
+          "maximum": 1,
+          "description": "매칭 threshold 개별 오버라이드. null이면 전역값 사용"
+        },
+        "catalogId": {
+          "type": ["string", "null"],
+          "description": "Firebase 카탈로그 출처 퀘스트의 문서 id (#4). 수동 추가는 null/없음"
+        },
+        "targetCount": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "완료에 필요한 횟수 (#7). 없으면 1 (단일 퀘스트)"
+        },
+        "count": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "현재 진행 횟수 (#7). 없으면 0"
+        },
+        "category": {
+          "enum": ["전투", "물물교환", "알바", null],
+          "description": "카테고리 태그 (#13). 없으면 배지 미표시. 배열 순서가 섹션 내 정렬 순서"
+        }
+      },
+      "required": ["done", "mode", "lastDoneAt", "displayName", "period"]
+    },
+    "character": {
+      "type": "object",
+      "properties": {
+        "displayName": { "type": "string" },
+        "tasks": {
+          "type": "object",
+          "additionalProperties": { "$ref": "#/$defs/taskState" }
+        }
+      },
+      "required": ["displayName", "tasks"]
+    },
+    "captureRegion": {
+      "type": ["object", "null"],
+      "description": "숙제 완료 팝업이 뜨는 화면 영역 (물리 픽셀 좌표)",
+      "properties": {
+        "left": { "type": "integer" },
+        "top": { "type": "integer" },
+        "width": { "type": "integer", "minimum": 1 },
+        "height": { "type": "integer", "minimum": 1 }
+      },
+      "required": ["left", "top", "width", "height"]
+    },
+    "settings": {
+      "type": "object",
+      "properties": {
+        "captureIntervalSec": { "type": "number", "minimum": 0.5 },
+        "weeklyResetDay": { "type": "integer", "minimum": 0, "maximum": 6, "description": "0=일요일 ... 6=토요일" },
+        "dailyResetHour": { "type": "integer", "minimum": 0, "maximum": 23 },
+        "matchThreshold": { "type": "number", "minimum": 0, "maximum": 1, "description": "전역 기본 threshold" },
+        "captureRegion": { "$ref": "#/$defs/captureRegion" },
+        "firebaseProjectId": {
+          "type": ["string", "null"],
+          "description": "퀘스트 카탈로그를 가져올 Firebase 프로젝트 ID (#4)"
+        },
+        "alarmModes": {
+          "type": "object",
+          "description": "알람 규칙별 모드 (#11). 키: 규칙 id (ominous-rift, field-boss)",
+          "additionalProperties": { "enum": ["sound", "ui", "off"] }
+        }
+      },
+      "required": ["captureIntervalSec", "weeklyResetDay", "dailyResetHour"]
+    },
+    "storeShape": {
+      "type": "object",
+      "properties": {
+        "characters": {
+          "type": "object",
+          "additionalProperties": { "$ref": "#/$defs/character" }
+        },
+        "characterOrder": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "탭 표시 순서 (characters의 키 목록)"
+        },
+        "settings": { "$ref": "#/$defs/settings" },
+        "lastDailyResetAt": { "type": ["integer", "null"] },
+        "lastWeeklyResetAt": { "type": ["integer", "null"] },
+        "questCatalog": {
+          "type": "array",
+          "description": "마지막으로 동기화된 Firestore 퀘스트 카탈로그 캐시 (#4)",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "string" },
+              "name": { "type": "string" },
+              "period": { "enum": ["daily", "weekly"] },
+              "targetCount": { "type": "integer", "minimum": 1 },
+              "category": { "enum": ["전투", "물물교환", "알바", null] }
+            },
+            "required": ["id", "name", "period"]
+          }
+        },
+        "metaVersion": { "type": "integer", "description": "스토어 마이그레이션 버전 (내부용)" }
+      },
+      "required": ["characters", "characterOrder", "settings"]
+    },
+    "wsMessage": {
+      "description": "WebSocket 메시지 (ws://127.0.0.1:47231, Python=서버 / Electron=클라이언트)",
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "type": { "const": "task_detected" },
+            "character": { "type": "string" },
+            "task": { "type": "string" },
+            "confidence": { "type": "number" },
+            "timestamp": { "type": "integer" }
+          },
+          "required": ["type", "character", "task", "confidence", "timestamp"]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": { "const": "heartbeat" },
+            "timestamp": { "type": "integer" }
+          },
+          "required": ["type", "timestamp"]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": { "const": "active_character" },
+            "character": { "type": "string" }
+          },
+          "required": ["type", "character"]
+        },
+        {
+          "type": "object",
+          "properties": { "type": { "const": "reload_config" } },
+          "required": ["type"]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": { "const": "set_paused" },
+            "paused": { "type": "boolean" }
+          },
+          "required": ["type", "paused"],
+          "description": "Electron → Python: 캡처 일시정지/재개 (트레이 메뉴 연동)"
+        },
+        {
+          "type": "object",
+          "properties": { "type": { "const": "capture_screenshot" } },
+          "required": ["type"],
+          "description": "Electron → Python: 전체 화면 스크린샷 요청 (리전 지정/템플릿 등록 UI용)"
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": { "const": "screenshot" },
+            "image": { "type": "string", "description": "base64 PNG (성공 시)" },
+            "width": { "type": "integer" },
+            "height": { "type": "integer" },
+            "error": { "type": "string", "description": "실패 사유 (실패 시)" }
+          },
+          "required": ["type"],
+          "description": "Python → Electron: capture_screenshot 응답 (요청자에게만). 좌표계는 mss 이미지 픽셀"
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,823 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  background: transparent;
+  overflow: hidden;
+}
+
+body {
+  font-family:
+    'Pretendard', 'Malgun Gothic', 'Apple SD Gothic Neo', system-ui, sans-serif;
+  font-size: 13px;
+  color: #e8e8ec;
+  user-select: none;
+}
+
+.overlay-root {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: rgba(22, 22, 28, 0.86);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+/* ── 타이틀바: 커스텀 드래그 영역 ───────────────── */
+.titlebar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  background: rgba(255, 255, 255, 0.04);
+  -webkit-app-region: drag; /* frameless 창 드래그 이동 */
+  flex-shrink: 0;
+}
+
+.titlebar-title {
+  font-weight: 600;
+  font-size: 13px;
+}
+
+.titlebar-buttons {
+  margin-left: auto;
+  display: flex;
+  gap: 4px;
+  -webkit-app-region: no-drag; /* 버튼은 드래그 제외 */
+}
+
+.titlebar-btn {
+  width: 24px;
+  height: 24px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: #b6b6c2;
+  font-size: 12px;
+  cursor: pointer;
+  line-height: 1;
+}
+
+.titlebar-btn:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+}
+
+.badge {
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.badge-paused {
+  background: rgba(255, 176, 32, 0.18);
+  color: #ffb020;
+}
+
+.badge-failed {
+  background: rgba(229, 72, 77, 0.2);
+  color: #ff6b70;
+}
+
+/* ── 엔진 연결 상태 점 ─────────────────────────── */
+.engine-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.engine-connected {
+  background: #46c46e;
+  box-shadow: 0 0 6px rgba(70, 196, 110, 0.7);
+}
+
+.engine-disconnected {
+  background: #8a8a98;
+}
+
+.engine-failed {
+  background: #e5484d;
+  box-shadow: 0 0 6px rgba(229, 72, 77, 0.7);
+}
+
+.content {
+  flex: 1;
+  padding: 12px;
+  overflow-y: auto;
+}
+
+.placeholder {
+  color: #7a7a88;
+  text-align: center;
+  margin-top: 40px;
+}
+
+/* ── 캐릭터 탭 ─────────────────────────────────── */
+.character-tabs {
+  display: flex;
+  gap: 4px;
+  padding: 8px 10px 0;
+  flex-wrap: wrap;
+  flex-shrink: 0;
+}
+
+.tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.06);
+  color: #b6b6c2;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.tab:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.tab-active {
+  background: rgba(94, 129, 255, 0.22);
+  border-color: rgba(94, 129, 255, 0.5);
+  color: #fff;
+}
+
+.tab-dragging {
+  opacity: 0.4;
+}
+
+.tab-add {
+  font-weight: 700;
+  padding: 5px 12px;
+}
+
+.tab-trash {
+  padding: 5px 10px;
+}
+
+.tab-trash:hover {
+  background: rgba(229, 72, 77, 0.18);
+}
+
+.tab-trash-confirm {
+  background: #e5484d;
+  color: #fff;
+  font-weight: 700;
+}
+
+.tab-trash-confirm:hover {
+  background: #f25e63;
+}
+
+/* 캐릭터 추가 폼 (#12) — 이름 + 프리셋 선택 + 추가/취소 */
+.tab-add-form {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.tab-preset-select {
+  padding: 5px 6px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  background: rgba(30, 30, 38, 0.9);
+  color: #d0d0da;
+  font-size: 12px;
+  outline: none;
+  max-width: 130px;
+}
+
+.tab-add:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.tab-edit-input {
+  width: 110px;
+  padding: 5px 8px;
+  border: 1px solid rgba(94, 129, 255, 0.6);
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.35);
+  color: #fff;
+  font-size: 12px;
+  outline: none;
+}
+
+/* ── 진행률 ────────────────────────────────────── */
+.progress-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.progress-bar {
+  flex: 1;
+  height: 6px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #5e81ff, #7ec8ff);
+  transition: width 0.25s ease;
+}
+
+.progress-text {
+  font-size: 11px;
+  color: #9a9aa8;
+  min-width: 32px;
+  text-align: right;
+}
+
+/* ── 퀘스트 목록 ─────────────────────────────────── */
+.task-section {
+  margin-bottom: 14px;
+}
+
+.section-title {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #7a7a88;
+  margin-bottom: 6px;
+}
+
+.task-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.task-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 8px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.task-item:hover {
+  background: rgba(255, 255, 255, 0.07);
+}
+
+.task-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  cursor: pointer;
+  min-width: 0;
+}
+
+.task-label input[type='checkbox'] {
+  accent-color: #5e81ff;
+  width: 15px;
+  height: 15px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.task-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.task-done .task-name {
+  color: #6f6f7e;
+  text-decoration: line-through;
+}
+
+/* ── 퀘스트 알람 하이라이트 (#11) — 배경색 + 회전 그라디언트 테두리 ── */
+@property --alarm-angle {
+  syntax: '<angle>';
+  initial-value: 0deg;
+  inherits: false;
+}
+
+.task-alarm {
+  position: relative;
+}
+
+/* 콘텐츠를 밀지 않는 오버레이 테두리 — conic-gradient가 빙글빙글 돌며 반짝임 */
+.task-alarm::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 8px; /* .task-item과 동일 */
+  padding: 1px; /* 테두리 두께 */
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  animation: alarm-spin 2.5s linear infinite;
+  pointer-events: none;
+}
+
+@keyframes alarm-spin {
+  to {
+    --alarm-angle: 360deg;
+  }
+}
+
+/* 불길한 소환의 결계 — 보라 계열 */
+.task-alarm-ominous-rift {
+  background: rgba(168, 108, 255, 0.18);
+}
+
+.task-alarm-ominous-rift:hover {
+  background: rgba(168, 108, 255, 0.26);
+}
+
+.task-alarm-ominous-rift::before {
+  background: conic-gradient(
+    from var(--alarm-angle),
+    #b57bff,
+    #efe0ff,
+    #8a5cff,
+    #b57bff,
+    #ffffff,
+    #b57bff
+  );
+}
+
+/* 필드 보스 — 골드 계열 */
+.task-alarm-field-boss {
+  background: rgba(255, 176, 32, 0.18);
+}
+
+.task-alarm-field-boss:hover {
+  background: rgba(255, 176, 32, 0.26);
+}
+
+.task-alarm-field-boss::before {
+  background: conic-gradient(
+    from var(--alarm-angle),
+    #ffcf57,
+    #fff8d6,
+    #ffa36b,
+    #ffcf57,
+    #ffffff,
+    #ffcf57
+  );
+}
+
+/* 카테고리 배지 (#13) — 일일/주간은 섹션으로 구분되므로 배지는 카테고리 */
+.cat-badge {
+  flex-shrink: 0;
+  padding: 1px 7px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.cat-combat {
+  background: rgba(255, 99, 99, 0.16);
+  color: #ff8f8f;
+}
+
+.cat-barter {
+  background: rgba(80, 200, 220, 0.16);
+  color: #6fd9ec;
+}
+
+.cat-parttime {
+  background: rgba(110, 210, 130, 0.16);
+  color: #7fdd95;
+}
+
+.mode-icon {
+  flex-shrink: 0;
+  font-size: 12px;
+}
+
+/* ── 카운트형 퀘스트 (#7) ──────────────────────── */
+.count-ctrl {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  flex-shrink: 0;
+}
+
+.count-btn {
+  width: 18px;
+  height: 18px;
+  border: none;
+  border-radius: 5px;
+  background: rgba(255, 255, 255, 0.08);
+  color: #b6b6c2;
+  font-size: 12px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.count-btn:hover:not(:disabled) {
+  background: rgba(94, 129, 255, 0.3);
+  color: #fff;
+}
+
+.count-btn:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
+.count-text {
+  min-width: 30px;
+  text-align: center;
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  color: #b6b6c2;
+}
+
+.count-done {
+  color: #46c46e;
+}
+
+.target-badge {
+  margin-left: 6px;
+  font-size: 10px;
+  color: #8fa6ff;
+}
+
+/* ── 추천 퀘스트 목록 (#15) ────────────────────── */
+.rec-toggle {
+  width: 100%;
+  padding: 7px 10px;
+  border: 1px dashed rgba(255, 255, 255, 0.18);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.03);
+  color: #b6b6c2;
+  font-size: 12px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.rec-toggle:hover {
+  background: rgba(94, 129, 255, 0.12);
+  border-color: rgba(94, 129, 255, 0.4);
+  color: #fff;
+}
+
+.rec-section-title {
+  margin-top: 8px;
+}
+
+.rec-item {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.rec-add-btn {
+  font-size: 11px;
+  padding: 3px 8px;
+}
+
+.rec-add-btn:disabled {
+  border-color: transparent;
+  background: transparent;
+  color: #46c46e;
+  opacity: 1;
+}
+
+.add-task-count {
+  width: 44px;
+  padding: 7px 6px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.3);
+  color: #fff;
+  font-size: 12px;
+  text-align: center;
+  outline: none;
+}
+
+/* ── 퀘스트 추가 폼 ──────────────────────────────── */
+.add-task-form {
+  display: flex;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.add-task-input {
+  flex: 1;
+  min-width: 0;
+  padding: 7px 10px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.3);
+  color: #fff;
+  font-size: 12px;
+  outline: none;
+}
+
+.add-task-input:focus {
+  border-color: rgba(94, 129, 255, 0.6);
+}
+
+.add-task-period {
+  padding: 7px 6px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  background: rgba(30, 30, 38, 0.9);
+  color: #d0d0da;
+  font-size: 12px;
+  outline: none;
+}
+
+.add-task-btn {
+  padding: 7px 12px;
+  border: none;
+  border-radius: 8px;
+  background: #5e81ff;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.add-task-btn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.add-task-btn:not(:disabled):hover {
+  background: #7093ff;
+}
+
+.titlebar-btn-active {
+  background: rgba(94, 129, 255, 0.28);
+  color: #fff;
+}
+
+/* ── 퀘스트 관리 화면 (#5) ─────────────────────── */
+.manage-title {
+  color: #b6b6c2;
+  font-size: 12px;
+}
+
+.manage-title b {
+  color: #fff;
+}
+
+.manage-add-form {
+  margin-top: 0;
+  margin-bottom: 12px;
+}
+
+.manage-task-name {
+  flex: 1;
+  min-width: 0;
+}
+
+.manage-delete {
+  flex-shrink: 0;
+  padding: 3px 8px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: #8a8a98;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.manage-delete:hover {
+  background: rgba(229, 72, 77, 0.2);
+  color: #ff6b70;
+}
+
+.manage-delete-confirm {
+  background: #e5484d;
+  color: #fff;
+  font-weight: 700;
+}
+
+.manage-delete-confirm:hover {
+  background: #f25e63;
+  color: #fff;
+}
+
+.catalog-badge {
+  flex-shrink: 0;
+  font-size: 11px;
+  color: #7ec8ff;
+}
+
+.settings-input-wide {
+  flex: 1;
+  min-width: 0;
+  width: auto;
+}
+
+.settings-hint code {
+  background: rgba(255, 255, 255, 0.08);
+  padding: 0 4px;
+  border-radius: 4px;
+}
+
+/* ── 설정 패널 ─────────────────────────────────── */
+.settings {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.settings-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.settings-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 26px;
+}
+
+.settings-label {
+  color: #b6b6c2;
+  flex-shrink: 0;
+  width: 72px;
+}
+
+.settings-label-wide {
+  flex: 1;
+  width: auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.settings-value {
+  color: #e8e8ec;
+  font-variant-numeric: tabular-nums;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.settings-unit {
+  color: #7a7a88;
+}
+
+.settings-btn {
+  flex-shrink: 0;
+  padding: 4px 10px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 7px;
+  background: rgba(255, 255, 255, 0.06);
+  color: #d0d0da;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.settings-btn:hover:not(:disabled) {
+  background: rgba(94, 129, 255, 0.25);
+  border-color: rgba(94, 129, 255, 0.5);
+  color: #fff;
+}
+
+.settings-btn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.settings-number {
+  width: 64px;
+  padding: 4px 8px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 7px;
+  background: rgba(0, 0, 0, 0.3);
+  color: #fff;
+  font-size: 12px;
+  outline: none;
+}
+
+.settings-number-sm {
+  width: 52px;
+}
+
+.settings-select {
+  padding: 4px 8px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 7px;
+  background: rgba(30, 30, 38, 0.9);
+  color: #d0d0da;
+  font-size: 12px;
+  outline: none;
+}
+
+.settings-slider {
+  flex: 1;
+  accent-color: #5e81ff;
+}
+
+.settings-error {
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: rgba(229, 72, 77, 0.15);
+  color: #ff8a8e;
+  font-size: 12px;
+}
+
+.settings-hint {
+  color: #7a7a88;
+  font-size: 12px;
+}
+
+.tpl-status {
+  flex-shrink: 0;
+  font-size: 11px;
+  color: #7a7a88;
+}
+
+.tpl-ok {
+  color: #46c46e;
+}
+
+/* ── 픽커 (영역 선택 창) ───────────────────────── */
+.picker-root {
+  position: fixed;
+  inset: 0;
+  cursor: crosshair;
+  overflow: hidden;
+  border-radius: 0;
+  background: #000;
+}
+
+.picker-screenshot {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+.picker-dim {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  pointer-events: none;
+}
+
+.picker-selection {
+  position: absolute;
+  border: 2px solid #5e81ff;
+  background: rgba(94, 129, 255, 0.12);
+  box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.25);
+  pointer-events: none;
+}
+
+.picker-size {
+  position: absolute;
+  top: -22px;
+  left: 0;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: #5e81ff;
+  color: #fff;
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+.picker-help {
+  position: absolute;
+  top: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 8px 16px;
+  border-radius: 999px;
+  background: rgba(20, 20, 26, 0.9);
+  color: #e8e8ec;
+  font-size: 13px;
+  pointer-events: none;
+}
+
+.picker-help kbd {
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.15);
+  font-family: inherit;
+  font-size: 11px;
+  margin-left: 6px;
+}
