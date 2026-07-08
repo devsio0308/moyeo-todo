@@ -1,4 +1,5 @@
 import { BrowserWindow, Menu, Tray, app, nativeImage } from 'electron'
+import { AUTO_DETECT_ENABLED } from '../shared/types'
 
 // 16x16 단색 원형 아이콘 (base64 PNG) — 별도 바이너리 리소스 없이 인라인 유지
 const TRAY_ICON_DATA_URL =
@@ -22,7 +23,7 @@ export function createTray(win: BrowserWindow, callbacks: TrayCallbacks): Tray {
   tray.setToolTip('모여길드 도비')
 
   const rebuildMenu = (): void => {
-    const menu = Menu.buildFromTemplate([
+    const template: Electron.MenuItemConstructorOptions[] = [
       {
         label: win.isVisible() ? '숨기기' : '보이기',
         click: () => {
@@ -30,8 +31,12 @@ export function createTray(win: BrowserWindow, callbacks: TrayCallbacks): Tray {
           else win.show()
           rebuildMenu()
         }
-      },
-      {
+      }
+    ]
+
+    // 자동 감지 비활성 버전(#10)에서는 캡처 관련 메뉴 숨김
+    if (AUTO_DETECT_ENABLED) {
+      template.push({
         label: '캡처 일시정지',
         type: 'checkbox',
         checked: capturePaused,
@@ -39,7 +44,10 @@ export function createTray(win: BrowserWindow, callbacks: TrayCallbacks): Tray {
           capturePaused = item.checked
           callbacks.onTogglePauseCapture(capturePaused)
         }
-      },
+      })
+    }
+
+    template.push(
       { type: 'separator' },
       {
         label: '종료',
@@ -47,8 +55,8 @@ export function createTray(win: BrowserWindow, callbacks: TrayCallbacks): Tray {
           app.quit()
         }
       }
-    ])
-    tray?.setContextMenu(menu)
+    )
+    tray?.setContextMenu(Menu.buildFromTemplate(template))
   }
 
   rebuildMenu()

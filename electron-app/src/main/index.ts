@@ -8,7 +8,7 @@ import { EngineWsClient } from './ws-client'
 import { dashboardStore } from './store'
 import { ResetScheduler } from './reset-scheduler'
 import { syncQuestCatalogOnce } from './quest-catalog'
-import type { EngineMessage, EngineStatus } from '../shared/types'
+import { AUTO_DETECT_ENABLED, type EngineMessage, type EngineStatus } from '../shared/types'
 
 let mainWindow: BrowserWindow | null = null
 let bridge: PythonBridge | null = null
@@ -59,7 +59,8 @@ if (!app.requestSingleInstanceLock()) {
       }
     })
 
-    startEngine()
+    // 자동 감지는 추가 검증 후 배포 (#10) — 플래그 켜기 전까지 엔진 미기동
+    if (AUTO_DETECT_ENABLED) startEngine()
 
     // 시작 시 퀘스트 카탈로그 자동 동기화 (#4) — 실패해도 앱 동작에는 영향 없음
     void syncQuestCatalogOnce().then((result) => {

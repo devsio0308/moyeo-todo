@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import type { TemplateIndex } from '../../shared/types'
+import { AUTO_DETECT_ENABLED, type TemplateIndex } from '../../shared/types'
 import { useDashboardStore } from '../store/useDashboardStore'
 
 const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토']
@@ -74,6 +74,8 @@ export default function SettingsPanel(): React.JSX.Element {
     <div className="settings">
       {error && <p className="settings-error">⚠ {error}</p>}
 
+      {/* 자동 감지 비활성 버전(#10) — 캡처/템플릿 관련 설정 숨김 */}
+      {AUTO_DETECT_ENABLED && (
       <section className="settings-section">
         <h3 className="section-title">자동 감지</h3>
 
@@ -140,6 +142,7 @@ export default function SettingsPanel(): React.JSX.Element {
           <span className="settings-value">{Math.round(settings.matchThreshold * 100)}%</span>
         </div>
       </section>
+      )}
 
       <section className="settings-section">
         <h3 className="section-title">리셋</h3>
@@ -209,6 +212,7 @@ export default function SettingsPanel(): React.JSX.Element {
         </p>
       </section>
 
+      {AUTO_DETECT_ENABLED && (
       <section className="settings-section">
         <h3 className="section-title">
           템플릿 {character ? `— ${character.displayName}` : ''}
@@ -275,6 +279,7 @@ export default function SettingsPanel(): React.JSX.Element {
             )
           })}
       </section>
+      )}
     </div>
   )
 }
