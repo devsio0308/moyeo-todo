@@ -5,7 +5,7 @@ import { useDashboardStore } from '../store/useDashboardStore'
  * 캐릭터 탭 바.
  * - 추가: + 버튼 → 인라인 입력
  * - 이름 변경: 활성 탭 더블클릭 → 인라인 입력
- * - 삭제: 활성 탭의 × (한 번 더 클릭으로 확정)
+ * - 삭제: + 뒤의 🗑 버튼 — 활성 캐릭터를 2단계 확인 후 삭제 (#6)
  * - 순서 변경: HTML5 drag & drop
  */
 export default function CharacterTabs(): React.JSX.Element {
@@ -21,11 +21,12 @@ export default function CharacterTabs(): React.JSX.Element {
   const [newName, setNewName] = useState('')
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editName, setEditName] = useState('')
-  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
+  const [confirmDelete, setConfirmDelete] = useState(false)
   const [dragId, setDragId] = useState<string | null>(null)
 
   if (!data) return <></>
   const order = data.characterOrder
+  const activeCharacter = activeId ? data.characters[activeId] : null
 
   const submitAdd = (): void => {
     const name = newName.trim()
@@ -83,7 +84,7 @@ export default function CharacterTabs(): React.JSX.Element {
             onDrop={() => handleDrop(id)}
             onClick={() => {
               setActive(id)
-              setConfirmDeleteId(null)
+              setConfirmDelete(false)
             }}
             onDoubleClick={() => {
               setEditingId(id)
@@ -92,23 +93,6 @@ export default function CharacterTabs(): React.JSX.Element {
             title="더블클릭: 이름 변경 / 드래그: 순서 변경"
           >
             {character.displayName}
-            {isActive && (
-              <span
-                className={`tab-delete ${confirmDeleteId === id ? 'tab-delete-confirm' : ''}`}
-                title={confirmDeleteId === id ? '한 번 더 클릭하면 삭제됩니다' : '캐릭터 삭제'}
-                onClick={(e) => {
-                  e.stopPropagation()
-                  if (confirmDeleteId === id) {
-                    void removeCharacter(id)
-                    setConfirmDeleteId(null)
-                  } else {
-                    setConfirmDeleteId(id)
-                  }
-                }}
-              >
-                ×
-              </span>
-            )}
           </button>
         )
       })}
@@ -129,6 +113,28 @@ export default function CharacterTabs(): React.JSX.Element {
       ) : (
         <button className="tab tab-add" title="캐릭터 추가" onClick={() => setAdding(true)}>
           +
+        </button>
+      )}
+
+      {activeCharacter && (
+        <button
+          className={`tab tab-trash ${confirmDelete ? 'tab-trash-confirm' : ''}`}
+          title={
+            confirmDelete
+              ? `한 번 더 클릭하면 '${activeCharacter.displayName}' 삭제`
+              : `현재 캐릭터(${activeCharacter.displayName}) 삭제`
+          }
+          onClick={() => {
+            if (confirmDelete && activeId) {
+              void removeCharacter(activeId)
+              setConfirmDelete(false)
+            } else {
+              setConfirmDelete(true)
+            }
+          }}
+          onBlur={() => setConfirmDelete(false)}
+        >
+          {confirmDelete ? '삭제?' : '🗑'}
         </button>
       )}
     </div>
