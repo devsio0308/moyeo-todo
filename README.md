@@ -54,6 +54,31 @@ npm run build:all
 | 엔진 생존 | 죽으면 3초 후 재시작, 연속 5회 실패 시 중단 + UI 에러 배지, 종료 시 SIGTERM 정리 |
 | 리셋 | 타이머 의존 없이 앱 시작/포커스/절전 복귀 시 day-boundary 비교 (일일 시각·주간 요일 설정 가능) |
 
+## 퀘스트 카탈로그 (Firebase)
+
+일일/주간 퀘스트 목록을 Firestore에서 가져와 **모든 캐릭터에 자동 반영**할 수 있다 (#4).
+
+1. Firebase 콘솔에서 프로젝트 생성 → Firestore Database 활성화
+2. `quests` 컬렉션에 문서 추가 — 필드:
+   ```
+   name:   "일일 던전"        (string, 필수)
+   period: "daily" | "weekly" (string, 기본 daily)
+   order:  1                  (number, 표시 순서 — 선택)
+   ```
+3. 공개 읽기 규칙 설정:
+   ```
+   rules_version = '2';
+   service cloud.firestore {
+     match /databases/{database}/documents {
+       match /quests/{doc} { allow read: if true; allow write: if false; }
+     }
+   }
+   ```
+4. 앱 ⚙ 설정 → "퀘스트 카탈로그(Firebase)"에 **프로젝트 ID** 입력 → 동기화
+
+앱 시작 시에도 자동 동기화된다. 카탈로그 퀘스트(☁)는 삭제해도 다음 동기화 때 다시 추가되며,
+카탈로그에서 빠진 항목은 삭제하지 않는다 (수동 추가 퀘스트 보존).
+
 ## Git 워크플로
 
 gitflow — `master`(릴리스) / `develop`(통합) / `feature/*`(기능 단위, `--no-ff` 머지)

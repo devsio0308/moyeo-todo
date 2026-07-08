@@ -7,6 +7,7 @@ import { PythonBridge, writeEngineConfig } from './python-bridge'
 import { EngineWsClient } from './ws-client'
 import { dashboardStore } from './store'
 import { ResetScheduler } from './reset-scheduler'
+import { syncQuestCatalogOnce } from './quest-catalog'
 import type { EngineMessage, EngineStatus } from '../shared/types'
 
 let mainWindow: BrowserWindow | null = null
@@ -59,6 +60,14 @@ if (!app.requestSingleInstanceLock()) {
     })
 
     startEngine()
+
+    // 시작 시 퀘스트 카탈로그 자동 동기화 (#4) — 실패해도 앱 동작에는 영향 없음
+    void syncQuestCatalogOnce().then((result) => {
+      console.log(`[catalog] ${result.message}`)
+      if (result.ok) {
+        mainWindow?.webContents.send('store:changed', dashboardStore.getState())
+      }
+    })
 
     // 리셋 스케줄러 — 시작/포커스/절전복귀 시 day-boundary 체크 (명세서 §6)
     resetScheduler = new ResetScheduler(() => {

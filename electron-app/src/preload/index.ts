@@ -1,6 +1,7 @@
 import { contextBridge, ipcRenderer } from 'electron'
 import type {
   CaptureRegion,
+  CatalogSyncResult,
   EngineStatus,
   Screenshot,
   Settings,
@@ -81,6 +82,10 @@ const api = {
     list: (): Promise<TemplateIndex> => ipcRenderer.invoke('template:list'),
     remove: (characterId: string, taskId: string): Promise<TemplateIndex> =>
       ipcRenderer.invoke('template:delete', characterId, taskId)
+  },
+  catalog: {
+    /** Firestore 퀘스트 카탈로그 수동 동기화 (#4) */
+    sync: (): Promise<CatalogSyncResult> => ipcRenderer.invoke('catalog:sync')
   },
   picker: {
     onInit: (

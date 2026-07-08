@@ -14,6 +14,23 @@ export interface TaskState {
   period: TaskPeriod
   /** 매칭 threshold 개별 오버라이드. null이면 전역값 사용 */
   threshold: number | null
+  /** Firebase 카탈로그 출처 퀘스트면 해당 문서 id (#4). 수동 추가는 null/없음 */
+  catalogId?: string | null
+}
+
+/** Firestore quests 컬렉션에서 가져온 카탈로그 항목 (#4) */
+export interface QuestCatalogItem {
+  id: string
+  name: string
+  period: TaskPeriod
+}
+
+/** 카탈로그 동기화 결과 (#4) */
+export interface CatalogSyncResult {
+  ok: boolean
+  message: string
+  added?: number
+  updated?: number
 }
 
 export interface Character {
@@ -36,6 +53,8 @@ export interface Settings {
   /** 전역 기본 매칭 threshold */
   matchThreshold: number
   captureRegion: CaptureRegion | null
+  /** 퀘스트 카탈로그를 가져올 Firebase 프로젝트 ID (#4). null이면 비활성 */
+  firebaseProjectId: string | null
 }
 
 export interface StoreShape {
@@ -44,6 +63,8 @@ export interface StoreShape {
   settings: Settings
   lastDailyResetAt: number | null
   lastWeeklyResetAt: number | null
+  /** 마지막으로 동기화된 퀘스트 카탈로그 캐시 (#4) — 새 캐릭터 생성 시 재사용 */
+  questCatalog?: QuestCatalogItem[]
   /** 스토어 마이그레이션 버전 (내부용) */
   metaVersion?: number
 }

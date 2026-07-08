@@ -21,6 +21,8 @@ export default function SettingsPanel(): React.JSX.Element {
   const [templates, setTemplates] = useState<TemplateIndex>({})
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
+  const [projectIdDraft, setProjectIdDraft] = useState<string | null>(null)
+  const [syncMessage, setSyncMessage] = useState<string | null>(null)
 
   const refreshTemplates = useCallback(async () => {
     setTemplates(await window.api.templates.list())
@@ -33,6 +35,26 @@ export default function SettingsPanel(): React.JSX.Element {
   if (!data) return <></>
   const { settings } = data
   const character = activeId ? data.characters[activeId] : null
+  const projectId = projectIdDraft ?? settings.firebaseProjectId ?? ''
+
+  const saveProjectId = (): void => {
+    const value = projectId.trim() || null
+    if (value !== settings.firebaseProjectId) {
+      void updateSettings({ firebaseProjectId: value })
+    }
+    setProjectIdDraft(null)
+  }
+
+  const runCatalogSync = async (): Promise<void> => {
+    setBusy(true)
+    setSyncMessage('동기화 중…')
+    try {
+      const result = await window.api.catalog.sync()
+      setSyncMessage(`${result.ok ? '✅' : '⚠'} ${result.message}`)
+    } finally {
+      setBusy(false)
+    }
+  }
 
   const runFlow = async (flow: () => Promise<unknown>): Promise<void> => {
     setError(null)
@@ -151,6 +173,40 @@ export default function SettingsPanel(): React.JSX.Element {
             ))}
           </select>
         </div>
+      </section>
+
+      <section className="settings-section">
+        <h3 className="section-title">퀘스트 카탈로그 (Firebase)</h3>
+
+        <div className="settings-row">
+          <span className="settings-label">프로젝트 ID</span>
+          <input
+            className="settings-number settings-input-wide"
+            type="text"
+            placeholder="my-firebase-project"
+            value={projectId}
+            onChange={(e) => setProjectIdDraft(e.target.value)}
+            onBlur={saveProjectId}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') saveProjectId()
+            }}
+          />
+          <button
+            className="settings-btn"
+            disabled={busy || !projectId.trim()}
+            onClick={() => {
+              saveProjectId()
+              void runCatalogSync()
+            }}
+          >
+            동기화
+          </button>
+        </div>
+        {syncMessage && <p className="settings-hint">{syncMessage}</p>}
+        <p className="settings-hint">
+          Firestore <code>quests</code> 컬렉션에서 일일/주간 퀘스트 목록을 가져와 모든 캐릭터에
+          반영합니다. 앱 시작 시에도 자동 동기화됩니다.
+        </p>
       </section>
 
       <section className="settings-section">
