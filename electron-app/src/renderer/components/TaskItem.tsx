@@ -5,6 +5,8 @@ interface Props {
   characterId: string
   taskId: string
   task: TaskState
+  /** 알람 시간대 — 배경 펄스 표시 (#11) */
+  alarmActive?: boolean
 }
 
 /**
@@ -12,7 +14,12 @@ interface Props {
  * 자동 감지로 완료된 항목만 🤖 아이콘 표시 — 유저가 오탐 여부를 구분할 수 있어야 함 (명세서 §5).
  * 수동 체크는 아이콘 없음 (#9).
  */
-export default function TaskItem({ characterId, taskId, task }: Props): React.JSX.Element {
+export default function TaskItem({
+  characterId,
+  taskId,
+  task,
+  alarmActive = false
+}: Props): React.JSX.Element {
   const setTaskDone = useDashboardStore((s) => s.setTaskDone)
   const incrementTask = useDashboardStore((s) => s.incrementTask)
 
@@ -21,7 +28,9 @@ export default function TaskItem({ characterId, taskId, task }: Props): React.JS
   const isCounted = target > 1 // 카운트형 퀘스트 (#7)
 
   return (
-    <li className={`task-item ${task.done ? 'task-done' : ''}`}>
+    <li
+      className={`task-item ${task.done ? 'task-done' : ''} ${alarmActive ? 'task-alarm' : ''}`}
+    >
       <label className="task-label">
         <input
           type="checkbox"

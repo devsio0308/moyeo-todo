@@ -283,6 +283,16 @@ body {
   text-decoration: line-through;
 }
 
+/* ── 퀘스트 알람 하이라이트 (#11) — 알람 시간대 동안 배경색 표시 ── */
+.task-alarm {
+  background: rgba(255, 176, 32, 0.22);
+  border-left: 3px solid #ffb020;
+}
+
+.task-alarm:hover {
+  background: rgba(255, 176, 32, 0.3);
+}
+
 .period-badge {
   flex-shrink: 0;
   padding: 1px 7px;

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
+import { ALARM_RULES, DEFAULT_ALARM_MODE, type AlarmMode } from '../../shared/alarms'
 import { AUTO_DETECT_ENABLED, type TemplateIndex } from '../../shared/types'
 import { useDashboardStore } from '../store/useDashboardStore'
 
@@ -176,6 +177,36 @@ export default function SettingsPanel(): React.JSX.Element {
             ))}
           </select>
         </div>
+      </section>
+
+      <section className="settings-section">
+        <h3 className="section-title">알람</h3>
+        {ALARM_RULES.map((rule) => (
+          <div className="settings-row" key={rule.id}>
+            <span className="settings-label settings-label-wide" title={rule.label}>
+              {rule.label}
+            </span>
+            <select
+              className="settings-select"
+              value={settings.alarmModes?.[rule.id] ?? DEFAULT_ALARM_MODE}
+              onChange={(e) =>
+                void updateSettings({
+                  alarmModes: {
+                    ...settings.alarmModes,
+                    [rule.id]: e.target.value as AlarmMode
+                  }
+                })
+              }
+            >
+              <option value="sound">UI + 소리</option>
+              <option value="ui">UI만</option>
+              <option value="off">끄기</option>
+            </select>
+          </div>
+        ))}
+        <p className="settings-hint">
+          이름에 해당 키워드가 포함된 퀘스트가 미완료면 알람 시각에 배경색으로 표시됩니다.
+        </p>
       </section>
 
       <section className="settings-section">
