@@ -142,3 +142,9 @@ export type EngineStatus = 'connected' | 'disconnected' | 'failed'
 
 export const WS_PORT = 47231
 export const WS_URL = `ws://127.0.0.1:${WS_PORT}`
+
+/**
+ * 자동 감지(화면 캡처) 기능 플래그 (#10).
+ * 추가 검증 후 배포 예정 — true로 바꾸면 엔진 스폰/WS 연결/관련 UI가 전부 복원된다.
+ */
+export const AUTO_DETECT_ENABLED = false

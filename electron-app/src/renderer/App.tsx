@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import type { EngineStatus } from '../shared/types'
+import { AUTO_DETECT_ENABLED, type EngineStatus } from '../shared/types'
 import CharacterTabs from './components/CharacterTabs'
 import QuestManager from './components/QuestManager'
 import SettingsPanel from './components/SettingsPanel'
@@ -48,12 +48,17 @@ export default function App(): React.JSX.Element {
     <div className="overlay-root">
       <header className="titlebar">
         <span className="titlebar-title">📝 모여길드 도비</span>
-        <span
-          className={`engine-dot engine-${engineStatus}`}
-          title={ENGINE_STATUS_LABEL[engineStatus]}
-        />
-        {engineStatus === 'failed' && <span className="badge badge-failed">엔진 오류</span>}
-        {capturePaused && <span className="badge badge-paused">캡처 정지됨</span>}
+        {/* 자동 감지 비활성 버전(#10)에서는 엔진 상태 UI 숨김 */}
+        {AUTO_DETECT_ENABLED && (
+          <>
+            <span
+              className={`engine-dot engine-${engineStatus}`}
+              title={ENGINE_STATUS_LABEL[engineStatus]}
+            />
+            {engineStatus === 'failed' && <span className="badge badge-failed">엔진 오류</span>}
+            {capturePaused && <span className="badge badge-paused">캡처 정지됨</span>}
+          </>
+        )}
         <div className="titlebar-buttons">
           <button
             className={`titlebar-btn ${view === 'manage' ? 'titlebar-btn-active' : ''}`}
