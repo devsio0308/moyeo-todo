@@ -308,12 +308,12 @@ body {
   padding: 1px; /* 테두리 두께 */
   background: conic-gradient(
     from var(--alarm-angle),
-    #ffb020,
-    #ffe28a,
-    #ff8a5c,
-    #ffb020,
-    #fff3c4,
-    #ffb020
+    #ffcf57,
+    #fff8d6,
+    #ffa36b,
+    #ffcf57,
+    #ffffff,
+    #ffcf57
   );
   -webkit-mask:
     linear-gradient(#000 0 0) content-box,
