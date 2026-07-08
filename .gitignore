@@ -22,3 +22,8 @@ Thumbs.db
 serviceAccount*.json
 service-account*.json
 .firebaserc
+
+# 로컬 환경변수 (프로젝트 ID 등) — .env.example만 커밋
+electron-app/.env
+electron-app/.env.*
+!electron-app/.env.example

@@ -94,6 +94,10 @@ npm run build && npx electron-builder
    ```
 4. 앱 ⚙ 설정 → "퀘스트 카탈로그(Firebase)"에 **프로젝트 ID** 입력 → 동기화
 
+**기본 프로젝트 ID 주입(#14):** `electron-app/.env.example`을 `.env`로 복사하고
+`MAIN_VITE_FIREBASE_PROJECT_ID`를 채우면 dev/release 빌드에 기본값으로 들어간다
+(`.env`는 git 미포함). 설정 UI에 직접 입력한 값이 있으면 그 값이 우선.
+
 앱 시작 시에도 자동 동기화된다. 카탈로그 퀘스트(☁)는 삭제해도 다음 동기화 때 다시 추가되며,
 카탈로그에서 빠진 항목은 삭제하지 않는다 (수동 추가 퀘스트 보존).
 
