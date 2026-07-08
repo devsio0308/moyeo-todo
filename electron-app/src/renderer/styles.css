@@ -162,26 +162,22 @@ body {
   padding: 5px 12px;
 }
 
-.tab-delete {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 15px;
-  height: 15px;
-  border-radius: 50%;
-  font-size: 12px;
-  line-height: 1;
-  color: #9a9aa8;
+.tab-trash {
+  padding: 5px 10px;
 }
 
-.tab-delete:hover {
-  background: rgba(255, 255, 255, 0.18);
-  color: #fff;
+.tab-trash:hover {
+  background: rgba(229, 72, 77, 0.18);
 }
 
-.tab-delete-confirm {
+.tab-trash-confirm {
   background: #e5484d;
   color: #fff;
+  font-weight: 700;
+}
+
+.tab-trash-confirm:hover {
+  background: #f25e63;
 }
 
 .tab-edit-input {
