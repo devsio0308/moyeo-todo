@@ -44,6 +44,8 @@ export interface StoreShape {
   settings: Settings
   lastDailyResetAt: number | null
   lastWeeklyResetAt: number | null
+  /** 스토어 마이그레이션 버전 (내부용) */
+  metaVersion?: number
 }
 
 // ── WebSocket 메시지 (명세서 §2) ─────────────────────────────
