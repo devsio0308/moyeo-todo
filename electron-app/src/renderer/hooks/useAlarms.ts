@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import {
+  ALARM_RULES,
   DEFAULT_ALARM_MODE,
   computeActiveTriggers,
   type AlarmMode
@@ -60,6 +61,8 @@ export function useAlarms(): ActiveAlarm[] {
   const [activeAlarms, setActiveAlarms] = useState<ActiveAlarm[]>([])
   // (ruleId:triggerAt) → 재생 완료 표시. 창 하나당 1회만 울리게
   const played = useRef<Set<string>>(new Set())
+  // dev 테스트용 강제 알람 (__alarmTest) — until까지 하이라이트 유지
+  const forced = useRef<{ alarm: ActiveAlarm; until: number } | null>(null)
 
   useEffect(() => {
     const check = (): void => {
@@ -84,6 +87,17 @@ export function useAlarms(): ActiveAlarm[] {
         }
       }
 
+      // dev 강제 알람 병합 (__alarmTest — 실제 스케줄과 무관하게 하이라이트 유지)
+      if (forced.current) {
+        if (Date.now() < forced.current.until) {
+          if (!alarms.some((a) => a.ruleId === forced.current?.alarm.ruleId)) {
+            alarms.push(forced.current.alarm)
+          }
+        } else {
+          forced.current = null
+        }
+      }
+
       // 오래된 재생 기록 정리 (하루 지난 키)
       if (played.current.size > 100) {
         const cutoff = Date.now() - 86_400_000
@@ -97,6 +111,26 @@ export function useAlarms(): ActiveAlarm[] {
           ? prev
           : alarms
       )
+    }
+
+    // dev 전용: DevTools 콘솔에서 강제 알람 테스트
+    //   __alarmTest()                    → 결계 알람 30초 (차임 + 하이라이트)
+    //   __alarmTest('field-boss', 60)   → 필드 보스 알람 60초
+    if (import.meta.env.DEV) {
+      ;(window as unknown as Record<string, unknown>).__alarmTest = (
+        ruleId: string = 'ominous-rift',
+        seconds: number = 30
+      ): string => {
+        const rule = ALARM_RULES.find((r) => r.id === ruleId)
+        if (!rule) return `알 수 없는 규칙 — 사용 가능: ${ALARM_RULES.map((r) => r.id).join(', ')}`
+        forced.current = {
+          alarm: { ruleId: rule.id, keyword: rule.keyword },
+          until: Date.now() + seconds * 1000
+        }
+        playChime()
+        check()
+        return `알람 강제 발동: ${rule.label} — ${seconds}초간 하이라이트`
+      }
     }
 
     check()
