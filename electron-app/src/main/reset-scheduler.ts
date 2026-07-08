@@ -64,7 +64,7 @@ export class ResetScheduler {
 
     if (decision.daily === 'reset') {
       dashboardStore.resetTasks('daily', now)
-      console.log('[reset] 일일 숙제 리셋 실행')
+      console.log('[reset] 일일 퀘스트 리셋 실행')
       changed = true
     } else if (decision.daily === 'baseline') {
       dashboardStore.markResetBaseline('daily', now)
@@ -72,7 +72,7 @@ export class ResetScheduler {
 
     if (decision.weekly === 'reset') {
       dashboardStore.resetTasks('weekly', now)
-      console.log('[reset] 주간 숙제 리셋 실행')
+      console.log('[reset] 주간 퀘스트 리셋 실행')
       changed = true
     } else if (decision.weekly === 'baseline') {
       dashboardStore.markResetBaseline('weekly', now)

@@ -107,7 +107,7 @@ export class DashboardStore {
     return this.getState()
   }
 
-  // ── 숙제 CRUD ────────────────────────────────────────────
+  // ── 퀘스트 CRUD ────────────────────────────────────────────
 
   addTask(characterId: string, displayName: string, period: TaskPeriod): StoreShape {
     const character = this.store.get('characters')[characterId]
@@ -171,7 +171,7 @@ export class DashboardStore {
 
   /**
    * 자동 감지 이벤트 반영 (명세서 §5).
-   * 존재하지 않는 조합이거나 이미 완료된 숙제(수동 체크 포함)는 건드리지 않는다.
+   * 존재하지 않는 조합이거나 이미 완료된 퀘스트(수동 체크 포함)는 건드리지 않는다.
    * @returns 상태가 실제로 바뀌었는지
    */
   applyDetection(characterId: string, taskId: string, timestamp: number): boolean {
@@ -194,7 +194,7 @@ export class DashboardStore {
 
   // ── 리셋 (feature/reset-scheduler에서 사용) ───────────────
 
-  /** period에 해당하는 모든 숙제를 초기화. mode 구분 없이 전체 리셋 (명세서 §6) */
+  /** period에 해당하는 모든 퀘스트를 초기화. mode 구분 없이 전체 리셋 (명세서 §6) */
   resetTasks(period: TaskPeriod, now: number): StoreShape {
     const characters = this.store.get('characters')
     const next: Record<string, Character> = {}

@@ -40,7 +40,7 @@ export default function App(): React.JSX.Element {
   return (
     <div className="overlay-root">
       <header className="titlebar">
-        <span className="titlebar-title">📝 숙제 대시보드</span>
+        <span className="titlebar-title">📝 모여길드 도비</span>
         <span
           className={`engine-dot engine-${engineStatus}`}
           title={ENGINE_STATUS_LABEL[engineStatus]}

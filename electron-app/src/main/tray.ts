@@ -19,7 +19,7 @@ export function createTray(win: BrowserWindow, callbacks: TrayCallbacks): Tray {
   const icon = nativeImage.createFromDataURL(TRAY_ICON_DATA_URL)
   if (process.platform === 'darwin') icon.setTemplateImage(true)
   tray = new Tray(icon)
-  tray.setToolTip('숙제 대시보드')
+  tray.setToolTip('모여길드 도비')
 
   const rebuildMenu = (): void => {
     const menu = Menu.buildFromTemplate([
