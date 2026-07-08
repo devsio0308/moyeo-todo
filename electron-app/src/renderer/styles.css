@@ -292,11 +292,6 @@ body {
 
 .task-alarm {
   position: relative;
-  background: rgba(255, 176, 32, 0.18);
-}
-
-.task-alarm:hover {
-  background: rgba(255, 176, 32, 0.26);
 }
 
 /* 콘텐츠를 밀지 않는 오버레이 테두리 — conic-gradient가 빙글빙글 돌며 반짝임 */
@@ -306,15 +301,6 @@ body {
   inset: 0;
   border-radius: 8px; /* .task-item과 동일 */
   padding: 1px; /* 테두리 두께 */
-  background: conic-gradient(
-    from var(--alarm-angle),
-    #ffcf57,
-    #fff8d6,
-    #ffa36b,
-    #ffcf57,
-    #ffffff,
-    #ffcf57
-  );
   -webkit-mask:
     linear-gradient(#000 0 0) content-box,
     linear-gradient(#000 0 0);
@@ -328,6 +314,48 @@ body {
   to {
     --alarm-angle: 360deg;
   }
+}
+
+/* 불길한 소환의 결계 — 보라 계열 */
+.task-alarm-ominous-rift {
+  background: rgba(168, 108, 255, 0.18);
+}
+
+.task-alarm-ominous-rift:hover {
+  background: rgba(168, 108, 255, 0.26);
+}
+
+.task-alarm-ominous-rift::before {
+  background: conic-gradient(
+    from var(--alarm-angle),
+    #b57bff,
+    #efe0ff,
+    #8a5cff,
+    #b57bff,
+    #ffffff,
+    #b57bff
+  );
+}
+
+/* 필드 보스 — 골드 계열 */
+.task-alarm-field-boss {
+  background: rgba(255, 176, 32, 0.18);
+}
+
+.task-alarm-field-boss:hover {
+  background: rgba(255, 176, 32, 0.26);
+}
+
+.task-alarm-field-boss::before {
+  background: conic-gradient(
+    from var(--alarm-angle),
+    #ffcf57,
+    #fff8d6,
+    #ffa36b,
+    #ffcf57,
+    #ffffff,
+    #ffcf57
+  );
 }
 
 .period-badge {
