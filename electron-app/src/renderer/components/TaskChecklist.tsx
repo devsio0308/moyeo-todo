@@ -16,7 +16,10 @@ export default function TaskChecklist(): React.JSX.Element {
   const doneCount = entries.filter(([, t]) => t.done).length
 
   const renderSection = (p: TaskPeriod, label: string): React.JSX.Element | null => {
-    const sectionTasks = entries.filter(([, t]) => t.period === p)
+    // 완료된 퀘스트는 하단으로 (#8) — sort는 stable이라 미완료끼리는 원래 순서 유지
+    const sectionTasks = entries
+      .filter(([, t]) => t.period === p)
+      .sort(([, a], [, b]) => Number(a.done) - Number(b.done))
     if (sectionTasks.length === 0) return null
     return (
       <section className="task-section">
