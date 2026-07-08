@@ -15,7 +15,13 @@ interface DashboardState {
   removeCharacter: (id: string) => Promise<void>
   renameCharacter: (id: string, displayName: string) => Promise<void>
   reorderCharacters: (order: string[]) => Promise<void>
-  addTask: (characterId: string, displayName: string, period: TaskPeriod) => Promise<void>
+  addTask: (
+    characterId: string,
+    displayName: string,
+    period: TaskPeriod,
+    targetCount?: number
+  ) => Promise<void>
+  incrementTask: (characterId: string, taskId: string, delta: number) => Promise<void>
   removeTask: (characterId: string, taskId: string) => Promise<void>
   updateTask: (
     characterId: string,
@@ -57,8 +63,10 @@ export const useDashboardStore = create<DashboardState>((set, get) => {
     removeCharacter: async (id) => apply(await window.api.store.removeCharacter(id)),
     renameCharacter: async (id, name) => apply(await window.api.store.renameCharacter(id, name)),
     reorderCharacters: async (order) => apply(await window.api.store.reorderCharacters(order)),
-    addTask: async (characterId, displayName, period) =>
-      apply(await window.api.store.addTask(characterId, displayName, period)),
+    addTask: async (characterId, displayName, period, targetCount) =>
+      apply(await window.api.store.addTask(characterId, displayName, period, targetCount)),
+    incrementTask: async (characterId, taskId, delta) =>
+      apply(await window.api.store.incrementTask(characterId, taskId, delta)),
     removeTask: async (characterId, taskId) =>
       apply(await window.api.store.removeTask(characterId, taskId)),
     updateTask: async (characterId, taskId, patch) =>

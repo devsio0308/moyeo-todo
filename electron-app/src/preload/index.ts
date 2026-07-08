@@ -46,8 +46,15 @@ const api = {
       ipcRenderer.invoke('store:rename-character', characterId, displayName),
     reorderCharacters: (order: string[]): Promise<StoreShape> =>
       ipcRenderer.invoke('store:reorder-characters', order),
-    addTask: (characterId: string, displayName: string, period: TaskPeriod): Promise<StoreShape> =>
-      ipcRenderer.invoke('store:add-task', characterId, displayName, period),
+    addTask: (
+      characterId: string,
+      displayName: string,
+      period: TaskPeriod,
+      targetCount?: number
+    ): Promise<StoreShape> =>
+      ipcRenderer.invoke('store:add-task', characterId, displayName, period, targetCount),
+    incrementTask: (characterId: string, taskId: string, delta: number): Promise<StoreShape> =>
+      ipcRenderer.invoke('store:increment-task', characterId, taskId, delta),
     removeTask: (characterId: string, taskId: string): Promise<StoreShape> =>
       ipcRenderer.invoke('store:remove-task', characterId, taskId),
     updateTask: (

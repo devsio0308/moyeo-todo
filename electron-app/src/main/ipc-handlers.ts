@@ -53,8 +53,17 @@ export function registerIpcHandlers(
 
   ipcMain.handle(
     'store:add-task',
-    (_e, characterId: string, displayName: string, period: TaskPeriod) => {
-      const state = dashboardStore.addTask(characterId, displayName, period)
+    (_e, characterId: string, displayName: string, period: TaskPeriod, targetCount?: number) => {
+      const state = dashboardStore.addTask(characterId, displayName, period, null, targetCount)
+      broadcast()
+      return state
+    }
+  )
+
+  ipcMain.handle(
+    'store:increment-task',
+    (_e, characterId: string, taskId: string, delta: number) => {
+      const state = dashboardStore.incrementTask(characterId, taskId, delta)
       broadcast()
       return state
     }

@@ -16,6 +16,10 @@ export interface TaskState {
   threshold: number | null
   /** Firebase 카탈로그 출처 퀘스트면 해당 문서 id (#4). 수동 추가는 null/없음 */
   catalogId?: string | null
+  /** 완료에 필요한 횟수 (#7). 없으면 1 (단일 퀘스트) */
+  targetCount?: number
+  /** 현재 진행 횟수 (#7). 없으면 0 */
+  count?: number
 }
 
 /** Firestore quests 컬렉션에서 가져온 카탈로그 항목 (#4) */
@@ -23,6 +27,8 @@ export interface QuestCatalogItem {
   id: string
   name: string
   period: TaskPeriod
+  /** 완료에 필요한 횟수 (#7). 없으면 1 */
+  targetCount?: number
 }
 
 /** 카탈로그 동기화 결과 (#4) */

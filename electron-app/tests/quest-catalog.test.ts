@@ -26,9 +26,28 @@ describe('parseQuestDocuments', () => {
       ]
     }
     expect(parseQuestDocuments(body)).toEqual([
-      { id: 'dungeon', name: '일일 던전', period: 'daily' },
-      { id: 'raid', name: '주간 레이드', period: 'weekly' }
+      { id: 'dungeon', name: '일일 던전', period: 'daily', targetCount: 1 },
+      { id: 'raid', name: '주간 레이드', period: 'weekly', targetCount: 1 }
     ])
+  })
+
+  it('targetCount 필드를 파싱한다 (#7)', () => {
+    const body = {
+      documents: [
+        doc('multi', {
+          name: { stringValue: '주간 던전 5회' },
+          period: { stringValue: 'weekly' },
+          targetCount: { integerValue: '5' }
+        }),
+        doc('bad-count', {
+          name: { stringValue: '음수 방어' },
+          targetCount: { integerValue: '-3' }
+        })
+      ]
+    }
+    const items = parseQuestDocuments(body)
+    expect(items.find((i) => i.id === 'multi')?.targetCount).toBe(5)
+    expect(items.find((i) => i.id === 'bad-count')?.targetCount).toBe(1) // 1 미만은 1로 클램프
   })
 
   it('period가 없거나 이상하면 daily로 처리', () => {

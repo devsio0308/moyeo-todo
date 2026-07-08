@@ -21,10 +21,13 @@ templates/
 {
   "period": "daily",
   "threshold": null,
+  "repeatable": false,
   "screen": { "width": 2560, "height": 1440 }
 }
 ```
 
 - `period`: `daily` | `weekly` — 쿨다운 주기 결정
 - `threshold`: 개별 매칭 임계값 (null이면 전역 `matchThreshold` 사용)
+- `repeatable`: 카운트형 퀘스트(#7) 여부 — true면 주기당 1회 쿨다운 대신
+  '팝업 소실 후 재등장 + 최소 10초 간격' 조건으로 여러 번 발화
 - `screen`: 등록 시점 화면 해상도 — 현재 해상도와 다르면 자동 리사이즈 매칭

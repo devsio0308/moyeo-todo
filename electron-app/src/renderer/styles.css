@@ -306,6 +306,66 @@ body {
   font-size: 12px;
 }
 
+/* ── 카운트형 퀘스트 (#7) ──────────────────────── */
+.count-ctrl {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  flex-shrink: 0;
+}
+
+.count-btn {
+  width: 18px;
+  height: 18px;
+  border: none;
+  border-radius: 5px;
+  background: rgba(255, 255, 255, 0.08);
+  color: #b6b6c2;
+  font-size: 12px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.count-btn:hover:not(:disabled) {
+  background: rgba(94, 129, 255, 0.3);
+  color: #fff;
+}
+
+.count-btn:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
+.count-text {
+  min-width: 30px;
+  text-align: center;
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  color: #b6b6c2;
+}
+
+.count-done {
+  color: #46c46e;
+}
+
+.target-badge {
+  margin-left: 6px;
+  font-size: 10px;
+  color: #8fa6ff;
+}
+
+.add-task-count {
+  width: 44px;
+  padding: 7px 6px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.3);
+  color: #fff;
+  font-size: 12px;
+  text-align: center;
+  outline: none;
+}
+
 /* ── 퀘스트 추가 폼 ──────────────────────────────── */
 .add-task-form {
   display: flex;

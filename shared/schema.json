@@ -21,6 +21,16 @@
         "catalogId": {
           "type": ["string", "null"],
           "description": "Firebase 카탈로그 출처 퀘스트의 문서 id (#4). 수동 추가는 null/없음"
+        },
+        "targetCount": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "완료에 필요한 횟수 (#7). 없으면 1 (단일 퀘스트)"
+        },
+        "count": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "현재 진행 횟수 (#7). 없으면 0"
         }
       },
       "required": ["done", "mode", "lastDoneAt", "displayName", "period"]
@@ -85,7 +95,8 @@
             "properties": {
               "id": { "type": "string" },
               "name": { "type": "string" },
-              "period": { "enum": ["daily", "weekly"] }
+              "period": { "enum": ["daily", "weekly"] },
+              "targetCount": { "type": "integer", "minimum": 1 }
             },
             "required": ["id", "name", "period"]
           }
