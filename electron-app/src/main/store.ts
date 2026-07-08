@@ -2,6 +2,7 @@ import Store from 'electron-store'
 import type {
   Character,
   QuestCatalogItem,
+  QuestCategory,
   Settings,
   StoreShape,
   TaskMode,
@@ -145,7 +146,8 @@ export class DashboardStore {
     displayName: string,
     period: TaskPeriod,
     catalogId: string | null = null,
-    targetCount = 1
+    targetCount = 1,
+    category: QuestCategory | null = null
   ): StoreShape {
     const character = this.store.get('characters')[characterId]
     if (character) {
@@ -159,7 +161,8 @@ export class DashboardStore {
         threshold: null,
         catalogId,
         targetCount: Math.max(1, Math.floor(targetCount)),
-        count: 0
+        count: 0,
+        category
       }
       this.store.set(`characters.${characterId}.tasks.${id}`, task)
     }
@@ -293,16 +296,19 @@ export class DashboardStore {
         } else {
           const t = tasks[existingTaskId]
           const itemTarget = Math.max(1, item.targetCount ?? 1)
+          const itemCategory = item.category ?? null
           if (
             t.displayName !== item.name ||
             t.period !== item.period ||
-            (t.targetCount ?? 1) !== itemTarget
+            (t.targetCount ?? 1) !== itemTarget ||
+            (t.category ?? null) !== itemCategory
           ) {
             tasks[existingTaskId] = {
               ...t,
               displayName: item.name,
               period: item.period,
-              targetCount: itemTarget
+              targetCount: itemTarget,
+              category: itemCategory
             }
             updated++
           }
@@ -325,7 +331,8 @@ export class DashboardStore {
       threshold: null,
       catalogId: item.id,
       targetCount: Math.max(1, item.targetCount ?? 1),
-      count: 0
+      count: 0,
+      category: item.category ?? null
     }
   }
 

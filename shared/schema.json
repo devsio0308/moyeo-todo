@@ -31,6 +31,10 @@
           "type": "integer",
           "minimum": 0,
           "description": "현재 진행 횟수 (#7). 없으면 0"
+        },
+        "category": {
+          "enum": ["전투", "물물교환", "알바", null],
+          "description": "카테고리 태그 (#13). 없으면 배지 미표시. 배열 순서가 섹션 내 정렬 순서"
         }
       },
       "required": ["done", "mode", "lastDoneAt", "displayName", "period"]
@@ -101,7 +105,8 @@
               "id": { "type": "string" },
               "name": { "type": "string" },
               "period": { "enum": ["daily", "weekly"] },
-              "targetCount": { "type": "integer", "minimum": 1 }
+              "targetCount": { "type": "integer", "minimum": 1 },
+              "category": { "enum": ["전투", "물물교환", "알바", null] }
             },
             "required": ["id", "name", "period"]
           }

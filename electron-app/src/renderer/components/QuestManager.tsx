@@ -1,5 +1,11 @@
 import { useState } from 'react'
-import type { TaskPeriod } from '../../shared/types'
+import {
+  QUEST_CATEGORIES,
+  QUEST_CATEGORY_CLASS,
+  questCategoryOrder,
+  type QuestCategory,
+  type TaskPeriod
+} from '../../shared/types'
 import { useDashboardStore } from '../store/useDashboardStore'
 
 /**
@@ -15,6 +21,7 @@ export default function QuestManager(): React.JSX.Element {
   const [name, setName] = useState('')
   const [period, setPeriod] = useState<TaskPeriod>('daily')
   const [targetCount, setTargetCount] = useState(1)
+  const [category, setCategory] = useState<QuestCategory | ''>('')
   const [confirmId, setConfirmId] = useState<string | null>(null)
 
   if (!data || !activeId || !data.characters[activeId]) {
@@ -27,13 +34,17 @@ export default function QuestManager(): React.JSX.Element {
   const submit = (): void => {
     const trimmed = name.trim()
     if (!trimmed) return
-    void addTask(activeId, trimmed, period, targetCount)
+    void addTask(activeId, trimmed, period, targetCount, category || null)
     setName('')
     setTargetCount(1)
+    setCategory('')
   }
 
   const renderSection = (p: TaskPeriod, label: string): React.JSX.Element | null => {
-    const sectionTasks = entries.filter(([, t]) => t.period === p)
+    // 체크리스트와 동일한 카테고리 순 정렬 (#13)
+    const sectionTasks = entries
+      .filter(([, t]) => t.period === p)
+      .sort(([, a], [, b]) => questCategoryOrder(a.category) - questCategoryOrder(b.category))
     if (sectionTasks.length === 0) return null
     return (
       <section className="task-section">
@@ -54,9 +65,11 @@ export default function QuestManager(): React.JSX.Element {
                   ☁
                 </span>
               )}
-              <span className={`period-badge period-${task.period}`}>
-                {task.period === 'daily' ? '일일' : '주간'}
-              </span>
+              {task.category && (
+                <span className={`cat-badge cat-${QUEST_CATEGORY_CLASS[task.category]}`}>
+                  {task.category}
+                </span>
+              )}
               <button
                 className={`manage-delete ${confirmId === taskId ? 'manage-delete-confirm' : ''}`}
                 title={confirmId === taskId ? '한 번 더 클릭하면 삭제' : '퀘스트 삭제'}
@@ -105,6 +118,19 @@ export default function QuestManager(): React.JSX.Element {
         >
           <option value="daily">일일</option>
           <option value="weekly">주간</option>
+        </select>
+        <select
+          className="add-task-period"
+          title="카테고리 태그"
+          value={category}
+          onChange={(e) => setCategory(e.target.value as QuestCategory | '')}
+        >
+          <option value="">태그 없음</option>
+          {QUEST_CATEGORIES.map((c) => (
+            <option key={c} value={c}>
+              {c}
+            </option>
+          ))}
         </select>
         <input
           className="add-task-count"

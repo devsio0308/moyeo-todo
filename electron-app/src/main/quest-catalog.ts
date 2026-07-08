@@ -1,12 +1,18 @@
 import { dashboardStore } from './store'
-import type { CatalogSyncResult, QuestCatalogItem, TaskPeriod } from '../shared/types'
+import {
+  isQuestCategory,
+  type CatalogSyncResult,
+  type QuestCatalogItem,
+  type TaskPeriod
+} from '../shared/types'
 
 /**
  * Firestore 퀘스트 카탈로그 연동 (#4).
  *
  * 데이터 계약:
  * - 컬렉션: `quests` (공개 읽기 규칙 필요)
- * - 문서 필드: { name: string, period: 'daily'|'weekly', order?: number, targetCount?: number }
+ * - 문서 필드: { name: string, period: 'daily'|'weekly', order?: number,
+ *               targetCount?: number, category?: '전투'|'물물교환'|'알바' }
  * - 문서 id가 catalogId로 사용된다
  *
  * 인증 없는 REST 읽기만 사용 — API 키/SDK 불필요.
@@ -44,12 +50,22 @@ export function parseQuestDocuments(body: unknown): QuestCatalogItem[] {
       : 1
     const targetCount = Number.isFinite(targetRaw) ? Math.max(1, Math.floor(targetRaw)) : 1
 
-    items.push({ id, name, period, targetCount, order })
+    // 카테고리 태그 (#13) — 허용 목록 외 값은 무시
+    const categoryRaw = d.fields.category?.stringValue?.trim()
+    const category = isQuestCategory(categoryRaw) ? categoryRaw : null
+
+    items.push({ id, name, period, targetCount, category, order })
   }
 
   // order → 이름 순 정렬 후 order 필드 제거
   items.sort((a, b) => a.order - b.order || a.name.localeCompare(b.name, 'ko'))
-  return items.map(({ id, name, period, targetCount }) => ({ id, name, period, targetCount }))
+  return items.map(({ id, name, period, targetCount, category }) => ({
+    id,
+    name,
+    period,
+    targetCount,
+    category
+  }))
 }
 
 /** Firestore에서 quests 컬렉션을 읽는다. 실패 시 throw. */
