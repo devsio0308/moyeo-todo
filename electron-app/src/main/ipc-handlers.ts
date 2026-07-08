@@ -27,11 +27,14 @@ export function registerIpcHandlers(
 
   ipcMain.handle('store:get-state', () => dashboardStore.getState())
 
-  ipcMain.handle('store:add-character', (_e, displayName: string) => {
-    const state = dashboardStore.addCharacter(displayName)
-    broadcast()
-    return state
-  })
+  ipcMain.handle(
+    'store:add-character',
+    (_e, displayName: string, copyFromCharacterId: string | null = null) => {
+      const state = dashboardStore.addCharacter(displayName, copyFromCharacterId)
+      broadcast()
+      return state
+    }
+  )
 
   ipcMain.handle('store:remove-character', (_e, characterId: string) => {
     const state = dashboardStore.removeCharacter(characterId)

@@ -11,7 +11,7 @@ interface DashboardState {
   setActiveCharacter: (id: string) => void
   setCapturePaused: (paused: boolean) => void
 
-  addCharacter: (displayName: string) => Promise<void>
+  addCharacter: (displayName: string, copyFromCharacterId?: string | null) => Promise<void>
   removeCharacter: (id: string) => Promise<void>
   renameCharacter: (id: string, displayName: string) => Promise<void>
   reorderCharacters: (order: string[]) => Promise<void>
@@ -54,8 +54,8 @@ export const useDashboardStore = create<DashboardState>((set, get) => {
     setActiveCharacter: (id) => set({ activeCharacterId: id }),
     setCapturePaused: (paused) => set({ capturePaused: paused }),
 
-    addCharacter: async (displayName) => {
-      const state = await window.api.store.addCharacter(displayName)
+    addCharacter: async (displayName, copyFromCharacterId) => {
+      const state = await window.api.store.addCharacter(displayName, copyFromCharacterId)
       // 새로 추가된 캐릭터를 바로 활성 탭으로
       const newId = state.characterOrder[state.characterOrder.length - 1] ?? null
       set({ data: state, activeCharacterId: newId })

@@ -19,6 +19,8 @@ export default function CharacterTabs(): React.JSX.Element {
 
   const [adding, setAdding] = useState(false)
   const [newName, setNewName] = useState('')
+  /** 새 캐릭터의 퀘스트 프리셋 소스 (#12). '' = 카탈로그 기본 */
+  const [presetSource, setPresetSource] = useState('')
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editName, setEditName] = useState('')
   const [confirmDelete, setConfirmDelete] = useState(false)
@@ -30,8 +32,15 @@ export default function CharacterTabs(): React.JSX.Element {
 
   const submitAdd = (): void => {
     const name = newName.trim()
-    if (name) void addCharacter(name)
+    if (name) void addCharacter(name, presetSource || null)
     setNewName('')
+    setPresetSource('')
+    setAdding(false)
+  }
+
+  const cancelAdd = (): void => {
+    setNewName('')
+    setPresetSource('')
     setAdding(false)
   }
 
@@ -98,18 +107,46 @@ export default function CharacterTabs(): React.JSX.Element {
       })}
 
       {adding ? (
-        <input
-          className="tab-edit-input"
-          placeholder="캐릭터 이름"
-          value={newName}
-          autoFocus
-          onChange={(e) => setNewName(e.target.value)}
-          onBlur={submitAdd}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter') submitAdd()
-            if (e.key === 'Escape') setAdding(false)
-          }}
-        />
+        <span className="tab-add-form">
+          <input
+            className="tab-edit-input"
+            placeholder="캐릭터 이름"
+            value={newName}
+            autoFocus
+            onChange={(e) => setNewName(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') submitAdd()
+              if (e.key === 'Escape') cancelAdd()
+            }}
+          />
+          <select
+            className="tab-preset-select"
+            title="퀘스트 구성 가져오기 — 선택한 캐릭터의 커스텀 퀘스트까지 복사"
+            value={presetSource}
+            onChange={(e) => setPresetSource(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Escape') cancelAdd()
+            }}
+          >
+            <option value="">카탈로그 기본</option>
+            {order.map((id) => (
+              <option key={id} value={id}>
+                {data.characters[id]?.displayName} 복사
+              </option>
+            ))}
+          </select>
+          <button
+            className="tab tab-add"
+            disabled={!newName.trim()}
+            onClick={submitAdd}
+            title="캐릭터 추가"
+          >
+            추가
+          </button>
+          <button className="tab" onClick={cancelAdd} title="취소">
+            ×
+          </button>
+        </span>
       ) : (
         <button className="tab tab-add" title="캐릭터 추가" onClick={() => setAdding(true)}>
           +
