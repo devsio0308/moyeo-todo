@@ -61,9 +61,10 @@ npm run build:all
 1. Firebase 콘솔에서 프로젝트 생성 → Firestore Database 활성화
 2. `quests` 컬렉션에 문서 추가 — 필드:
    ```
-   name:   "일일 던전"        (string, 필수)
-   period: "daily" | "weekly" (string, 기본 daily)
-   order:  1                  (number, 표시 순서 — 선택)
+   name:        "일일 던전"        (string, 필수)
+   period:      "daily" | "weekly" (string, 기본 daily)
+   order:       1                  (number, 표시 순서 — 선택)
+   targetCount: 5                  (number, 완료 필요 횟수 — 선택, 기본 1)
    ```
 3. 공개 읽기 규칙 설정:
    ```

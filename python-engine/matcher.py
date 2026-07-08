@@ -25,6 +25,8 @@ from config import EngineConfig
 log = logging.getLogger(__name__)
 
 CONSECUTIVE_FRAMES_REQUIRED = 2
+# repeatable 템플릿(#7): 발화 후 재발화까지의 최소 간격 (같은 팝업 중복 카운트 방지)
+REPEAT_MIN_INTERVAL_SEC = 10.0
 
 
 @dataclass
@@ -42,6 +44,8 @@ class Template:
     image: np.ndarray  # grayscale
     period: str = "daily"  # daily | weekly
     threshold: Optional[float] = None  # None이면 전역값
+    # 카운트형 퀘스트(#7): True면 주기당 1회 쿨다운 대신 '소실 후 재등장' 시 재발화
+    repeatable: bool = False
     # 등록 시점 화면 해상도 (해상도 변경 감지용). 없으면 리사이즈 시도 안 함
     screen_width: Optional[int] = None
     screen_height: Optional[int] = None
@@ -103,6 +107,7 @@ def load_templates(templates_dir: Path) -> list[Template]:
                     meta = json.loads(meta_path.read_text(encoding="utf-8"))
                     tpl.period = meta.get("period", "daily")
                     tpl.threshold = meta.get("threshold")
+                    tpl.repeatable = bool(meta.get("repeatable", False))
                     screen = meta.get("screen") or {}
                     tpl.screen_width = screen.get("width")
                     tpl.screen_height = screen.get("height")
@@ -140,8 +145,12 @@ class TemplateMatcher:
         self.active_character: Optional[str] = None
         # (character, task) → 연속 threshold 통과 프레임 수
         self._consecutive_hits: dict[tuple[str, str], int] = {}
-        # (character, task) → 마지막 전송된 period key (쿨다운)
+        # (character, task) → 마지막 전송된 period key (쿨다운, 단일 퀘스트용)
         self._sent_period: dict[tuple[str, str], str] = {}
+        # repeatable(#7): 발화 후 '팝업 소실'을 봐야 재무장. (character, task) → 무장 여부
+        self._disarmed: set[tuple[str, str]] = set()
+        # repeatable: (character, task) → 마지막 발화 시각
+        self._last_fired: dict[tuple[str, str], float] = {}
 
     def reload(self, config: EngineConfig) -> None:
         """reload_config 수신 시: 설정 + 템플릿 다시 로드. 쿨다운 상태는 유지."""
@@ -170,11 +179,12 @@ class TemplateMatcher:
             if self.active_character is not None and tpl.character != self.active_character:
                 continue
 
-            # 쿨다운: 이번 일/주에 이미 보낸 조합은 스킵
+            # 쿨다운 (단일 퀘스트): 이번 일/주에 이미 보낸 조합은 스킵.
+            # repeatable(#7)은 주기 쿨다운 대신 '소실 후 재무장' 방식 사용.
             pkey = period_key(
                 tpl.period, now, self.config.daily_reset_hour, self.config.weekly_reset_day
             )
-            if self._sent_period.get(key) == pkey:
+            if not tpl.repeatable and self._sent_period.get(key) == pkey:
                 continue
 
             image = tpl.image_for_screen(screen_size)
@@ -188,22 +198,38 @@ class TemplateMatcher:
             threshold = tpl.threshold if tpl.threshold is not None else self.config.match_threshold
 
             if confidence >= threshold:
+                if tpl.repeatable and key in self._disarmed:
+                    # 직전 발화의 팝업이 아직 화면에 있음 — 소실 전까지 중복 카운트 금지
+                    continue
+
                 hits = self._consecutive_hits.get(key, 0) + 1
                 self._consecutive_hits[key] = hits
-                if hits >= CONSECUTIVE_FRAMES_REQUIRED:
-                    # 확정 이벤트 — 쿨다운 등록 후 전송
+                if hits < CONSECUTIVE_FRAMES_REQUIRED:
+                    continue
+
+                if tpl.repeatable:
+                    # 최소 간격 미달이면 발화 보류 (같은 팝업의 잔상/재렌더 오탐 방지)
+                    if now - self._last_fired.get(key, float("-inf")) < REPEAT_MIN_INTERVAL_SEC:
+                        self._consecutive_hits[key] = 0
+                        continue
+                    self._disarmed.add(key)
+                    self._last_fired[key] = now
+                else:
                     self._sent_period[key] = pkey
-                    self._consecutive_hits[key] = 0
-                    detections.append(
-                        Detection(
-                            character=tpl.character,
-                            task=tpl.task,
-                            confidence=round(confidence, 4),
-                            timestamp=int(now),
-                        )
+
+                self._consecutive_hits[key] = 0
+                detections.append(
+                    Detection(
+                        character=tpl.character,
+                        task=tpl.task,
+                        confidence=round(confidence, 4),
+                        timestamp=int(now),
                     )
+                )
             else:
                 # 연속성 끊김 — 일시적 화면 전환/애니메이션 오탐 방지
                 self._consecutive_hits[key] = 0
+                # repeatable: 팝업 소실 확인 → 재무장 (다음 등장 시 다시 카운트 가능)
+                self._disarmed.discard(key)
 
         return detections

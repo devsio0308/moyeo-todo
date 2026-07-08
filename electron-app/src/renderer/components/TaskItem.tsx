@@ -13,6 +13,11 @@ interface Props {
  */
 export default function TaskItem({ characterId, taskId, task }: Props): React.JSX.Element {
   const setTaskDone = useDashboardStore((s) => s.setTaskDone)
+  const incrementTask = useDashboardStore((s) => s.incrementTask)
+
+  const target = task.targetCount ?? 1
+  const count = task.count ?? (task.done ? target : 0)
+  const isCounted = target > 1 // 카운트형 퀘스트 (#7)
 
   return (
     <li className={`task-item ${task.done ? 'task-done' : ''}`}>
@@ -20,10 +25,32 @@ export default function TaskItem({ characterId, taskId, task }: Props): React.JS
         <input
           type="checkbox"
           checked={task.done}
+          title={isCounted ? '체크: 전체 완료 / 해제: 0회로 초기화' : undefined}
           onChange={(e) => void setTaskDone(characterId, taskId, e.target.checked, 'manual')}
         />
         <span className="task-name">{task.displayName}</span>
       </label>
+      {isCounted && (
+        <span className="count-ctrl">
+          <button
+            className="count-btn"
+            disabled={count <= 0}
+            onClick={() => void incrementTask(characterId, taskId, -1)}
+          >
+            −
+          </button>
+          <span className={`count-text ${task.done ? 'count-done' : ''}`}>
+            {count}/{target}
+          </span>
+          <button
+            className="count-btn"
+            disabled={task.done}
+            onClick={() => void incrementTask(characterId, taskId, 1)}
+          >
+            ＋
+          </button>
+        </span>
+      )}
       <span className={`period-badge period-${task.period}`}>
         {task.period === 'daily' ? '일일' : '주간'}
       </span>

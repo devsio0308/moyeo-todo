@@ -6,7 +6,7 @@ import type { CatalogSyncResult, QuestCatalogItem, TaskPeriod } from '../shared/
  *
  * 데이터 계약:
  * - 컬렉션: `quests` (공개 읽기 규칙 필요)
- * - 문서 필드: { name: string, period: 'daily'|'weekly', order?: number }
+ * - 문서 필드: { name: string, period: 'daily'|'weekly', order?: number, targetCount?: number }
  * - 문서 id가 catalogId로 사용된다
  *
  * 인증 없는 REST 읽기만 사용 — API 키/SDK 불필요.
@@ -38,12 +38,18 @@ export function parseQuestDocuments(body: unknown): QuestCatalogItem[] {
       ? Number(d.fields.order.integerValue ?? d.fields.order.doubleValue ?? 0)
       : Number.MAX_SAFE_INTEGER // order 없으면 뒤로
 
-    items.push({ id, name, period, order })
+    // 카운트형 퀘스트 (#7): targetCount ≥ 2면 N회 반복 퀘스트
+    const targetRaw = d.fields.targetCount
+      ? Number(d.fields.targetCount.integerValue ?? d.fields.targetCount.doubleValue ?? 1)
+      : 1
+    const targetCount = Number.isFinite(targetRaw) ? Math.max(1, Math.floor(targetRaw)) : 1
+
+    items.push({ id, name, period, targetCount, order })
   }
 
   // order → 이름 순 정렬 후 order 필드 제거
   items.sort((a, b) => a.order - b.order || a.name.localeCompare(b.name, 'ko'))
-  return items.map(({ id, name, period }) => ({ id, name, period }))
+  return items.map(({ id, name, period, targetCount }) => ({ id, name, period, targetCount }))
 }
 
 /** Firestore에서 quests 컬렉션을 읽는다. 실패 시 throw. */

@@ -14,6 +14,7 @@ export default function QuestManager(): React.JSX.Element {
 
   const [name, setName] = useState('')
   const [period, setPeriod] = useState<TaskPeriod>('daily')
+  const [targetCount, setTargetCount] = useState(1)
   const [confirmId, setConfirmId] = useState<string | null>(null)
 
   if (!data || !activeId || !data.characters[activeId]) {
@@ -26,8 +27,9 @@ export default function QuestManager(): React.JSX.Element {
   const submit = (): void => {
     const trimmed = name.trim()
     if (!trimmed) return
-    void addTask(activeId, trimmed, period)
+    void addTask(activeId, trimmed, period, targetCount)
     setName('')
+    setTargetCount(1)
   }
 
   const renderSection = (p: TaskPeriod, label: string): React.JSX.Element | null => {
@@ -39,7 +41,14 @@ export default function QuestManager(): React.JSX.Element {
         <ul className="task-list">
           {sectionTasks.map(([taskId, task]) => (
             <li className="task-item" key={taskId}>
-              <span className="task-name manage-task-name">{task.displayName}</span>
+              <span className="task-name manage-task-name">
+                {task.displayName}
+                {(task.targetCount ?? 1) > 1 && (
+                  <span className="target-badge" title={`${task.targetCount}회 완료 필요`}>
+                    ×{task.targetCount}
+                  </span>
+                )}
+              </span>
               {task.catalogId && (
                 <span className="catalog-badge" title="Firebase 카탈로그 퀘스트 — 삭제해도 다음 동기화 때 다시 추가됩니다">
                   ☁
@@ -97,6 +106,18 @@ export default function QuestManager(): React.JSX.Element {
           <option value="daily">일일</option>
           <option value="weekly">주간</option>
         </select>
+        <input
+          className="add-task-count"
+          type="number"
+          min={1}
+          max={99}
+          title="완료에 필요한 횟수 (1이면 단일 퀘스트)"
+          value={targetCount}
+          onChange={(e) => {
+            const v = parseInt(e.target.value)
+            if (v >= 1 && v <= 99) setTargetCount(v)
+          }}
+        />
         <button className="add-task-btn" type="submit" disabled={!name.trim()}>
           추가
         </button>

@@ -40,6 +40,8 @@ export function saveTemplate(
       {
         period: task.period,
         threshold: task.threshold,
+        // 카운트형 퀘스트(#7): 주기당 1회 쿨다운 대신 소실 후 재발화 허용
+        repeatable: (task.targetCount ?? 1) > 1,
         // 등록 시점 화면 해상도(mss 픽셀) — 해상도 변경 감지용 (명세서 §4)
         screen: { width: screenshot.width, height: screenshot.height }
       },
@@ -85,6 +87,7 @@ export function syncTemplateMeta(characterId: string, taskId: string): void {
     const meta = JSON.parse(readFileSync(metaPath, 'utf-8'))
     meta.period = task.period
     meta.threshold = task.threshold
+    meta.repeatable = (task.targetCount ?? 1) > 1
     writeFileSync(metaPath, JSON.stringify(meta, null, 2), 'utf-8')
   } catch {
     // 메타가 깨졌으면 다음 등록 때 재생성

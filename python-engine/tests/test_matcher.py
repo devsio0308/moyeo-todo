@@ -148,6 +148,78 @@ class TestResolutionScaling:
         assert matcher.process_frame(tiny, (600, 400), now=NOW) == []
 
 
+class TestRepeatable:
+    """카운트형 퀘스트(#7) — repeatable 템플릿은 소실 후 재등장 시 다시 발화."""
+
+    @pytest.fixture
+    def repeat_workspace(self, tmp_path):
+        tpl = make_template()
+        tpl_dir = tmp_path / "templates" / "character_01"
+        tpl_dir.mkdir(parents=True)
+        cv2.imwrite(str(tpl_dir / "weekly_dungeon.png"), tpl)
+        (tpl_dir / "weekly_dungeon.json").write_text(
+            json.dumps(
+                {
+                    "period": "weekly",
+                    "repeatable": True,
+                    "screen": {"width": 600, "height": 400},
+                }
+            )
+        )
+        config = EngineConfig(templates_dir=tmp_path / "templates")
+        return TemplateMatcher(config), tpl
+
+    def test_refires_after_disappear(self, repeat_workspace):
+        matcher, tpl = repeat_workspace
+        hit = make_frame_with(tpl)
+        miss = make_noise_frame()
+        screen = (600, 400)
+
+        # 1차 발화 (2연속)
+        assert matcher.process_frame(hit, screen, now=NOW) == []
+        assert len(matcher.process_frame(hit, screen, now=NOW + 1)) == 1
+        # 팝업이 계속 떠 있는 동안은 재발화 없음
+        assert matcher.process_frame(hit, screen, now=NOW + 2) == []
+        assert matcher.process_frame(hit, screen, now=NOW + 3) == []
+        # 소실 → 재등장 (+ 최소 간격 경과) → 2차 발화
+        assert matcher.process_frame(miss, screen, now=NOW + 20) == []
+        assert matcher.process_frame(hit, screen, now=NOW + 22) == []
+        assert len(matcher.process_frame(hit, screen, now=NOW + 24)) == 1
+
+    def test_min_interval_blocks_rapid_refire(self, repeat_workspace):
+        matcher, tpl = repeat_workspace
+        hit = make_frame_with(tpl)
+        miss = make_noise_frame()
+        screen = (600, 400)
+
+        matcher.process_frame(hit, screen, now=NOW)
+        assert len(matcher.process_frame(hit, screen, now=NOW + 1)) == 1
+        # 곧바로 소실→재등장해도 최소 간격(10초) 내에는 발화하지 않음
+        matcher.process_frame(miss, screen, now=NOW + 2)
+        matcher.process_frame(hit, screen, now=NOW + 3)
+        assert matcher.process_frame(hit, screen, now=NOW + 4) == []
+        # 간격 경과 후에는 발화
+        matcher.process_frame(miss, screen, now=NOW + 5)
+        matcher.process_frame(hit, screen, now=NOW + 12)
+        assert len(matcher.process_frame(hit, screen, now=NOW + 13)) == 1
+
+    def test_same_period_multiple_fires(self, repeat_workspace):
+        """단일 퀘스트와 달리 같은 주에 여러 번 발화 가능해야 한다."""
+        matcher, tpl = repeat_workspace
+        hit = make_frame_with(tpl)
+        miss = make_noise_frame()
+        screen = (600, 400)
+
+        fired = 0
+        t = NOW
+        for _ in range(3):
+            matcher.process_frame(hit, screen, now=t)
+            fired += len(matcher.process_frame(hit, screen, now=t + 1))
+            matcher.process_frame(miss, screen, now=t + 2)
+            t += 30  # 최소 간격 초과
+        assert fired == 3
+
+
 class TestPeriodKey:
     def test_daily_boundary_respects_reset_hour(self):
         # 리셋 시각 6시: 새벽 5시는 '전날', 7시는 '당일'

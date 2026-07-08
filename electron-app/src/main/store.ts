@@ -124,7 +124,8 @@ export class DashboardStore {
     characterId: string,
     displayName: string,
     period: TaskPeriod,
-    catalogId: string | null = null
+    catalogId: string | null = null,
+    targetCount = 1
   ): StoreShape {
     const character = this.store.get('characters')[characterId]
     if (character) {
@@ -136,7 +137,9 @@ export class DashboardStore {
         displayName,
         period,
         threshold: null,
-        catalogId
+        catalogId,
+        targetCount: Math.max(1, Math.floor(targetCount)),
+        count: 0
       }
       this.store.set(`characters.${characterId}.tasks.${id}`, task)
     }
@@ -165,7 +168,8 @@ export class DashboardStore {
     return this.getState()
   }
 
-  /** 체크 상태 변경. done=true일 때만 mode/lastDoneAt 갱신. at: unix epoch(초), 기본 현재 시각 */
+  /** 체크 상태 변경. done=true일 때만 mode/lastDoneAt 갱신. at: unix epoch(초), 기본 현재 시각.
+   *  카운트 퀘스트(#7): 완료 체크 = count를 target으로, 해제 = 0으로 */
   setTaskDone(
     characterId: string,
     taskId: string,
@@ -177,6 +181,32 @@ export class DashboardStore {
     if (task) {
       const next: TaskState = {
         ...task,
+        done,
+        count: done ? (task.targetCount ?? 1) : 0,
+        mode: done ? mode : task.mode,
+        lastDoneAt: done ? (at ?? Math.floor(Date.now() / 1000)) : null
+      }
+      this.store.set(`characters.${characterId}.tasks.${taskId}`, next)
+    }
+    return this.getState()
+  }
+
+  /** 카운트 퀘스트 진행 증감 (#7). target 도달 시 완료, 0 미만/target 초과는 클램프 */
+  incrementTask(
+    characterId: string,
+    taskId: string,
+    delta: number,
+    mode: TaskMode = 'manual',
+    at?: number
+  ): StoreShape {
+    const task = this.store.get('characters')[characterId]?.tasks[taskId]
+    if (task) {
+      const target = task.targetCount ?? 1
+      const count = Math.max(0, Math.min((task.count ?? 0) + delta, target))
+      const done = count >= target
+      const next: TaskState = {
+        ...task,
+        count,
         done,
         mode: done ? mode : task.mode,
         lastDoneAt: done ? (at ?? Math.floor(Date.now() / 1000)) : null
@@ -198,7 +228,8 @@ export class DashboardStore {
       return false
     }
     if (task.done) return false // 이미 완료 — 수동 체크를 auto로 덮어쓰지 않음
-    this.setTaskDone(characterId, taskId, true, 'auto', timestamp)
+    // 카운트 퀘스트(#7)는 감지 1회당 +1, 단일 퀘스트는 target=1이라 즉시 완료
+    this.incrementTask(characterId, taskId, 1, 'auto', timestamp)
     return true
   }
 
@@ -241,8 +272,18 @@ export class DashboardStore {
           added++
         } else {
           const t = tasks[existingTaskId]
-          if (t.displayName !== item.name || t.period !== item.period) {
-            tasks[existingTaskId] = { ...t, displayName: item.name, period: item.period }
+          const itemTarget = Math.max(1, item.targetCount ?? 1)
+          if (
+            t.displayName !== item.name ||
+            t.period !== item.period ||
+            (t.targetCount ?? 1) !== itemTarget
+          ) {
+            tasks[existingTaskId] = {
+              ...t,
+              displayName: item.name,
+              period: item.period,
+              targetCount: itemTarget
+            }
             updated++
           }
         }
@@ -262,7 +303,9 @@ export class DashboardStore {
       displayName: item.name,
       period: item.period,
       threshold: null,
-      catalogId: item.id
+      catalogId: item.id,
+      targetCount: Math.max(1, item.targetCount ?? 1),
+      count: 0
     }
   }
 
@@ -276,7 +319,7 @@ export class DashboardStore {
       const tasks: Record<string, TaskState> = {}
       for (const [taskId, task] of Object.entries(character.tasks)) {
         tasks[taskId] =
-          task.period === period ? { ...task, done: false, lastDoneAt: null } : task
+          task.period === period ? { ...task, done: false, lastDoneAt: null, count: 0 } : task
       }
       next[charId] = { ...character, tasks }
     }
