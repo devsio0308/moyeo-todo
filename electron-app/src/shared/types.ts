@@ -6,6 +6,27 @@
 export type TaskMode = 'auto' | 'manual'
 export type TaskPeriod = 'daily' | 'weekly'
 
+/** 퀘스트 카테고리 태그 (#13) — 일일/주간은 섹션으로 구분되므로 배지는 카테고리 표시.
+ *  배열 순서 = 섹션 내 정렬 순서 (전투 → 물물교환 → 알바) */
+export const QUEST_CATEGORIES = ['전투', '물물교환', '알바'] as const
+export type QuestCategory = (typeof QUEST_CATEGORIES)[number]
+
+/** 카테고리 → CSS 클래스 접미사 */
+export const QUEST_CATEGORY_CLASS: Record<QuestCategory, string> = {
+  전투: 'combat',
+  물물교환: 'barter',
+  알바: 'parttime'
+}
+
+export function isQuestCategory(value: unknown): value is QuestCategory {
+  return typeof value === 'string' && (QUEST_CATEGORIES as readonly string[]).includes(value)
+}
+
+/** 섹션 내 정렬용 카테고리 순위 — 미지정 카테고리는 맨 뒤 */
+export function questCategoryOrder(category?: QuestCategory | null): number {
+  return category ? QUEST_CATEGORIES.indexOf(category) : QUEST_CATEGORIES.length
+}
+
 export interface TaskState {
   done: boolean
   mode: TaskMode
@@ -20,6 +41,8 @@ export interface TaskState {
   targetCount?: number
   /** 현재 진행 횟수 (#7). 없으면 0 */
   count?: number
+  /** 카테고리 태그 (#13). 없으면 배지 미표시 */
+  category?: QuestCategory | null
 }
 
 /** Firestore quests 컬렉션에서 가져온 카탈로그 항목 (#4) */
@@ -29,6 +52,8 @@ export interface QuestCatalogItem {
   period: TaskPeriod
   /** 완료에 필요한 횟수 (#7). 없으면 1 */
   targetCount?: number
+  /** 카테고리 태그 (#13) */
+  category?: QuestCategory | null
 }
 
 /** 카탈로그 동기화 결과 (#4) */

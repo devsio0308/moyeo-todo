@@ -381,7 +381,8 @@ body {
   );
 }
 
-.period-badge {
+/* 카테고리 배지 (#13) — 일일/주간은 섹션으로 구분되므로 배지는 카테고리 */
+.cat-badge {
   flex-shrink: 0;
   padding: 1px 7px;
   border-radius: 999px;
@@ -389,14 +390,19 @@ body {
   font-weight: 600;
 }
 
-.period-daily {
-  background: rgba(94, 129, 255, 0.16);
-  color: #8fa6ff;
+.cat-combat {
+  background: rgba(255, 99, 99, 0.16);
+  color: #ff8f8f;
 }
 
-.period-weekly {
-  background: rgba(190, 125, 255, 0.16);
-  color: #cf9fff;
+.cat-barter {
+  background: rgba(80, 200, 220, 0.16);
+  color: #6fd9ec;
+}
+
+.cat-parttime {
+  background: rgba(110, 210, 130, 0.16);
+  color: #7fdd95;
 }
 
 .mode-icon {

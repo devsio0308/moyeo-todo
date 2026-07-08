@@ -1,5 +1,12 @@
 import { create } from 'zustand'
-import type { Settings, StoreShape, TaskMode, TaskPeriod, TaskState } from '../../shared/types'
+import type {
+  QuestCategory,
+  Settings,
+  StoreShape,
+  TaskMode,
+  TaskPeriod,
+  TaskState
+} from '../../shared/types'
 
 interface DashboardState {
   data: StoreShape | null
@@ -19,7 +26,8 @@ interface DashboardState {
     characterId: string,
     displayName: string,
     period: TaskPeriod,
-    targetCount?: number
+    targetCount?: number,
+    category?: QuestCategory | null
   ) => Promise<void>
   incrementTask: (characterId: string, taskId: string, delta: number) => Promise<void>
   removeTask: (characterId: string, taskId: string) => Promise<void>
@@ -63,8 +71,10 @@ export const useDashboardStore = create<DashboardState>((set, get) => {
     removeCharacter: async (id) => apply(await window.api.store.removeCharacter(id)),
     renameCharacter: async (id, name) => apply(await window.api.store.renameCharacter(id, name)),
     reorderCharacters: async (order) => apply(await window.api.store.reorderCharacters(order)),
-    addTask: async (characterId, displayName, period, targetCount) =>
-      apply(await window.api.store.addTask(characterId, displayName, period, targetCount)),
+    addTask: async (characterId, displayName, period, targetCount, category) =>
+      apply(
+        await window.api.store.addTask(characterId, displayName, period, targetCount, category)
+      ),
     incrementTask: async (characterId, taskId, delta) =>
       apply(await window.api.store.incrementTask(characterId, taskId, delta)),
     removeTask: async (characterId, taskId) =>

@@ -3,6 +3,7 @@ import type {
   CaptureRegion,
   CatalogSyncResult,
   EngineStatus,
+  QuestCategory,
   Screenshot,
   Settings,
   StoreShape,
@@ -53,9 +54,17 @@ const api = {
       characterId: string,
       displayName: string,
       period: TaskPeriod,
-      targetCount?: number
+      targetCount?: number,
+      category?: QuestCategory | null
     ): Promise<StoreShape> =>
-      ipcRenderer.invoke('store:add-task', characterId, displayName, period, targetCount),
+      ipcRenderer.invoke(
+        'store:add-task',
+        characterId,
+        displayName,
+        period,
+        targetCount,
+        category ?? null
+      ),
     incrementTask: (characterId: string, taskId: string, delta: number): Promise<StoreShape> =>
       ipcRenderer.invoke('store:increment-task', characterId, taskId, delta),
     removeTask: (characterId: string, taskId: string): Promise<StoreShape> =>

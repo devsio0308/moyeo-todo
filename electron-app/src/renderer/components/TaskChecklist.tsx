@@ -1,4 +1,4 @@
-import type { TaskPeriod } from '../../shared/types'
+import { questCategoryOrder, type TaskPeriod } from '../../shared/types'
 import type { ActiveAlarm } from '../hooks/useAlarms'
 import { useDashboardStore } from '../store/useDashboardStore'
 import TaskItem from './TaskItem'
@@ -22,10 +22,14 @@ export default function TaskChecklist({ activeAlarms = [] }: Props): React.JSX.E
   const doneCount = entries.filter(([, t]) => t.done).length
 
   const renderSection = (p: TaskPeriod, label: string): React.JSX.Element | null => {
-    // 완료된 퀘스트는 하단으로 (#8) — sort는 stable이라 미완료끼리는 원래 순서 유지
+    // 정렬: 완료는 하단(#8) → 카테고리 순(전투→물물교환→알바, 미지정 뒤)(#13) → 원래 순서
     const sectionTasks = entries
       .filter(([, t]) => t.period === p)
-      .sort(([, a], [, b]) => Number(a.done) - Number(b.done))
+      .sort(
+        ([, a], [, b]) =>
+          Number(a.done) - Number(b.done) ||
+          questCategoryOrder(a.category) - questCategoryOrder(b.category)
+      )
     if (sectionTasks.length === 0) return null
     return (
       <section className="task-section">

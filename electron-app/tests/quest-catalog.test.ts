@@ -26,9 +26,23 @@ describe('parseQuestDocuments', () => {
       ]
     }
     expect(parseQuestDocuments(body)).toEqual([
-      { id: 'dungeon', name: '일일 던전', period: 'daily', targetCount: 1 },
-      { id: 'raid', name: '주간 레이드', period: 'weekly', targetCount: 1 }
+      { id: 'dungeon', name: '일일 던전', period: 'daily', targetCount: 1, category: null },
+      { id: 'raid', name: '주간 레이드', period: 'weekly', targetCount: 1, category: null }
     ])
+  })
+
+  it('category 필드를 파싱하고 허용 외 값은 무시한다 (#13)', () => {
+    const body = {
+      documents: [
+        doc('combat', { name: { stringValue: '결계' }, category: { stringValue: '전투' } }),
+        doc('barter', { name: { stringValue: '교역' }, category: { stringValue: '물물교환' } }),
+        doc('invalid', { name: { stringValue: '요리' }, category: { stringValue: '낚시' } })
+      ]
+    }
+    const items = parseQuestDocuments(body)
+    expect(items.find((i) => i.id === 'combat')?.category).toBe('전투')
+    expect(items.find((i) => i.id === 'barter')?.category).toBe('물물교환')
+    expect(items.find((i) => i.id === 'invalid')?.category).toBeNull()
   })
 
   it('targetCount 필드를 파싱한다 (#7)', () => {

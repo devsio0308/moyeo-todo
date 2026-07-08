@@ -56,8 +56,22 @@ export function registerIpcHandlers(
 
   ipcMain.handle(
     'store:add-task',
-    (_e, characterId: string, displayName: string, period: TaskPeriod, targetCount?: number) => {
-      const state = dashboardStore.addTask(characterId, displayName, period, null, targetCount)
+    (
+      _e,
+      characterId: string,
+      displayName: string,
+      period: TaskPeriod,
+      targetCount?: number,
+      category?: import('../shared/types').QuestCategory | null
+    ) => {
+      const state = dashboardStore.addTask(
+        characterId,
+        displayName,
+        period,
+        null,
+        targetCount,
+        category ?? null
+      )
       broadcast()
       return state
     }

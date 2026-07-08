@@ -1,4 +1,4 @@
-import type { TaskState } from '../../shared/types'
+import { QUEST_CATEGORY_CLASS, type TaskState } from '../../shared/types'
 import { useDashboardStore } from '../store/useDashboardStore'
 
 interface Props {
@@ -63,9 +63,11 @@ export default function TaskItem({
           </button>
         </span>
       )}
-      <span className={`period-badge period-${task.period}`}>
-        {task.period === 'daily' ? '일일' : '주간'}
-      </span>
+      {task.category && (
+        <span className={`cat-badge cat-${QUEST_CATEGORY_CLASS[task.category]}`}>
+          {task.category}
+        </span>
+      )}
       {task.done && task.mode === 'auto' && (
         <span className="mode-icon" title="자동 감지됨">
           🤖
