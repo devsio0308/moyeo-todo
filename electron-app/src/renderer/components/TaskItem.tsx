@@ -5,8 +5,8 @@ interface Props {
   characterId: string
   taskId: string
   task: TaskState
-  /** 알람 시간대 — 배경 펄스 표시 (#11) */
-  alarmActive?: boolean
+  /** 알람 시간대인 규칙 id — 규칙별 색상 하이라이트 (#11). null이면 알람 없음 */
+  alarmRuleId?: string | null
 }
 
 /**
@@ -18,7 +18,7 @@ export default function TaskItem({
   characterId,
   taskId,
   task,
-  alarmActive = false
+  alarmRuleId = null
 }: Props): React.JSX.Element {
   const setTaskDone = useDashboardStore((s) => s.setTaskDone)
   const incrementTask = useDashboardStore((s) => s.incrementTask)
@@ -29,7 +29,9 @@ export default function TaskItem({
 
   return (
     <li
-      className={`task-item ${task.done ? 'task-done' : ''} ${alarmActive ? 'task-alarm' : ''}`}
+      className={`task-item ${task.done ? 'task-done' : ''} ${
+        alarmRuleId ? `task-alarm task-alarm-${alarmRuleId}` : ''
+      }`}
     >
       <label className="task-label">
         <input

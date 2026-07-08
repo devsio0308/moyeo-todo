@@ -44,14 +44,20 @@ function playChime(): void {
   }
 }
 
+/** 지금 하이라이트해야 하는 알람 (규칙별 색상 구분용) */
+export interface ActiveAlarm {
+  ruleId: string
+  keyword: string
+}
+
 /**
  * 퀘스트 알람 훅 (#11).
  * 5초 주기로 트리거를 확인해:
- * - 반환값: 지금 펄스 표시해야 하는 키워드 목록 (미완료 매칭 퀘스트가 있을 때만)
+ * - 반환값: 지금 하이라이트할 알람 목록 (미완료 매칭 퀘스트가 있을 때만)
  * - 부수효과: 'sound' 모드 규칙은 트리거당 1회 차임 재생
  */
-export function useAlarms(): string[] {
-  const [activeKeywords, setActiveKeywords] = useState<string[]>([])
+export function useAlarms(): ActiveAlarm[] {
+  const [activeAlarms, setActiveAlarms] = useState<ActiveAlarm[]>([])
   // (ruleId:triggerAt) → 재생 완료 표시. 창 하나당 1회만 울리게
   const played = useRef<Set<string>>(new Set())
 
@@ -61,13 +67,13 @@ export function useAlarms(): string[] {
       const alarmModes = data?.settings.alarmModes ?? {}
       const triggers = computeActiveTriggers(Date.now())
 
-      const keywords: string[] = []
+      const alarms: ActiveAlarm[] = []
       for (const trigger of triggers) {
         const mode: AlarmMode = alarmModes[trigger.ruleId] ?? DEFAULT_ALARM_MODE
         if (mode === 'off') continue
         if (!hasUncompletedMatching(data, trigger.keyword)) continue
 
-        keywords.push(trigger.keyword)
+        alarms.push({ ruleId: trigger.ruleId, keyword: trigger.keyword })
 
         if (mode === 'sound') {
           const key = `${trigger.ruleId}:${trigger.triggerAt}`
@@ -86,10 +92,10 @@ export function useAlarms(): string[] {
         )
       }
 
-      setActiveKeywords((prev) =>
-        prev.length === keywords.length && prev.every((k, i) => k === keywords[i])
+      setActiveAlarms((prev) =>
+        prev.length === alarms.length && prev.every((a, i) => a.ruleId === alarms[i].ruleId)
           ? prev
-          : keywords
+          : alarms
       )
     }
 
@@ -98,5 +104,5 @@ export function useAlarms(): string[] {
     return () => clearInterval(timer)
   }, [])
 
-  return activeKeywords
+  return activeAlarms
 }

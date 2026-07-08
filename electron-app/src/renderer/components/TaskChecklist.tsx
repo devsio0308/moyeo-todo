@@ -1,14 +1,15 @@
 import type { TaskPeriod } from '../../shared/types'
+import type { ActiveAlarm } from '../hooks/useAlarms'
 import { useDashboardStore } from '../store/useDashboardStore'
 import TaskItem from './TaskItem'
 
 interface Props {
-  /** 지금 알람 펄스를 표시할 퀘스트 이름 키워드 (#11) */
-  alarmKeywords?: string[]
+  /** 지금 하이라이트할 알람 목록 (#11) — 규칙별 색상 구분 */
+  activeAlarms?: ActiveAlarm[]
 }
 
 /** 활성 캐릭터의 퀘스트 체크 목록 + 진행률. 추가/삭제는 퀘스트 관리 화면(#5)에서. */
-export default function TaskChecklist({ alarmKeywords = [] }: Props): React.JSX.Element {
+export default function TaskChecklist({ activeAlarms = [] }: Props): React.JSX.Element {
   const data = useDashboardStore((s) => s.data)
   const activeId = useDashboardStore((s) => s.activeCharacterId)
 
@@ -36,8 +37,11 @@ export default function TaskChecklist({ alarmKeywords = [] }: Props): React.JSX.
               characterId={activeId}
               taskId={taskId}
               task={task}
-              alarmActive={
-                !task.done && alarmKeywords.some((k) => task.displayName.includes(k))
+              alarmRuleId={
+                task.done
+                  ? null
+                  : (activeAlarms.find((a) => task.displayName.includes(a.keyword))?.ruleId ??
+                    null)
               }
             />
           ))}
