@@ -180,6 +180,29 @@ body {
   background: #f25e63;
 }
 
+/* 캐릭터 추가 폼 (#12) — 이름 + 프리셋 선택 + 추가/취소 */
+.tab-add-form {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.tab-preset-select {
+  padding: 5px 6px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  background: rgba(30, 30, 38, 0.9);
+  color: #d0d0da;
+  font-size: 12px;
+  outline: none;
+  max-width: 130px;
+}
+
+.tab-add:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
 .tab-edit-input {
   width: 110px;
   padding: 5px 8px;
