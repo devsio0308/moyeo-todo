@@ -17,6 +17,10 @@
           "minimum": 0,
           "maximum": 1,
           "description": "매칭 threshold 개별 오버라이드. null이면 전역값 사용"
+        },
+        "catalogId": {
+          "type": ["string", "null"],
+          "description": "Firebase 카탈로그 출처 퀘스트의 문서 id (#4). 수동 추가는 null/없음"
         }
       },
       "required": ["done", "mode", "lastDoneAt", "displayName", "period"]
@@ -50,7 +54,11 @@
         "weeklyResetDay": { "type": "integer", "minimum": 0, "maximum": 6, "description": "0=일요일 ... 6=토요일" },
         "dailyResetHour": { "type": "integer", "minimum": 0, "maximum": 23 },
         "matchThreshold": { "type": "number", "minimum": 0, "maximum": 1, "description": "전역 기본 threshold" },
-        "captureRegion": { "$ref": "#/$defs/captureRegion" }
+        "captureRegion": { "$ref": "#/$defs/captureRegion" },
+        "firebaseProjectId": {
+          "type": ["string", "null"],
+          "description": "퀘스트 카탈로그를 가져올 Firebase 프로젝트 ID (#4)"
+        }
       },
       "required": ["captureIntervalSec", "weeklyResetDay", "dailyResetHour"]
     },
@@ -68,7 +76,21 @@
         },
         "settings": { "$ref": "#/$defs/settings" },
         "lastDailyResetAt": { "type": ["integer", "null"] },
-        "lastWeeklyResetAt": { "type": ["integer", "null"] }
+        "lastWeeklyResetAt": { "type": ["integer", "null"] },
+        "questCatalog": {
+          "type": "array",
+          "description": "마지막으로 동기화된 Firestore 퀘스트 카탈로그 캐시 (#4)",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "string" },
+              "name": { "type": "string" },
+              "period": { "enum": ["daily", "weekly"] }
+            },
+            "required": ["id", "name", "period"]
+          }
+        },
+        "metaVersion": { "type": "integer", "description": "스토어 마이그레이션 버전 (내부용)" }
       },
       "required": ["characters", "characterOrder", "settings"]
     },

@@ -40,6 +40,11 @@ export default function QuestManager(): React.JSX.Element {
           {sectionTasks.map(([taskId, task]) => (
             <li className="task-item" key={taskId}>
               <span className="task-name manage-task-name">{task.displayName}</span>
+              {task.catalogId && (
+                <span className="catalog-badge" title="Firebase 카탈로그 퀘스트 — 삭제해도 다음 동기화 때 다시 추가됩니다">
+                  ☁
+                </span>
+              )}
               <span className={`period-badge period-${task.period}`}>
                 {task.period === 'daily' ? '일일' : '주간'}
               </span>

@@ -1,6 +1,7 @@
 import Store from 'electron-store'
 import type {
   Character,
+  QuestCatalogItem,
   Settings,
   StoreShape,
   TaskMode,
@@ -13,7 +14,8 @@ const DEFAULT_SETTINGS: Settings = {
   weeklyResetDay: 1, // 월요일 오전 6시 주간 리셋 (#1)
   dailyResetHour: 6, // 매일 오전 6시 일일 리셋 (#1)
   matchThreshold: 0.85,
-  captureRegion: null
+  captureRegion: null,
+  firebaseProjectId: null // 퀘스트 카탈로그 소스 (#4)
 }
 
 /** 스토어 마이그레이션 버전 — 리셋 기본값 변경(#1) 반영 */
@@ -65,7 +67,8 @@ export class DashboardStore {
       characterOrder: this.store.get('characterOrder'),
       settings: { ...DEFAULT_SETTINGS, ...this.store.get('settings') },
       lastDailyResetAt: this.store.get('lastDailyResetAt', null),
-      lastWeeklyResetAt: this.store.get('lastWeeklyResetAt', null)
+      lastWeeklyResetAt: this.store.get('lastWeeklyResetAt', null),
+      questCatalog: this.store.get('questCatalog', [])
     }
   }
 
@@ -74,7 +77,15 @@ export class DashboardStore {
   addCharacter(displayName: string): StoreShape {
     const characters = this.store.get('characters')
     const id = this.nextId('character', Object.keys(characters))
-    const character: Character = { displayName, tasks: {} }
+
+    // 새 캐릭터는 캐시된 카탈로그 퀘스트로 즉시 채운다 (#4)
+    const tasks: Record<string, TaskState> = {}
+    const catalog = this.store.get('questCatalog', []) ?? []
+    catalog.forEach((item, i) => {
+      tasks[`task_${String(i + 1).padStart(2, '0')}`] = this.catalogTask(item)
+    })
+
+    const character: Character = { displayName, tasks }
     this.store.set(`characters.${id}`, character)
     this.store.set('characterOrder', [...this.store.get('characterOrder'), id])
     return this.getState()
@@ -109,7 +120,12 @@ export class DashboardStore {
 
   // ── 퀘스트 CRUD ────────────────────────────────────────────
 
-  addTask(characterId: string, displayName: string, period: TaskPeriod): StoreShape {
+  addTask(
+    characterId: string,
+    displayName: string,
+    period: TaskPeriod,
+    catalogId: string | null = null
+  ): StoreShape {
     const character = this.store.get('characters')[characterId]
     if (character) {
       const id = this.nextId('task', Object.keys(character.tasks))
@@ -119,7 +135,8 @@ export class DashboardStore {
         lastDoneAt: null,
         displayName,
         period,
-        threshold: null
+        threshold: null,
+        catalogId
       }
       this.store.set(`characters.${characterId}.tasks.${id}`, task)
     }
@@ -190,6 +207,63 @@ export class DashboardStore {
   updateSettings(patch: Partial<Settings>): StoreShape {
     this.store.set('settings', { ...this.getState().settings, ...patch })
     return this.getState()
+  }
+
+  // ── 퀘스트 카탈로그 동기화 (#4) ──────────────────────────
+
+  /**
+   * Firestore에서 받아온 카탈로그를 캐시하고 전체 캐릭터에 반영.
+   * - 캐릭터에 catalogId가 없는 항목 → 추가
+   * - 이름/주기가 바뀐 항목 → 갱신 (체크 상태는 유지)
+   * - 카탈로그에서 사라진 항목은 삭제하지 않음 (개별 커스텀 퀘스트 보존)
+   */
+  syncQuestCatalog(catalog: QuestCatalogItem[]): { added: number; updated: number } {
+    this.store.set('questCatalog', catalog)
+
+    let added = 0
+    let updated = 0
+    const characters = this.store.get('characters')
+    const next: Record<string, Character> = {}
+
+    for (const [charId, character] of Object.entries(characters)) {
+      const tasks: Record<string, TaskState> = { ...character.tasks }
+      const byCatalogId = new Map(
+        Object.entries(tasks)
+          .filter(([, t]) => t.catalogId)
+          .map(([taskId, t]) => [t.catalogId as string, taskId])
+      )
+
+      for (const item of catalog) {
+        const existingTaskId = byCatalogId.get(item.id)
+        if (!existingTaskId) {
+          const id = this.nextId('task', Object.keys(tasks))
+          tasks[id] = this.catalogTask(item)
+          added++
+        } else {
+          const t = tasks[existingTaskId]
+          if (t.displayName !== item.name || t.period !== item.period) {
+            tasks[existingTaskId] = { ...t, displayName: item.name, period: item.period }
+            updated++
+          }
+        }
+      }
+      next[charId] = { ...character, tasks }
+    }
+
+    this.store.set('characters', next)
+    return { added, updated }
+  }
+
+  private catalogTask(item: QuestCatalogItem): TaskState {
+    return {
+      done: false,
+      mode: 'manual',
+      lastDoneAt: null,
+      displayName: item.name,
+      period: item.period,
+      threshold: null,
+      catalogId: item.id
+    }
   }
 
   // ── 리셋 (feature/reset-scheduler에서 사용) ───────────────

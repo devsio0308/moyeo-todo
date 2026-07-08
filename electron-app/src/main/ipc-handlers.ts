@@ -1,6 +1,7 @@
 import { BrowserWindow, ipcMain } from 'electron'
 import { dashboardStore } from './store'
 import { openPicker } from './picker-window'
+import { syncQuestCatalogOnce } from './quest-catalog'
 import { deleteTemplate, listTemplates, saveTemplate, syncTemplateMeta } from './templates'
 import type { Screenshot, Settings, TaskMode, TaskPeriod, TaskState } from '../shared/types'
 
@@ -154,5 +155,13 @@ export function registerIpcHandlers(
     deleteTemplate(characterId, taskId)
     callbacks.onSettingsChanged?.()
     return listTemplates()
+  })
+
+  // ── 퀘스트 카탈로그 동기화 (#4) ─────────────────────────
+
+  ipcMain.handle('catalog:sync', async () => {
+    const result = await syncQuestCatalogOnce()
+    if (result.ok) broadcast()
+    return result
   })
 }

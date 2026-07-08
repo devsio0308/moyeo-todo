@@ -411,6 +411,24 @@ body {
   color: #fff;
 }
 
+.catalog-badge {
+  flex-shrink: 0;
+  font-size: 11px;
+  color: #7ec8ff;
+}
+
+.settings-input-wide {
+  flex: 1;
+  min-width: 0;
+  width: auto;
+}
+
+.settings-hint code {
+  background: rgba(255, 255, 255, 0.08);
+  padding: 0 4px;
+  border-radius: 4px;
+}
+
 /* ── 설정 패널 ─────────────────────────────────── */
 .settings {
   display: flex;
