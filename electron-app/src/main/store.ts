@@ -10,12 +10,17 @@ import type {
 
 const DEFAULT_SETTINGS: Settings = {
   captureIntervalSec: 2.5,
-  weeklyResetDay: 4, // 목요일 (게임마다 다름 — 설정에서 변경)
-  dailyResetHour: 0,
+  weeklyResetDay: 1, // 월요일 오전 6시 주간 리셋 (#1)
+  dailyResetHour: 6, // 매일 오전 6시 일일 리셋 (#1)
   matchThreshold: 0.85,
   captureRegion: null
 }
 
+/** 스토어 마이그레이션 버전 — 리셋 기본값 변경(#1) 반영 */
+const META_VERSION = 2
+
+// 주의: metaVersion은 DEFAULTS에 넣으면 안 된다 — electron-store가 키 없는
+// 기존 스토어에도 기본값을 돌려줘서 마이그레이션이 스킵된다.
 const DEFAULTS: StoreShape = {
   characters: {},
   characterOrder: [],
@@ -34,6 +39,19 @@ export class DashboardStore {
 
   constructor() {
     this.store = new Store<StoreShape>({ defaults: DEFAULTS })
+    this.migrate()
+  }
+
+  /** 버전 기반 일회성 마이그레이션 */
+  private migrate(): void {
+    const version = this.store.get('metaVersion', 1)
+    if (version < 2) {
+      // v2 (#1): 리셋 기본값 변경 — 일일 06:00, 주간 월요일
+      const settings = this.store.get('settings')
+      this.store.set('settings', { ...settings, dailyResetHour: 6, weeklyResetDay: 1 })
+      console.log('[store] 마이그레이션 v2: 리셋 기본값 → 일일 06:00 / 월요일')
+    }
+    if (version !== META_VERSION) this.store.set('metaVersion', META_VERSION)
   }
 
   /** electron-store 데이터 파일 경로 (python 엔진 설정 전달 등에 사용) */

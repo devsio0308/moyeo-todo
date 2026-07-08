@@ -16,8 +16,8 @@ log = logging.getLogger(__name__)
 
 DEFAULT_CAPTURE_INTERVAL_SEC = 2.5
 DEFAULT_MATCH_THRESHOLD = 0.85
-DEFAULT_DAILY_RESET_HOUR = 0
-DEFAULT_WEEKLY_RESET_DAY = 4  # 0=일요일 ... 6=토요일 (명세서 §5 스키마와 동일한 규약)
+DEFAULT_DAILY_RESET_HOUR = 6  # 매일 오전 6시 (#1)
+DEFAULT_WEEKLY_RESET_DAY = 1  # 월요일 — 0=일요일 ... 6=토요일 (명세서 §5 스키마와 동일한 규약)
 
 
 @dataclass
