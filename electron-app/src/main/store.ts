@@ -69,7 +69,8 @@ export class DashboardStore {
       settings: { ...DEFAULT_SETTINGS, ...this.store.get('settings') },
       lastDailyResetAt: this.store.get('lastDailyResetAt', null),
       lastWeeklyResetAt: this.store.get('lastWeeklyResetAt', null),
-      questCatalog: this.store.get('questCatalog', [])
+      questCatalog: this.store.get('questCatalog', []),
+      recommendedQuests: this.store.get('recommendedQuests', [])
     }
   }
 
@@ -319,6 +320,11 @@ export class DashboardStore {
 
     this.store.set('characters', next)
     return { added, updated }
+  }
+
+  /** 추천 퀘스트 목록 캐시 (#15) — 동기화 시 갱신, UI 피커에서 사용 */
+  setRecommendedQuests(items: QuestCatalogItem[]): void {
+    this.store.set('recommendedQuests', items)
   }
 
   private catalogTask(item: QuestCatalogItem): TaskState {

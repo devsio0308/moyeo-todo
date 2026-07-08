@@ -68,17 +68,27 @@ export function parseQuestDocuments(body: unknown): QuestCatalogItem[] {
   }))
 }
 
-/** Firestore에서 quests 컬렉션을 읽는다. 실패 시 throw. */
-export async function fetchQuestCatalog(projectId: string): Promise<QuestCatalogItem[]> {
+/** 추천 퀘스트 컬렉션 이름 (#15) — quests와 동일한 문서 형식 */
+const RECOMMENDED_COLLECTION = 'recommended_quests'
+
+/** Firestore에서 퀘스트 형식 컬렉션을 읽는다. 실패 시 throw. */
+async function fetchQuestCollection(
+  projectId: string,
+  collection: string
+): Promise<QuestCatalogItem[]> {
   const url =
     `https://firestore.googleapis.com/v1/projects/${encodeURIComponent(projectId)}` +
-    `/databases/(default)/documents/quests?pageSize=300`
+    `/databases/(default)/documents/${encodeURIComponent(collection)}?pageSize=300`
 
   const res = await fetch(url, { signal: AbortSignal.timeout(FIRESTORE_TIMEOUT_MS) })
   if (!res.ok) {
     throw new Error(`Firestore 응답 오류 (HTTP ${res.status}) — 프로젝트 ID/읽기 규칙 확인`)
   }
   return parseQuestDocuments(await res.json())
+}
+
+export async function fetchQuestCatalog(projectId: string): Promise<QuestCatalogItem[]> {
+  return fetchQuestCollection(projectId, 'quests')
 }
 
 /** 빌드 시 .env(MAIN_VITE_FIREBASE_PROJECT_ID)에서 주입되는 기본 프로젝트 ID (#14). git 미포함 */
@@ -99,9 +109,20 @@ export async function syncQuestCatalogOnce(): Promise<CatalogSyncResult> {
       return { ok: false, message: 'quests 컬렉션이 비어 있거나 읽을 수 없습니다' }
     }
     const { added, updated } = dashboardStore.syncQuestCatalog(catalog)
+
+    // 추천 퀘스트 목록(#15)도 함께 갱신 — 실패해도 본 동기화 결과에는 영향 없음
+    let recommendedNote = ''
+    try {
+      const recommended = await fetchQuestCollection(projectId, RECOMMENDED_COLLECTION)
+      dashboardStore.setRecommendedQuests(recommended)
+      if (recommended.length > 0) recommendedNote = ` · 추천 ${recommended.length}개`
+    } catch (e) {
+      console.warn('[catalog] 추천 목록 갱신 실패 (기존 캐시 유지):', e)
+    }
+
     return {
       ok: true,
-      message: `카탈로그 ${catalog.length}개 동기화 완료 (추가 ${added} · 갱신 ${updated})`,
+      message: `카탈로그 ${catalog.length}개 동기화 완료 (추가 ${added} · 갱신 ${updated})${recommendedNote}`,
       added,
       updated
     }

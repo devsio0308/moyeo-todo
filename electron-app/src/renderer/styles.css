@@ -458,6 +458,45 @@ body {
   color: #8fa6ff;
 }
 
+/* ── 추천 퀘스트 목록 (#15) ────────────────────── */
+.rec-toggle {
+  width: 100%;
+  padding: 7px 10px;
+  border: 1px dashed rgba(255, 255, 255, 0.18);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.03);
+  color: #b6b6c2;
+  font-size: 12px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.rec-toggle:hover {
+  background: rgba(94, 129, 255, 0.12);
+  border-color: rgba(94, 129, 255, 0.4);
+  color: #fff;
+}
+
+.rec-section-title {
+  margin-top: 8px;
+}
+
+.rec-item {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.rec-add-btn {
+  font-size: 11px;
+  padding: 3px 8px;
+}
+
+.rec-add-btn:disabled {
+  border-color: transparent;
+  background: transparent;
+  color: #46c46e;
+  opacity: 1;
+}
+
 .add-task-count {
   width: 44px;
   padding: 7px 6px;

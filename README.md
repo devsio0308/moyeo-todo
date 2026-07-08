@@ -89,6 +89,7 @@ npm run build && npx electron-builder
    service cloud.firestore {
      match /databases/{database}/documents {
        match /quests/{doc} { allow read: if true; allow write: if false; }
+       match /recommended_quests/{doc} { allow read: if true; allow write: if false; }
      }
    }
    ```
@@ -100,6 +101,10 @@ npm run build && npx electron-builder
 
 앱 시작 시에도 자동 동기화된다. 카탈로그 퀘스트(☁)는 삭제해도 다음 동기화 때 다시 추가되며,
 카탈로그에서 빠진 항목은 삭제하지 않는다 (수동 추가 퀘스트 보존).
+
+**추천 퀘스트(#15):** `recommended_quests` 컬렉션(문서 형식 동일)은 강제 동기화 대상이 아니라
+퀘스트 관리 화면의 "📖 추천 퀘스트" 목록으로 표시되고, 골라서 추가하면 **커스텀 퀘스트**로
+등록된다 (캐릭터별 선택, 삭제 자유).
 
 ## Git 워크플로
 

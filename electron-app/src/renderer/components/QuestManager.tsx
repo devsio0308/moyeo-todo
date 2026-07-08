@@ -23,6 +23,7 @@ export default function QuestManager(): React.JSX.Element {
   const [targetCount, setTargetCount] = useState(1)
   const [category, setCategory] = useState<QuestCategory | ''>('')
   const [confirmId, setConfirmId] = useState<string | null>(null)
+  const [showRecommended, setShowRecommended] = useState(false)
 
   if (!data || !activeId || !data.characters[activeId]) {
     return <p className="placeholder">캐릭터를 먼저 추가하세요.</p>
@@ -30,6 +31,9 @@ export default function QuestManager(): React.JSX.Element {
 
   const character = data.characters[activeId]
   const entries = Object.entries(character.tasks)
+  const recommended = data.recommendedQuests ?? []
+  /** 같은 이름의 퀘스트가 이미 있으면 '추가됨' 처리 (#15) */
+  const existingNames = new Set(entries.map(([, t]) => t.displayName))
 
   const submit = (): void => {
     const trimmed = name.trim()
@@ -148,6 +152,70 @@ export default function QuestManager(): React.JSX.Element {
           추가
         </button>
       </form>
+
+      {recommended.length > 0 && (
+        <section className="task-section">
+          <button
+            className="rec-toggle"
+            onClick={() => setShowRecommended((v) => !v)}
+            title="추천 목록에서 골라 커스텀 퀘스트로 추가 (카탈로그와 달리 자동 동기화되지 않음)"
+          >
+            📖 추천 퀘스트 {recommended.length}개 {showRecommended ? '▲' : '▼'}
+          </button>
+          {showRecommended && (
+            <ul className="task-list">
+              {['daily', 'weekly'].map((p) => {
+                const items = recommended.filter((r) => r.period === p)
+                if (items.length === 0) return null
+                return (
+                  <li key={p}>
+                    <h3 className="section-title rec-section-title">
+                      {p === 'daily' ? '일일' : '주간'}
+                    </h3>
+                    <ul className="task-list">
+                      {items.map((item) => {
+                        const added = existingNames.has(item.name)
+                        return (
+                          <li className="task-item rec-item" key={item.id}>
+                            <span className="task-name manage-task-name">
+                              {item.name}
+                              {(item.targetCount ?? 1) > 1 && (
+                                <span className="target-badge">×{item.targetCount}</span>
+                              )}
+                            </span>
+                            {item.category && (
+                              <span
+                                className={`cat-badge cat-${QUEST_CATEGORY_CLASS[item.category]}`}
+                              >
+                                {item.category}
+                              </span>
+                            )}
+                            <button
+                              className="settings-btn rec-add-btn"
+                              disabled={added}
+                              onClick={() =>
+                                void addTask(
+                                  activeId,
+                                  item.name,
+                                  item.period,
+                                  item.targetCount ?? 1,
+                                  item.category ?? null
+                                )
+                              }
+                            >
+                              {added ? '추가됨' : '＋ 추가'}
+                            </button>
+                          </li>
+                        )
+                      })}
+                    </ul>
+                  </li>
+                )
+              })}
+            </ul>
+          )}
+        </section>
+      )}
 
       {renderSection('daily', '일일 퀘스트')}
       {renderSection('weekly', '주간 퀘스트')}

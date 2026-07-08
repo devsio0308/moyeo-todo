@@ -98,6 +98,8 @@ export interface StoreShape {
   lastWeeklyResetAt: number | null
   /** 마지막으로 동기화된 퀘스트 카탈로그 캐시 (#4) — 새 캐릭터 생성 시 재사용 */
   questCatalog?: QuestCatalogItem[]
+  /** 추천 퀘스트 목록 캐시 (#15) — 선택해서 커스텀 퀘스트로 추가 */
+  recommendedQuests?: QuestCatalogItem[]
   /** 스토어 마이그레이션 버전 (내부용) */
   metaVersion?: number
 }
