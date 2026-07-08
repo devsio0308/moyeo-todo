@@ -305,7 +305,7 @@ body {
   position: absolute;
   inset: 0;
   border-radius: 8px; /* .task-item과 동일 */
-  padding: 2px; /* 테두리 두께 */
+  padding: 1px; /* 테두리 두께 */
   background: conic-gradient(
     from var(--alarm-angle),
     #ffb020,
