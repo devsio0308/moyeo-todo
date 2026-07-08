@@ -21,25 +21,57 @@ function hasUncompletedMatching(data: StoreShape | null, keyword: string): boole
   return false
 }
 
-/** Web Audio 합성 차임 — 에셋/네트워크 불필요 (CSP 안전) */
-function playChime(): void {
+/** 규칙별 알람음 패턴 — 3연타를 기본 단위로, 반복 횟수와 음으로 구분 */
+interface TonePattern {
+  /** 기본 주파수 (Hz) */
+  note: number
+  /** 3연타 반복 횟수 */
+  bursts: number
+  volume: number
+}
+
+const TONE_PATTERNS: Record<string, TonePattern> = {
+  // 결계: 낮은 D#5 — 3연타 ×3
+  'ominous-rift': { note: 622.25, bursts: 3, volume: 0.28 },
+  // 필드 보스: A#5 — 3연타 ×1. 결계(D#5)와 같은 옥타브의 완전5도 — 동시에 울리면 자연스러운 화음
+  'field-boss': { note: 932.33, bursts: 1, volume: 0.26 }
+}
+
+const DEFAULT_TONE: TonePattern = { note: 880, bursts: 1, volume: 0.26 }
+
+const STRIKES_PER_BURST = 3
+const STRIKE_GAP_SEC = 0.1
+const BURST_GAP_SEC = 0.45
+const DECAY_SEC = 0.38
+
+/** Web Audio 알람음 — 부드러운 sine 단일 톤의 3연타 (에셋/네트워크 불필요, CSP 안전) */
+function playChime(ruleId?: string): void {
   try {
+    const { note, bursts, volume } = (ruleId && TONE_PATTERNS[ruleId]) || DEFAULT_TONE
     const ctx = new AudioContext()
-    const notes = [880, 1174.66, 880] // A5 → D6 → A5
-    notes.forEach((freq, i) => {
-      const osc = ctx.createOscillator()
-      const gain = ctx.createGain()
-      osc.type = 'sine'
-      osc.frequency.value = freq
-      const t = ctx.currentTime + i * 0.22
-      gain.gain.setValueAtTime(0, t)
-      gain.gain.linearRampToValueAtTime(0.25, t + 0.03)
-      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.2)
-      osc.connect(gain).connect(ctx.destination)
-      osc.start(t)
-      osc.stop(t + 0.22)
-    })
-    setTimeout(() => void ctx.close(), 1500)
+    const burstLen = (STRIKES_PER_BURST - 1) * STRIKE_GAP_SEC
+
+    for (let b = 0; b < bursts; b++) {
+      const burstStart = ctx.currentTime + b * (burstLen + BURST_GAP_SEC)
+      for (let s = 0; s < STRIKES_PER_BURST; s++) {
+        const osc = ctx.createOscillator()
+        const gain = ctx.createGain()
+        osc.type = 'sine'
+        osc.frequency.value = note
+        const t = burstStart + s * STRIKE_GAP_SEC
+        // 부드러운 어택(15ms) → 자연 감쇠. 마지막 타는 살짝 길게 울림
+        const decay = s === STRIKES_PER_BURST - 1 ? DECAY_SEC * 1.6 : DECAY_SEC
+        gain.gain.setValueAtTime(0, t)
+        gain.gain.linearRampToValueAtTime(volume, t + 0.015)
+        gain.gain.exponentialRampToValueAtTime(0.0005, t + decay)
+        osc.connect(gain).connect(ctx.destination)
+        osc.start(t)
+        osc.stop(t + decay + 0.05)
+      }
+    }
+
+    const totalMs = (bursts * (burstLen + BURST_GAP_SEC) + DECAY_SEC + 0.5) * 1000
+    setTimeout(() => void ctx.close(), totalMs)
   } catch (e) {
     console.warn('[alarm] 사운드 재생 실패:', e)
   }
@@ -82,7 +114,7 @@ export function useAlarms(): ActiveAlarm[] {
           const key = `${trigger.ruleId}:${trigger.triggerAt}`
           if (!played.current.has(key)) {
             played.current.add(key)
-            playChime()
+            playChime(trigger.ruleId)
           }
         }
       }
@@ -127,7 +159,7 @@ export function useAlarms(): ActiveAlarm[] {
           alarm: { ruleId: rule.id, keyword: rule.keyword },
           until: Date.now() + seconds * 1000
         }
-        playChime()
+        playChime(rule.id)
         check()
         return `알람 강제 발동: ${rule.label} — ${seconds}초간 하이라이트`
       }
