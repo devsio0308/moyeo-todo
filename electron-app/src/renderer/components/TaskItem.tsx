@@ -9,7 +9,8 @@ interface Props {
 
 /**
  * 퀘스트 한 줄 (체크 전용 — 삭제는 퀘스트 관리 화면에서, #5).
- * 자동 감지(🤖) / 수동 체크(👆)를 아이콘으로 구분 — 유저가 오탐 여부를 나중에 구분할 수 있어야 함 (명세서 §5).
+ * 자동 감지로 완료된 항목만 🤖 아이콘 표시 — 유저가 오탐 여부를 구분할 수 있어야 함 (명세서 §5).
+ * 수동 체크는 아이콘 없음 (#9).
  */
 export default function TaskItem({ characterId, taskId, task }: Props): React.JSX.Element {
   const setTaskDone = useDashboardStore((s) => s.setTaskDone)
@@ -54,9 +55,9 @@ export default function TaskItem({ characterId, taskId, task }: Props): React.JS
       <span className={`period-badge period-${task.period}`}>
         {task.period === 'daily' ? '일일' : '주간'}
       </span>
-      {task.done && (
-        <span className="mode-icon" title={task.mode === 'auto' ? '자동 감지됨' : '수동 체크'}>
-          {task.mode === 'auto' ? '🤖' : '👆'}
+      {task.done && task.mode === 'auto' && (
+        <span className="mode-icon" title="자동 감지됨">
+          🤖
         </span>
       )}
     </li>
