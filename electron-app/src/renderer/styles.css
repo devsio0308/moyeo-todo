@@ -306,28 +306,6 @@ body {
   font-size: 12px;
 }
 
-.task-delete {
-  flex-shrink: 0;
-  width: 20px;
-  height: 20px;
-  border: none;
-  border-radius: 6px;
-  background: transparent;
-  color: transparent;
-  font-size: 13px;
-  cursor: pointer;
-  line-height: 1;
-}
-
-.task-item:hover .task-delete {
-  color: #8a8a98;
-}
-
-.task-delete:hover {
-  background: rgba(229, 72, 77, 0.2);
-  color: #ff6b70 !important;
-}
-
 /* ── 퀘스트 추가 폼 ──────────────────────────────── */
 .add-task-form {
   display: flex;
@@ -383,6 +361,53 @@ body {
 
 .titlebar-btn-active {
   background: rgba(94, 129, 255, 0.28);
+  color: #fff;
+}
+
+/* ── 퀘스트 관리 화면 (#5) ─────────────────────── */
+.manage-title {
+  color: #b6b6c2;
+  font-size: 12px;
+}
+
+.manage-title b {
+  color: #fff;
+}
+
+.manage-add-form {
+  margin-top: 0;
+  margin-bottom: 12px;
+}
+
+.manage-task-name {
+  flex: 1;
+  min-width: 0;
+}
+
+.manage-delete {
+  flex-shrink: 0;
+  padding: 3px 8px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: #8a8a98;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.manage-delete:hover {
+  background: rgba(229, 72, 77, 0.2);
+  color: #ff6b70;
+}
+
+.manage-delete-confirm {
+  background: #e5484d;
+  color: #fff;
+  font-weight: 700;
+}
+
+.manage-delete-confirm:hover {
+  background: #f25e63;
   color: #fff;
 }
 

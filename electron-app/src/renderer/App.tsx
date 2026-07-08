@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import type { EngineStatus } from '../shared/types'
 import CharacterTabs from './components/CharacterTabs'
+import QuestManager from './components/QuestManager'
 import SettingsPanel from './components/SettingsPanel'
 import TaskChecklist from './components/TaskChecklist'
 import { useDashboardStore } from './store/useDashboardStore'
@@ -11,6 +12,9 @@ const ENGINE_STATUS_LABEL: Record<EngineStatus, string> = {
   failed: '엔진 시작 실패 — 재시작 중단됨'
 }
 
+/** 체크리스트 / 퀘스트 관리(#5) / 설정 */
+type View = 'checklist' | 'manage' | 'settings'
+
 export default function App(): React.JSX.Element {
   const capturePaused = useDashboardStore((s) => s.capturePaused)
   const setCapturePaused = useDashboardStore((s) => s.setCapturePaused)
@@ -18,7 +22,10 @@ export default function App(): React.JSX.Element {
   const applyState = useDashboardStore((s) => s.applyState)
   const activeCharacterId = useDashboardStore((s) => s.activeCharacterId)
   const [engineStatus, setEngineStatus] = useState<EngineStatus>('disconnected')
-  const [showSettings, setShowSettings] = useState(false)
+  const [view, setView] = useState<View>('checklist')
+
+  const toggleView = (target: View): void =>
+    setView((v) => (v === target ? 'checklist' : target))
 
   useEffect(() => {
     void init()
@@ -49,9 +56,16 @@ export default function App(): React.JSX.Element {
         {capturePaused && <span className="badge badge-paused">캡처 정지됨</span>}
         <div className="titlebar-buttons">
           <button
-            className={`titlebar-btn ${showSettings ? 'titlebar-btn-active' : ''}`}
+            className={`titlebar-btn ${view === 'manage' ? 'titlebar-btn-active' : ''}`}
+            title="퀘스트 관리 (추가/삭제)"
+            onClick={() => toggleView('manage')}
+          >
+            📋
+          </button>
+          <button
+            className={`titlebar-btn ${view === 'settings' ? 'titlebar-btn-active' : ''}`}
             title="설정"
-            onClick={() => setShowSettings((v) => !v)}
+            onClick={() => toggleView('settings')}
           >
             ⚙
           </button>
@@ -68,7 +82,15 @@ export default function App(): React.JSX.Element {
         </div>
       </header>
       <CharacterTabs />
-      <main className="content">{showSettings ? <SettingsPanel /> : <TaskChecklist />}</main>
+      <main className="content">
+        {view === 'settings' ? (
+          <SettingsPanel />
+        ) : view === 'manage' ? (
+          <QuestManager />
+        ) : (
+          <TaskChecklist />
+        )}
+      </main>
     </div>
   )
 }
