@@ -68,6 +68,11 @@
         "firebaseProjectId": {
           "type": ["string", "null"],
           "description": "퀘스트 카탈로그를 가져올 Firebase 프로젝트 ID (#4)"
+        },
+        "alarmModes": {
+          "type": "object",
+          "description": "알람 규칙별 모드 (#11). 키: 규칙 id (ominous-rift, field-boss)",
+          "additionalProperties": { "enum": ["sound", "ui", "off"] }
         }
       },
       "required": ["captureIntervalSec", "weeklyResetDay", "dailyResetHour"]

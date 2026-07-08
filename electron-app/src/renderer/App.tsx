@@ -4,6 +4,7 @@ import CharacterTabs from './components/CharacterTabs'
 import QuestManager from './components/QuestManager'
 import SettingsPanel from './components/SettingsPanel'
 import TaskChecklist from './components/TaskChecklist'
+import { useAlarms } from './hooks/useAlarms'
 import { useDashboardStore } from './store/useDashboardStore'
 
 const ENGINE_STATUS_LABEL: Record<EngineStatus, string> = {
@@ -23,6 +24,7 @@ export default function App(): React.JSX.Element {
   const activeCharacterId = useDashboardStore((s) => s.activeCharacterId)
   const [engineStatus, setEngineStatus] = useState<EngineStatus>('disconnected')
   const [view, setView] = useState<View>('checklist')
+  const alarmKeywords = useAlarms() // 지금 펄스 표시할 퀘스트 키워드 (#11)
 
   const toggleView = (target: View): void =>
     setView((v) => (v === target ? 'checklist' : target))
@@ -93,7 +95,7 @@ export default function App(): React.JSX.Element {
         ) : view === 'manage' ? (
           <QuestManager />
         ) : (
-          <TaskChecklist />
+          <TaskChecklist alarmKeywords={alarmKeywords} />
         )}
       </main>
     </div>

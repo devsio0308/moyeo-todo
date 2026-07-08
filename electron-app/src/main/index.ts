@@ -19,6 +19,9 @@ let resetScheduler: ResetScheduler | null = null
 let activeCharacter: string | null = null
 let capturePaused = false
 
+// 알람 차임(#11)을 사용자 제스처 없이 재생할 수 있게 autoplay 정책 해제
+app.commandLine.appendSwitch('autoplay-policy', 'no-user-gesture-required')
+
 // 단일 인스턴스 보장 — 오버레이가 두 개 뜨면 혼란만 생김
 if (!app.requestSingleInstanceLock()) {
   app.quit()

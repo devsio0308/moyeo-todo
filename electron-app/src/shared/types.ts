@@ -61,6 +61,8 @@ export interface Settings {
   captureRegion: CaptureRegion | null
   /** 퀘스트 카탈로그를 가져올 Firebase 프로젝트 ID (#4). null이면 비활성 */
   firebaseProjectId: string | null
+  /** 알람 규칙별 모드 (#11). 키: AlarmRule.id, 없으면 기본 'sound'(UI+소리) */
+  alarmModes?: Record<string, import('./alarms').AlarmMode>
 }
 
 export interface StoreShape {
