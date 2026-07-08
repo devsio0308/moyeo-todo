@@ -9,7 +9,7 @@ const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토']
  * - 캡처 리전 지정 / 해제
  * - 캡처 주기, 전역 threshold 슬라이더
  * - 일일/주간 리셋 시각
- * - 활성 캐릭터의 숙제별 템플릿 등록/삭제 + 개별 threshold
+ * - 활성 캐릭터의 퀘스트별 템플릿 등록/삭제 + 개별 threshold
  */
 export default function SettingsPanel(): React.JSX.Element {
   const data = useDashboardStore((s) => s.data)
@@ -159,7 +159,7 @@ export default function SettingsPanel(): React.JSX.Element {
         </h3>
         {!character && <p className="settings-hint">캐릭터를 먼저 추가하세요.</p>}
         {character && Object.keys(character.tasks).length === 0 && (
-          <p className="settings-hint">이 캐릭터에 숙제를 먼저 추가하세요.</p>
+          <p className="settings-hint">이 캐릭터에 퀘스트를 먼저 추가하세요.</p>
         )}
         {character &&
           activeId &&
@@ -180,7 +180,7 @@ export default function SettingsPanel(): React.JSX.Element {
                   max={0.99}
                   step={0.01}
                   placeholder="전역"
-                  title="이 숙제만의 매칭 정확도 (비우면 전역값)"
+                  title="이 퀘스트만의 매칭 정확도 (비우면 전역값)"
                   value={task.threshold ?? ''}
                   onChange={(e) => {
                     const raw = e.target.value

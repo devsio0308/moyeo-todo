@@ -3,7 +3,7 @@ import type { TaskPeriod } from '../../shared/types'
 import { useDashboardStore } from '../store/useDashboardStore'
 import TaskItem from './TaskItem'
 
-/** 활성 캐릭터의 숙제 목록 + 추가 폼 + 진행률 */
+/** 활성 캐릭터의 퀘스트 목록 + 추가 폼 + 진행률 */
 export default function TaskChecklist(): React.JSX.Element {
   const data = useDashboardStore((s) => s.data)
   const activeId = useDashboardStore((s) => s.activeCharacterId)
@@ -13,7 +13,7 @@ export default function TaskChecklist(): React.JSX.Element {
   const [period, setPeriod] = useState<TaskPeriod>('daily')
 
   if (!data || !activeId || !data.characters[activeId]) {
-    return <p className="placeholder">캐릭터를 추가하면 숙제를 관리할 수 있어요.</p>
+    return <p className="placeholder">캐릭터를 추가하면 퀘스트를 관리할 수 있어요.</p>
   }
 
   const character = data.characters[activeId]
@@ -58,10 +58,10 @@ export default function TaskChecklist(): React.JSX.Element {
         </div>
       )}
 
-      {renderSection('daily', '일일 숙제')}
-      {renderSection('weekly', '주간 숙제')}
+      {renderSection('daily', '일일 퀘스트')}
+      {renderSection('weekly', '주간 퀘스트')}
 
-      {entries.length === 0 && <p className="placeholder">아래에서 숙제를 추가해 보세요.</p>}
+      {entries.length === 0 && <p className="placeholder">아래에서 퀘스트를 추가해 보세요.</p>}
 
       <form
         className="add-task-form"
@@ -72,7 +72,7 @@ export default function TaskChecklist(): React.JSX.Element {
       >
         <input
           className="add-task-input"
-          placeholder="숙제 추가…"
+          placeholder="퀘스트 추가…"
           value={name}
           onChange={(e) => setName(e.target.value)}
         />

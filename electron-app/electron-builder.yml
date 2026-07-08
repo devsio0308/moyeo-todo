@@ -21,7 +21,7 @@ nsis:
   oneClick: false
   allowToChangeInstallationDirectory: true
   createDesktopShortcut: always
-  shortcutName: 숙제 대시보드
+  shortcutName: 모여길드 도비
 
 mac:
   target:

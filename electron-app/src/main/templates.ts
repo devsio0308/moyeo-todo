@@ -29,7 +29,7 @@ export function saveTemplate(
   if (cropped.isEmpty()) throw new Error('크롭 결과가 비어 있습니다')
 
   const task = dashboardStore.getState().characters[characterId]?.tasks[taskId]
-  if (!task) throw new Error(`존재하지 않는 숙제: ${characterId}/${taskId}`)
+  if (!task) throw new Error(`존재하지 않는 퀘스트: ${characterId}/${taskId}`)
 
   const dir = join(templatesDir(), characterId)
   mkdirSync(dir, { recursive: true })

@@ -123,7 +123,7 @@ export function registerIpcHandlers(
   }
 
   ipcMain.handle('flow:pick-region', async () => {
-    const { rect } = await pickRect('숙제 완료 팝업이 뜨는 영역을 드래그하세요')
+    const { rect } = await pickRect('퀘스트 완료 팝업이 뜨는 영역을 드래그하세요')
     if (!rect) return null // 취소
     const state = dashboardStore.updateSettings({ captureRegion: rect })
     callbacks.onSettingsChanged?.()
@@ -140,7 +140,7 @@ export function registerIpcHandlers(
 
   ipcMain.handle('flow:register-template', async (_e, characterId: string, taskId: string) => {
     const { rect, screenshot } = await pickRect(
-      '이 숙제의 완료 팝업(고유한 부분)을 드래그로 지정하세요'
+      '이 퀘스트의 완료 팝업(고유한 부분)을 드래그로 지정하세요'
     )
     if (!rect) return null // 취소
     saveTemplate(characterId, taskId, screenshot, rect)

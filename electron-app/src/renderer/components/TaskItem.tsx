@@ -8,7 +8,7 @@ interface Props {
 }
 
 /**
- * 숙제 한 줄.
+ * 퀘스트 한 줄.
  * 자동 감지(🤖) / 수동 체크(👆)를 아이콘으로 구분 — 유저가 오탐 여부를 나중에 구분할 수 있어야 함 (명세서 §5).
  */
 export default function TaskItem({ characterId, taskId, task }: Props): React.JSX.Element {
@@ -35,7 +35,7 @@ export default function TaskItem({ characterId, taskId, task }: Props): React.JS
       )}
       <button
         className="task-delete"
-        title="숙제 삭제"
+        title="퀘스트 삭제"
         onClick={() => void removeTask(characterId, taskId)}
       >
         ×
