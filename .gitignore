@@ -16,3 +16,9 @@ venv/
 .DS_Store
 Thumbs.db
 *.log
+
+# Firebase 비밀키 예방 조치 — 서비스 계정 키는 절대 커밋 금지
+*firebase-adminsdk*.json
+serviceAccount*.json
+service-account*.json
+.firebaserc
