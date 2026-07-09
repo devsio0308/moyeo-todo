@@ -20,6 +20,33 @@ body {
   user-select: none;
 }
 
+/*
+ * 커스텀 스크롤바 (#31) — Windows에서 Chromium 기본 스크롤바(굵고 각진)가
+ * 그대로 노출되는 것을 macOS 오버레이 스크롤바 느낌으로 통일한다.
+ */
+* {
+  scrollbar-width: thin; /* Firefox */
+  scrollbar-color: rgba(255, 255, 255, 0.16) transparent;
+}
+
+*::-webkit-scrollbar {
+  width: 7px;
+  height: 7px;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.14);
+  border-radius: 999px;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.28);
+}
+
 .overlay-root {
   display: flex;
   flex-direction: column;

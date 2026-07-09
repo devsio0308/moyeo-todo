@@ -32,6 +32,34 @@ body {
 }
 
 /*
+ * 커스텀 스크롤바 (#31) — 모바일은 대부분 오버레이 스크롤바라 영향 없지만,
+ * Windows 데스크톱 브라우저에서 열었을 때 Chromium 기본 스크롤바 대신
+ * macOS 오버레이 느낌으로 통일한다 (electron-app과 동일 스타일).
+ */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.16) transparent;
+}
+
+*::-webkit-scrollbar {
+  width: 7px;
+  height: 7px;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.14);
+  border-radius: 999px;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.28);
+}
+
+/*
  * ── 오버레이 컨테이너 — 모바일에서는 전체화면, 노치/홈바 안전영역 확보 ──
  * height는 100dvh가 아니라 100% — body가 이미 position:fixed로 뷰포트에
  * 정확히 고정돼 있어서, 그 아래 체인은 전부 %로 물려받는 게 dvh와의 단위
