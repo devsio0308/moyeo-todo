@@ -2,6 +2,7 @@ import { BrowserWindow, ipcMain } from 'electron'
 import { dashboardStore } from './store'
 import { openPicker } from './picker-window'
 import { syncQuestCatalogOnce } from './quest-catalog'
+import { registerGameAccount } from './cloud-sync'
 import { deleteTemplate, listTemplates, saveTemplate, syncTemplateMeta } from './templates'
 import type { Screenshot, Settings, TaskMode, TaskPeriod, TaskState } from '../shared/types'
 
@@ -208,6 +209,14 @@ export function registerIpcHandlers(
 
   ipcMain.handle('catalog:sync', async () => {
     const result = await syncQuestCatalogOnce()
+    if (result.ok) broadcast()
+    return result
+  })
+
+  // ── 게임계정 ID 기반 Firestore 동기화 (#26) ─────────────
+
+  ipcMain.handle('cloud:register', async (_e, gameAccountId: string) => {
+    const result = await registerGameAccount(gameAccountId)
     if (result.ok) broadcast()
     return result
   })

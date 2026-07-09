@@ -24,6 +24,8 @@ export default function SettingsPanel(): React.JSX.Element {
   const [busy, setBusy] = useState(false)
   const [projectIdDraft, setProjectIdDraft] = useState<string | null>(null)
   const [syncMessage, setSyncMessage] = useState<string | null>(null)
+  const [accountIdDraft, setAccountIdDraft] = useState<string | null>(null)
+  const [cloudMessage, setCloudMessage] = useState<string | null>(null)
 
   const refreshTemplates = useCallback(async () => {
     setTemplates(await window.api.templates.list())
@@ -54,6 +56,18 @@ export default function SettingsPanel(): React.JSX.Element {
       setSyncMessage(`${result.ok ? '✅' : '⚠'} ${result.message}`)
     } finally {
       setBusy(false)
+    }
+  }
+
+  const runCloudRegister = async (accountId: string): Promise<void> => {
+    setBusy(true)
+    setCloudMessage('연동 중…')
+    try {
+      const result = await window.api.cloud.register(accountId)
+      setCloudMessage(`${result.ok ? '✅' : '⚠'} ${result.message}`)
+    } finally {
+      setBusy(false)
+      setAccountIdDraft(null)
     }
   }
 
@@ -240,6 +254,41 @@ export default function SettingsPanel(): React.JSX.Element {
         <p className="settings-hint">
           Firestore <code>quests</code> 컬렉션에서 일일/주간 퀘스트 목록을 가져와 모든 캐릭터에
           반영합니다. 앱 시작 시에도 자동 동기화됩니다.
+        </p>
+      </section>
+
+      <section className="settings-section">
+        <h3 className="section-title">게임계정 동기화</h3>
+
+        <div className="settings-row">
+          <span className="settings-label">계정 ID</span>
+          <input
+            className="settings-number settings-input-wide"
+            type="text"
+            placeholder="예: 서버명-닉네임"
+            value={accountIdDraft ?? settings.gameAccountId ?? ''}
+            onChange={(e) => setAccountIdDraft(e.target.value)}
+            onKeyDown={(e) => {
+              const value = (e.currentTarget as HTMLInputElement).value.trim()
+              if (e.key === 'Enter' && value) void runCloudRegister(value)
+            }}
+          />
+          <button
+            className="settings-btn"
+            disabled={busy || !(accountIdDraft ?? settings.gameAccountId ?? '').trim()}
+            onClick={() => {
+              const value = (accountIdDraft ?? settings.gameAccountId ?? '').trim()
+              if (value) void runCloudRegister(value)
+            }}
+          >
+            {settings.gameAccountId ? '재연동' : '연동'}
+          </button>
+        </div>
+        {cloudMessage && <p className="settings-hint">{cloudMessage}</p>}
+        <p className="settings-hint">
+          {settings.gameAccountId
+            ? `'${settings.gameAccountId}'로 동기화 중 — 캐릭터/퀘스트 변경이 자동으로 클라우드에 저장됩니다.`
+            : '등록하면 캐릭터/퀘스트 진행 상황이 이 ID로 클라우드에 저장돼, 같은 ID로 다른 기기에서도 이어서 볼 수 있습니다. 이미 등록된 ID를 입력하면 그 데이터를 불러옵니다.'}
         </p>
       </section>
 

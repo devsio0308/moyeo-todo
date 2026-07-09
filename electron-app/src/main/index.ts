@@ -8,6 +8,7 @@ import { EngineWsClient } from './ws-client'
 import { dashboardStore } from './store'
 import { ResetScheduler } from './reset-scheduler'
 import { syncQuestCatalogOnce } from './quest-catalog'
+import { pushCloudSyncIfRegistered } from './cloud-sync'
 import { AUTO_DETECT_ENABLED, type EngineMessage, type EngineStatus } from '../shared/types'
 
 // 알람 차임(#11)을 사용자 제스처 없이 재생할 수 있게 autoplay 정책 해제
@@ -24,10 +25,17 @@ let activeCharacter: string | null = null
 let capturePaused = false
 let lastEngineStatus: EngineStatus = 'disconnected'
 
-/** 열려 있는 모든 창에 브로드캐스트 (#17 — 두 창이 같은 상태를 공유) */
+/**
+ * 열려 있는 모든 창에 브로드캐스트 (#17 — 두 창이 같은 상태를 공유).
+ * store가 바뀔 때마다 등록된 게임계정이 있으면 Firestore에도 반영한다 (#26) —
+ * 개별 IPC 핸들러마다 훅을 걸 필요 없이 이 한 지점만 지키면 빠짐없이 커버된다.
+ */
 function broadcastAll(channel: string, payload: unknown): void {
   for (const win of BrowserWindow.getAllWindows()) {
     if (!win.isDestroyed()) win.webContents.send(channel, payload)
+  }
+  if (channel === 'store:changed') {
+    void pushCloudSyncIfRegistered()
   }
 }
 

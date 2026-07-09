@@ -1,6 +1,7 @@
 import Store from 'electron-store'
 import type {
   Character,
+  CloudPlayerData,
   QuestCatalogItem,
   QuestCategory,
   Settings,
@@ -16,7 +17,8 @@ const DEFAULT_SETTINGS: Settings = {
   dailyResetHour: 6, // 매일 오전 6시 일일 리셋 (#1)
   matchThreshold: 0.85,
   captureRegion: null,
-  firebaseProjectId: null // 퀘스트 카탈로그 소스 (#4)
+  firebaseProjectId: null, // 퀘스트 카탈로그 소스 (#4)
+  gameAccountId: null // Firestore 동기화 키 (#26)
 }
 
 /** 스토어 마이그레이션 버전 — 리셋 기본값 변경(#1) 반영 */
@@ -396,6 +398,36 @@ export class DashboardStore {
   /** 최초 실행 시 리셋 기준점만 기록 (리셋 없이) — reset-scheduler에서 사용 */
   markResetBaseline(period: TaskPeriod, at: number): void {
     this.store.set(period === 'daily' ? 'lastDailyResetAt' : 'lastWeeklyResetAt', at)
+  }
+
+  // ── Firestore 동기화 (#26) ────────────────────────────────
+
+  /** 클라우드에 올릴 부분집합. 기기별 설정(captureRegion 등)은 제외 */
+  getCloudSyncPayload(): CloudPlayerData {
+    const state = this.getState()
+    return {
+      characters: state.characters,
+      characterOrder: state.characterOrder,
+      lastDailyResetAt: state.lastDailyResetAt,
+      lastWeeklyResetAt: state.lastWeeklyResetAt,
+      dailyResetHour: state.settings.dailyResetHour,
+      weeklyResetDay: state.settings.weeklyResetDay,
+      updatedAt: Math.floor(Date.now() / 1000)
+    }
+  }
+
+  /** 원격 데이터로 로컬을 덮어쓴다 (등록 시 '원격 우선' 병합, #26) */
+  applyCloudSnapshot(data: CloudPlayerData): StoreShape {
+    this.store.set('characters', data.characters)
+    this.store.set('characterOrder', data.characterOrder)
+    this.store.set('lastDailyResetAt', data.lastDailyResetAt)
+    this.store.set('lastWeeklyResetAt', data.lastWeeklyResetAt)
+    this.store.set('settings', {
+      ...this.getState().settings,
+      dailyResetHour: data.dailyResetHour,
+      weeklyResetDay: data.weeklyResetDay
+    })
+    return this.getState()
   }
 
   // ── 내부 유틸 ────────────────────────────────────────────

@@ -85,6 +85,10 @@
           "type": "object",
           "description": "알람 규칙별 모드 (#11). 키: 규칙 id (ominous-rift, field-boss)",
           "additionalProperties": { "enum": ["sound", "ui", "off"] }
+        },
+        "gameAccountId": {
+          "type": ["string", "null"],
+          "description": "게임계정 ID (#26) — Firestore players/{id} 문서와 동기화하는 키. 등록 시 캐릭터/퀘스트 진행 상황이 클라우드에 저장된다"
         }
       },
       "required": ["captureIntervalSec", "weeklyResetDay", "dailyResetHour"]
