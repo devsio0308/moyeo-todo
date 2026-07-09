@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { AUTO_DETECT_ENABLED, type EngineStatus } from '../shared/types'
 import CharacterTabs from './components/CharacterTabs'
 import TaskChecklist from './components/TaskChecklist'
@@ -25,6 +25,8 @@ export default function OverlayApp(): React.JSX.Element {
   const activeAlarms = useAlarms() // 알람은 오버레이가 담당 (#11, #17)
   const [syncing, setSyncing] = useState(false)
   const [syncError, setSyncError] = useState<string | null>(null)
+  const [syncCooldown, setSyncCooldown] = useState(false)
+  const cooldownTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   useEffect(() => {
     void init()
@@ -45,6 +47,7 @@ export default function OverlayApp(): React.JSX.Element {
 
   /** 수동 동기화 (#28) — 클릭했을 때만 클라우드에서 가져옴. 자동 폴링 없음(트래픽 절약) */
   const handleSync = async (): Promise<void> => {
+    if (syncing || syncCooldown) return
     setSyncing(true)
     setSyncError(null)
     try {
@@ -55,6 +58,10 @@ export default function OverlayApp(): React.JSX.Element {
       }
     } finally {
       setSyncing(false)
+      // 연타로 인한 과도한 요청 방지 (#30) — 성공/실패 무관하게 1분간 재요청 제한
+      setSyncCooldown(true)
+      if (cooldownTimer.current) clearTimeout(cooldownTimer.current)
+      cooldownTimer.current = setTimeout(() => setSyncCooldown(false), 60_000)
     }
   }
 
@@ -75,9 +82,14 @@ export default function OverlayApp(): React.JSX.Element {
         <div className="titlebar-buttons">
           <button
             className="titlebar-btn"
-            title={syncError ?? '클라우드에서 최신 데이터 가져오기 (클릭 시에만 동기화)'}
+            title={
+              syncError ??
+              (syncCooldown
+                ? '1분에 한 번만 동기화할 수 있어요'
+                : '클라우드에서 최신 데이터 가져오기 (클릭 시에만 동기화)')
+            }
             onClick={() => void handleSync()}
-            disabled={syncing}
+            disabled={syncing || syncCooldown}
           >
             {syncing ? '⏳' : syncError ? '⚠' : '🔄'}
           </button>
