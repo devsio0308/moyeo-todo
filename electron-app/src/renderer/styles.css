@@ -718,6 +718,31 @@ body {
   overflow-wrap: anywhere;
 }
 
+.manage-edit {
+  flex-shrink: 0;
+  padding: 3px 6px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  font-size: 12px;
+  cursor: pointer;
+  opacity: 0.55;
+}
+
+.manage-edit:hover {
+  background: rgba(94, 129, 255, 0.2);
+  opacity: 1;
+}
+
+.edit-row {
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.edit-row .add-task-input {
+  flex: 1 1 100%;
+}
+
 .manage-delete {
   flex-shrink: 0;
   padding: 3px 8px;

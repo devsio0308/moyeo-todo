@@ -183,11 +183,27 @@ export class DashboardStore {
   updateTask(
     characterId: string,
     taskId: string,
-    patch: Partial<Pick<TaskState, 'displayName' | 'period' | 'threshold'>>
+    patch: Partial<
+      Pick<TaskState, 'displayName' | 'period' | 'threshold' | 'category' | 'targetCount'>
+    >
   ): StoreShape {
     const task = this.store.get('characters')[characterId]?.tasks[taskId]
     if (task) {
-      this.store.set(`characters.${characterId}.tasks.${taskId}`, { ...task, ...patch })
+      const next: TaskState = { ...task, ...patch }
+      // 횟수 변경(#21): count 클램프 + 완료 상태 재계산
+      if (patch.targetCount !== undefined) {
+        const target = Math.max(1, Math.floor(patch.targetCount))
+        const count = Math.min(task.count ?? 0, target)
+        next.targetCount = target
+        next.count = count
+        next.done = count >= target
+        next.lastDoneAt = next.done
+          ? task.done
+            ? task.lastDoneAt
+            : Math.floor(Date.now() / 1000)
+          : null
+      }
+      this.store.set(`characters.${characterId}.tasks.${taskId}`, next)
     }
     return this.getState()
   }

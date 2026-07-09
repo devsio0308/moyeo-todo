@@ -98,11 +98,17 @@ export function registerIpcHandlers(
       _e,
       characterId: string,
       taskId: string,
-      patch: Partial<Pick<TaskState, 'displayName' | 'period' | 'threshold'>>
+      patch: Partial<
+        Pick<TaskState, 'displayName' | 'period' | 'threshold' | 'category' | 'targetCount'>
+      >
     ) => {
       const state = dashboardStore.updateTask(characterId, taskId, patch)
-      if (patch.period !== undefined || patch.threshold !== undefined) {
-        // 템플릿 메타(period/threshold)도 함께 갱신 후 엔진 리로드
+      if (
+        patch.period !== undefined ||
+        patch.threshold !== undefined ||
+        patch.targetCount !== undefined // repeatable 메타에 영향 (#7)
+      ) {
+        // 템플릿 메타(period/threshold/repeatable)도 함께 갱신 후 엔진 리로드
         syncTemplateMeta(characterId, taskId)
         callbacks.onSettingsChanged?.()
       }

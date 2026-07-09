@@ -76,7 +76,9 @@ const api = {
     updateTask: (
       characterId: string,
       taskId: string,
-      patch: Partial<Pick<TaskState, 'displayName' | 'period' | 'threshold'>>
+      patch: Partial<
+        Pick<TaskState, 'displayName' | 'period' | 'threshold' | 'category' | 'targetCount'>
+      >
     ): Promise<StoreShape> => ipcRenderer.invoke('store:update-task', characterId, taskId, patch),
     setTaskDone: (
       characterId: string,
