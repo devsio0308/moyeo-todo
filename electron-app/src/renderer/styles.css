@@ -30,52 +30,83 @@ body {
   overflow: hidden;
 }
 
-/* ── 관리 창 (#17) — 일반 프레임 창, 불투명 배경 ── */
-.manage-root {
+/* ── 관리 창 어드민 레이아웃 (#22) ─────────────── */
+.admin-root {
   display: flex;
-  flex-direction: column;
   height: 100%;
-  background: #16161c;
+  background: #111116;
+  font-size: 14px;
 }
 
-.manage-header {
+.side-nav {
+  display: flex;
+  flex-direction: column;
+  width: 220px;
+  flex-shrink: 0;
+  padding: 18px 12px;
+  background: #191920;
+  border-right: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.side-brand {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 10px 12px;
-  background: rgba(255, 255, 255, 0.04);
-  flex-shrink: 0;
+  padding: 4px 10px 22px;
+  font-size: 16px;
+  font-weight: 700;
 }
 
-.manage-nav {
+.side-brand-icon {
+  font-size: 20px;
+}
+
+.side-nav-list {
   display: flex;
+  flex-direction: column;
   gap: 4px;
-  flex: 1;
 }
 
-.manage-tab {
-  padding: 6px 12px;
-  border: 1px solid transparent;
+.side-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border: none;
   border-radius: 8px;
   background: transparent;
   color: #b6b6c2;
-  font-size: 13px;
+  font-size: 14px;
+  text-align: left;
   cursor: pointer;
 }
 
-.manage-tab:hover {
-  background: rgba(255, 255, 255, 0.08);
+.side-nav-item:hover {
+  background: rgba(255, 255, 255, 0.06);
+  color: #fff;
 }
 
-.manage-tab-active {
+.side-nav-active {
   background: rgba(94, 129, 255, 0.22);
-  border-color: rgba(94, 129, 255, 0.5);
   color: #fff;
+  font-weight: 600;
+}
+
+.side-nav-icon {
+  width: 20px;
+  text-align: center;
+}
+
+.side-footer {
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
 .overlay-launch-btn {
   flex-shrink: 0;
-  padding: 6px 14px;
+  padding: 10px 14px;
   border: none;
   border-radius: 8px;
   background: #5e81ff;
@@ -89,8 +120,148 @@ body {
   background: #7093ff;
 }
 
-.manage-content {
-  padding: 14px;
+.admin-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.admin-header {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 18px 24px 10px;
+  flex-shrink: 0;
+}
+
+.admin-title {
+  font-size: 20px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.admin-header .character-tabs {
+  padding: 0;
+  flex: 1;
+}
+
+.admin-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 14px 24px 24px;
+}
+
+/* 퀘스트 관리: 본문 + 추천 패널 2단 (#22) */
+.quest-cols {
+  display: flex;
+  gap: 24px;
+  align-items: flex-start;
+}
+
+.quest-main {
+  flex: 1;
+  min-width: 0;
+  max-width: 640px;
+}
+
+.rec-panel {
+  width: 380px;
+  flex-shrink: 0;
+  padding: 16px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.settings-narrow {
+  max-width: 640px;
+}
+
+/* ── 대시보드 (#22) ────────────────────────────── */
+.dashboard {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+.dash-section-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: #b6b6c2;
+  margin-bottom: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.dash-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 14px;
+}
+
+.dash-card {
+  padding: 16px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.dash-card-done {
+  border-color: rgba(70, 196, 110, 0.35);
+}
+
+.dash-card-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.dash-card-title {
+  font-weight: 700;
+  font-size: 14px;
+}
+
+.dash-card-count {
+  font-size: 11px;
+  color: #7a7a88;
+  flex-shrink: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.dash-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.dash-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgba(255, 176, 32, 0.14);
+  color: #ffcf82;
+  font-size: 12px;
+}
+
+.dash-chip-progress {
+  font-size: 10px;
+  color: #d8a75a;
+  font-variant-numeric: tabular-nums;
+}
+
+.dash-all-done {
+  color: #46c46e;
+  font-size: 13px;
+}
+
+.dash-empty {
+  color: #6f6f7e;
+  font-size: 12px;
 }
 
 /* ── 타이틀바: 커스텀 드래그 영역 ───────────────── */
@@ -587,28 +758,6 @@ body {
 }
 
 /* ── 추천 퀘스트 목록 (#15) ────────────────────── */
-.rec-toggle {
-  width: 100%;
-  padding: 7px 10px;
-  border: 1px dashed rgba(255, 255, 255, 0.18);
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.03);
-  color: #b6b6c2;
-  font-size: 12px;
-  text-align: left;
-  cursor: pointer;
-}
-
-.rec-toggle:hover {
-  background: rgba(94, 129, 255, 0.12);
-  border-color: rgba(94, 129, 255, 0.4);
-  color: #fff;
-}
-
-.rec-section-title {
-  margin-top: 8px;
-}
-
 .rec-item {
   background: rgba(255, 255, 255, 0.02);
 }
