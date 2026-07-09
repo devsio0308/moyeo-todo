@@ -118,15 +118,22 @@ service cloud.firestore {
   match /databases/{database}/documents {
     match /quests/{doc} { allow read: if true; allow write: if false; }
     match /recommended_quests/{doc} { allow read: if true; allow write: if false; }
-    match /players/{playerId} { allow read, write: if true; }
+    match /players/{doc} {
+      allow get: if true;
+      allow list: if false;
+      allow write: if true;
+    }
   }
 }
 ```
 
-`players` 컬렉션은 **영구적으로** 읽기/쓰기 모두 열려 있어야 한다 — 인증 없이 ID만으로
-접근하는 설계이기 때문이다(위 `quests`/`recommended_quests`처럼 시드 후 잠그는 규칙이
-아님). 민감한 개인정보가 아닌 퀘스트 체크 상태만 다루므로 감수 가능한 트레이드오프로
-판단했다.
+`players` 컬렉션은 **영구적으로** 이 규칙이어야 한다 — 인증 없이 ID만으로 접근하는
+설계이기 때문이다(위 `quests`/`recommended_quests`처럼 시드 후 잠그는 규칙이 아님).
+`get`(정확한 ID로 문서 하나 조회)만 허용하고 **`list`(컬렉션 전체 나열)는 반드시 차단**
+해야 한다 — `allow read: if true`로 두면 ID를 몰라도 등록된 모든 플레이어의 데이터를
+한 번에 훑어볼 수 있어 "ID를 아는 사람만 접근 가능"이라는 설계 의도가 무력화된다.
+`write`는 여전히 열려 있어 특정 ID를 노린 변조까지 막지는 못하지만(인증 없는 설계의
+근본적 한계), list 차단만으로 무작위 스캔·전체 유출 위험은 사라진다.
 
 동작:
 - ⚙ 설정 → "게임계정 동기화"에서 ID 등록. **원격에 이미 데이터가 있으면 원격 우선**으로
