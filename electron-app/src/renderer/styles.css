@@ -278,6 +278,64 @@ body {
 }
 
 /* ── 진행률 ────────────────────────────────────── */
+/* 섹션 헤더: 제목 + 섹션별 프로그레스 (#18) */
+.section-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.section-head .section-title {
+  margin-bottom: 0;
+  flex-shrink: 0;
+}
+
+.section-progress {
+  flex: 1;
+}
+
+/* 카테고리 그룹 접기 (#19) */
+.task-group {
+  margin-bottom: 6px;
+}
+
+.group-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  padding: 4px 6px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: #b6b6c2;
+  font-size: 11px;
+  cursor: pointer;
+  text-align: left;
+}
+
+.group-head:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.group-chevron {
+  width: 12px;
+  color: #7a7a88;
+}
+
+.group-count {
+  margin-left: auto;
+  font-size: 10px;
+  color: #7a7a88;
+  font-variant-numeric: tabular-nums;
+}
+
+.cat-none {
+  background: rgba(160, 160, 175, 0.16);
+  color: #a9a9b8;
+}
+
 .progress-row {
   display: flex;
   align-items: center;
@@ -358,10 +416,12 @@ body {
   flex-shrink: 0;
 }
 
+/* 긴 이름은 말줄임 대신 줄바꿈 (#20) — 한국어 단어 단위 유지 */
 .task-name {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  white-space: normal;
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+  line-height: 1.35;
 }
 
 .task-done .task-name {
@@ -653,6 +713,9 @@ body {
 .manage-task-name {
   flex: 1;
   min-width: 0;
+  white-space: normal;
+  word-break: keep-all;
+  overflow-wrap: anywhere;
 }
 
 .manage-delete {
