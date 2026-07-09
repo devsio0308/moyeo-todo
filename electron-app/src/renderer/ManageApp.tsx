@@ -1,22 +1,30 @@
 import { useEffect, useState } from 'react'
 import { AUTO_DETECT_ENABLED, type EngineStatus } from '../shared/types'
 import CharacterTabs from './components/CharacterTabs'
+import DashboardView from './components/DashboardView'
 import QuestManager from './components/QuestManager'
+import RecommendedPanel from './components/RecommendedPanel'
 import SettingsPanel from './components/SettingsPanel'
 import { useDashboardStore } from './store/useDashboardStore'
 
-type View = 'manage' | 'settings'
+type View = 'dashboard' | 'quests' | 'settings'
+
+const VIEW_TITLE: Record<View, string> = {
+  dashboard: '대시보드',
+  quests: '퀘스트 관리',
+  settings: '설정'
+}
 
 /**
- * 관리 창 (#17) — 시작 시 표시되는 메인 창 (일반 프레임).
- * 캐릭터 관리(추가/삭제/이름/순서), 퀘스트 관리, 설정, 오버레이 띄우기.
+ * 관리 창 (#17, #22) — 어드민 대시보드 레이아웃.
+ * 사이드바 내비 + 대시보드(주간 현황) / 퀘스트 관리(+추천 패널) / 설정.
  */
 export default function ManageApp(): React.JSX.Element {
   const init = useDashboardStore((s) => s.init)
   const applyState = useDashboardStore((s) => s.applyState)
   const setCapturePaused = useDashboardStore((s) => s.setCapturePaused)
   const [engineStatus, setEngineStatus] = useState<EngineStatus>('disconnected')
-  const [view, setView] = useState<View>('manage')
+  const [view, setView] = useState<View>('dashboard')
 
   useEffect(() => {
     void init()
@@ -30,38 +38,64 @@ export default function ManageApp(): React.JSX.Element {
     }
   }, [init, applyState, setCapturePaused])
 
+  const navItem = (v: View, icon: string): React.JSX.Element => (
+    <button
+      className={`side-nav-item ${view === v ? 'side-nav-active' : ''}`}
+      onClick={() => setView(v)}
+    >
+      <span className="side-nav-icon">{icon}</span>
+      {VIEW_TITLE[v]}
+    </button>
+  )
+
   return (
-    <div className="manage-root">
-      <header className="manage-header">
-        <div className="manage-nav">
+    <div className="admin-root">
+      <aside className="side-nav">
+        <div className="side-brand">
+          <span className="side-brand-icon">🧦</span>
+          <span className="side-brand-name">모여길드 도비</span>
+        </div>
+        <nav className="side-nav-list">
+          {navItem('dashboard', '🏠')}
+          {navItem('quests', '📋')}
+          {navItem('settings', '⚙')}
+        </nav>
+        <div className="side-footer">
+          {AUTO_DETECT_ENABLED && engineStatus === 'failed' && (
+            <span className="badge badge-failed">엔진 오류</span>
+          )}
           <button
-            className={`manage-tab ${view === 'manage' ? 'manage-tab-active' : ''}`}
-            onClick={() => setView('manage')}
+            className="overlay-launch-btn side-launch"
+            title="게임 위에 체크리스트 오버레이 띄우기"
+            onClick={() => window.api.window.showOverlay()}
           >
-            📋 퀘스트 관리
-          </button>
-          <button
-            className={`manage-tab ${view === 'settings' ? 'manage-tab-active' : ''}`}
-            onClick={() => setView('settings')}
-          >
-            ⚙ 설정
+            🚀 오버레이 띄우기
           </button>
         </div>
-        {AUTO_DETECT_ENABLED && engineStatus === 'failed' && (
-          <span className="badge badge-failed">엔진 오류</span>
-        )}
-        <button
-          className="overlay-launch-btn"
-          title="게임 위에 체크리스트 오버레이 띄우기"
-          onClick={() => window.api.window.showOverlay()}
-        >
-          🚀 오버레이 띄우기
-        </button>
-      </header>
-      <CharacterTabs />
-      <main className="content manage-content">
-        {view === 'settings' ? <SettingsPanel /> : <QuestManager />}
-      </main>
+      </aside>
+
+      <div className="admin-main">
+        <header className="admin-header">
+          <h1 className="admin-title">{VIEW_TITLE[view]}</h1>
+          {view === 'quests' && <CharacterTabs />}
+        </header>
+        <main className="admin-content">
+          {view === 'dashboard' ? (
+            <DashboardView />
+          ) : view === 'quests' ? (
+            <div className="quest-cols">
+              <div className="quest-main">
+                <QuestManager />
+              </div>
+              <RecommendedPanel />
+            </div>
+          ) : (
+            <div className="settings-narrow">
+              <SettingsPanel />
+            </div>
+          )}
+        </main>
+      </div>
     </div>
   )
 }

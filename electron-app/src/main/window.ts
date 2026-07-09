@@ -54,16 +54,16 @@ export function createOverlayWindow(): BrowserWindow {
 
 /**
  * 관리 창 (#17) — 시작 시 표시되는 메인 창.
- * 캐릭터/퀘스트 관리, 설정, 오버레이 띄우기. 일반 프레임 창.
+ * 어드민 대시보드 스타일 (#22) — 최대화 상태로 연다.
  */
 export function createManageWindow(): BrowserWindow {
   const win = new BrowserWindow({
-    width: 560,
-    height: 760,
-    minWidth: 460,
-    minHeight: 520,
+    width: 1280,
+    height: 860,
+    minWidth: 900,
+    minHeight: 600,
     autoHideMenuBar: true,
-    backgroundColor: '#16161c',
+    backgroundColor: '#111116',
     title: '모여길드 도비',
     show: false,
     webPreferences: {
@@ -74,7 +74,10 @@ export function createManageWindow(): BrowserWindow {
     }
   })
 
-  win.on('ready-to-show', () => win.show())
+  win.on('ready-to-show', () => {
+    win.maximize() // 어드민 페이지 — 최대화로 시작 (#22)
+    win.show()
+  })
   openExternalLinks(win)
   loadRenderer(win)
   return win
