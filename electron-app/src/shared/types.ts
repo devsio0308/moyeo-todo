@@ -80,6 +80,12 @@ export interface CloudRegisterResult {
   pulled?: boolean
 }
 
+/** 수동 클라우드 동기화(풀) 결과 (#28) */
+export interface CloudSyncResult {
+  ok: boolean
+  message: string
+}
+
 export interface Character {
   displayName: string
   tasks: Record<string, TaskState>

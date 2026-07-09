@@ -433,6 +433,11 @@ body {
   color: #fff;
 }
 
+.titlebar-btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
 .badge {
   padding: 2px 8px;
   border-radius: 999px;

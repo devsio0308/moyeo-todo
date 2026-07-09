@@ -8,7 +8,7 @@
 import { dashboardStore } from './store'
 import { getEffectiveProjectId } from './quest-catalog'
 import { getFirestoreDocument, putFirestoreDocument } from './firestore-rest'
-import type { CloudPlayerData, CloudRegisterResult } from '../shared/types'
+import type { CloudPlayerData, CloudRegisterResult, CloudSyncResult } from '../shared/types'
 
 function playerDocPath(gameAccountId: string): string {
   return `players/${encodeURIComponent(gameAccountId)}`
@@ -45,6 +45,34 @@ export async function registerGameAccount(gameAccountId: string): Promise<CloudR
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e)
     return { ok: false, message: `연동 실패: ${msg}` }
+  }
+}
+
+/**
+ * 클라우드에서 최신 데이터를 가져와 로컬을 덮어쓴다 (#28 — 오버레이 수동 동기화 버튼).
+ * 변경 시마다 자동 푸시는 하지만 자동 풀(polling)은 하지 않는다 — 트래픽을 아끼기 위해
+ * "버튼을 눌렀을 때만" 가져오는 구조. 다른 기기(폰 등)에서 바꾼 내용을 반영할 때 사용.
+ */
+export async function pullCloudSyncIfRegistered(): Promise<CloudSyncResult> {
+  const { settings } = dashboardStore.getState()
+  const gameAccountId = settings.gameAccountId?.trim()
+  if (!gameAccountId) {
+    return { ok: false, message: '동기화 ID가 등록되지 않았습니다 — 설정에서 먼저 연동하세요' }
+  }
+
+  const projectId = getEffectiveProjectId()
+  if (!projectId) return { ok: false, message: 'Firebase 프로젝트 ID가 설정되지 않았습니다' }
+
+  try {
+    const remote = await getFirestoreDocument(projectId, playerDocPath(gameAccountId))
+    if (!remote) {
+      return { ok: false, message: '클라우드에 데이터가 없습니다' }
+    }
+    dashboardStore.applyCloudSnapshot(remote as unknown as CloudPlayerData)
+    return { ok: true, message: '최신 데이터를 가져왔습니다' }
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e)
+    return { ok: false, message: `동기화 실패: ${msg}` }
   }
 }
 
