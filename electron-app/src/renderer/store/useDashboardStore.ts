@@ -34,7 +34,9 @@ interface DashboardState {
   updateTask: (
     characterId: string,
     taskId: string,
-    patch: Partial<Pick<TaskState, 'displayName' | 'period' | 'threshold'>>
+    patch: Partial<
+      Pick<TaskState, 'displayName' | 'period' | 'threshold' | 'category' | 'targetCount'>
+    >
   ) => Promise<void>
   setTaskDone: (characterId: string, taskId: string, done: boolean, mode: TaskMode) => Promise<void>
   updateSettings: (patch: Partial<Settings>) => Promise<void>
