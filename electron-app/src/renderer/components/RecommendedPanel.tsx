@@ -62,12 +62,12 @@ function QuestRow({
 }): React.JSX.Element {
   return (
     <li className="task-item rec-item">
-      {item.location && <span className="loc-badge">{item.location}</span>}
       <span className="task-name manage-task-name">
         {item.name}
         {(item.targetCount ?? 1) > 1 && <span className="target-badge">×{item.targetCount}</span>}
         {owner && <span className="rec-owner">{owner}</span>}
       </span>
+      {item.location && <span className="loc-badge">{item.location}</span>}
       {item.category && (
         <span className={`cat-badge cat-${QUEST_CATEGORY_CLASS[item.category]}`}>
           {item.category}

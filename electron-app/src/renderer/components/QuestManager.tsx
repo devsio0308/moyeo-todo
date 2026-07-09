@@ -147,7 +147,6 @@ export default function QuestManager(): React.JSX.Element {
 
             return (
               <li className="task-item" key={taskId}>
-                {task.location && <span className="loc-badge">{task.location}</span>}
                 <span className="task-name manage-task-name">
                   {task.displayName}
                   {(task.targetCount ?? 1) > 1 && (
@@ -161,6 +160,7 @@ export default function QuestManager(): React.JSX.Element {
                     ☁
                   </span>
                 )}
+                {task.location && <span className="loc-badge">{task.location}</span>}
                 {task.category && (
                   <span className={`cat-badge cat-${QUEST_CATEGORY_CLASS[task.category]}`}>
                     {task.category}

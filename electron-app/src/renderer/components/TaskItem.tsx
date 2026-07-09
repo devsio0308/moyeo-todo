@@ -40,11 +40,9 @@ export default function TaskItem({
           title={isCounted ? '체크: 전체 완료 / 해제: 0회로 초기화' : undefined}
           onChange={(e) => void setTaskDone(characterId, taskId, e.target.checked, 'manual')}
         />
-        <span className="task-name">
-          {task.location && <span className="loc-badge">{task.location}</span>}
-          {task.displayName}
-        </span>
+        <span className="task-name">{task.displayName}</span>
       </label>
+      {task.location && <span className="loc-badge">{task.location}</span>}
       {isCounted && (
         <span className="count-ctrl">
           <button

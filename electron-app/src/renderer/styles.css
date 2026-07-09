@@ -159,15 +159,17 @@ body {
   align-items: flex-start;
 }
 
+/* 창 폭이 줄면 추천 패널이 먼저 줄어들고 퀘스트 등록/목록 폭은 유지 */
 .quest-main {
-  flex: 1;
-  min-width: 0;
-  max-width: 640px;
+  flex: 1 1 640px;
+  min-width: 460px;
+  max-width: 680px;
 }
 
 .rec-panel {
-  width: 380px;
-  flex-shrink: 0;
+  flex: 1 6 380px; /* shrink 가중치를 크게 — 좁아질 때 이쪽이 먼저 줄어듦 */
+  min-width: 190px;
+  max-width: 420px;
   padding: 16px;
   border-radius: 12px;
   background: rgba(255, 255, 255, 0.03);
@@ -257,12 +259,11 @@ body {
   margin-right: auto;
 }
 
-/* 지역 태그 (#24) — 값 변동성이 커서 단일 색 고정 */
+/* 지역 태그 (#24) — 값 변동성이 커서 단일 색 고정. 카테고리 태그 바로 앞에 표시 */
 .loc-badge {
   flex-shrink: 0;
   display: inline-block;
   padding: 1px 7px;
-  margin-right: 6px;
   border-radius: 999px;
   background: rgba(140, 160, 255, 0.14);
   color: #a9b8ff;
@@ -899,11 +900,13 @@ body {
 /* ── 퀘스트 관리 화면 (#5) ─────────────────────── */
 .manage-title {
   color: #b6b6c2;
-  font-size: 12px;
+  font-size: 17px;
+  margin-bottom: 4px;
 }
 
 .manage-title b {
   color: #fff;
+  font-size: 18px;
 }
 
 .manage-add-form {
