@@ -177,7 +177,7 @@ body {
 }
 
 /* 일정 폭 이하에서는 추천 패널을 아래로 (사이드바 220px 포함 기준) */
-@media (max-width: 1120px) {
+@media (max-width: 1320px) {
   .quest-cols {
     flex-direction: column;
   }
