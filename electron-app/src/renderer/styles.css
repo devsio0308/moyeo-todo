@@ -178,6 +178,97 @@ body {
   max-width: 640px;
 }
 
+/* 카드형 폼 (#23) — 퀘스트/캐릭터 추가 */
+.add-quest-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+  margin-bottom: 18px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.form-field label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #8a8a98;
+}
+
+.form-row {
+  display: flex;
+  gap: 12px;
+  align-items: flex-end;
+}
+
+.form-inline {
+  display: flex;
+  gap: 8px;
+}
+
+.form-submit {
+  margin-left: auto;
+  padding: 8px 18px;
+}
+
+/* 캐릭터 관리 뷰 (#23) */
+.char-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.char-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.char-order-btns {
+  display: flex;
+  gap: 3px;
+}
+
+.char-name {
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.char-name-input {
+  max-width: 180px;
+}
+
+.char-meta {
+  color: #7a7a88;
+  font-size: 12px;
+  margin-right: auto;
+}
+
+/* 추천 패널 — 타 캐릭터 커스텀 (#23) */
+.rec-others-title {
+  margin-top: 22px;
+}
+
+.rec-owner {
+  display: inline-block;
+  margin-left: 8px;
+  font-size: 10px;
+  color: #7a7a88;
+}
+
 /* ── 대시보드 (#22) ────────────────────────────── */
 .dashboard {
   display: flex;
@@ -385,67 +476,6 @@ body {
   background: rgba(94, 129, 255, 0.22);
   border-color: rgba(94, 129, 255, 0.5);
   color: #fff;
-}
-
-.tab-dragging {
-  opacity: 0.4;
-}
-
-.tab-add {
-  font-weight: 700;
-  padding: 5px 12px;
-}
-
-.tab-trash {
-  padding: 5px 10px;
-}
-
-.tab-trash:hover {
-  background: rgba(229, 72, 77, 0.18);
-}
-
-.tab-trash-confirm {
-  background: #e5484d;
-  color: #fff;
-  font-weight: 700;
-}
-
-.tab-trash-confirm:hover {
-  background: #f25e63;
-}
-
-/* 캐릭터 추가 폼 (#12) — 이름 + 프리셋 선택 + 추가/취소 */
-.tab-add-form {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.tab-preset-select {
-  padding: 5px 6px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 8px;
-  background: rgba(30, 30, 38, 0.9);
-  color: #d0d0da;
-  font-size: 12px;
-  outline: none;
-  max-width: 130px;
-}
-
-.tab-add:disabled {
-  opacity: 0.4;
-  cursor: default;
-}
-
-.tab-edit-input {
-  width: 110px;
-  padding: 5px 8px;
-  border: 1px solid rgba(94, 129, 255, 0.6);
-  border-radius: 8px;
-  background: rgba(0, 0, 0, 0.35);
-  color: #fff;
-  font-size: 12px;
-  outline: none;
 }
 
 /* ── 진행률 ────────────────────────────────────── */

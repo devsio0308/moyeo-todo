@@ -201,55 +201,69 @@ export default function QuestManager(): React.JSX.Element {
         <b>{character.displayName}</b>의 퀘스트 관리
       </p>
 
+      {/* 카드형 추가 폼 (#23) */}
       <form
-        className="add-task-form manage-add-form"
+        className="add-quest-card"
         onSubmit={(e) => {
           e.preventDefault()
           submit()
         }}
       >
-        <input
-          className="add-task-input"
-          placeholder="퀘스트 추가…"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-        />
-        <select
-          className="add-task-period"
-          value={period}
-          onChange={(e) => setPeriod(e.target.value as TaskPeriod)}
-        >
-          <option value="daily">일일</option>
-          <option value="weekly">주간</option>
-        </select>
-        <select
-          className="add-task-period"
-          title="카테고리 태그"
-          value={category}
-          onChange={(e) => setCategory(e.target.value as QuestCategory | '')}
-        >
-          <option value="">태그 없음</option>
-          {QUEST_CATEGORIES.map((c) => (
-            <option key={c} value={c}>
-              {c}
-            </option>
-          ))}
-        </select>
-        <input
-          className="add-task-count"
-          type="number"
-          min={1}
-          max={99}
-          title="완료에 필요한 횟수 (1이면 단일 퀘스트)"
-          value={targetCount}
-          onChange={(e) => {
-            const v = parseInt(e.target.value)
-            if (v >= 1 && v <= 99) setTargetCount(v)
-          }}
-        />
-        <button className="add-task-btn" type="submit" disabled={!name.trim()}>
-          추가
-        </button>
+        <div className="form-field">
+          <label>퀘스트 이름</label>
+          <input
+            className="add-task-input"
+            placeholder="예: 두갈드아일 엘빈: 야채볶음 2 → 상급목재 4"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+          />
+        </div>
+        <div className="form-row">
+          <div className="form-field">
+            <label>주기</label>
+            <select
+              className="add-task-period"
+              value={period}
+              onChange={(e) => setPeriod(e.target.value as TaskPeriod)}
+            >
+              <option value="daily">일일</option>
+              <option value="weekly">주간</option>
+            </select>
+          </div>
+          <div className="form-field">
+            <label>카테고리</label>
+            <select
+              className="add-task-period"
+              value={category}
+              onChange={(e) => setCategory(e.target.value as QuestCategory | '')}
+            >
+              <option value="">태그 없음</option>
+              {QUEST_CATEGORIES.map((c) => (
+                <option key={c} value={c}>
+                  {c}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="form-field">
+            <label>완료 횟수</label>
+            <input
+              className="add-task-count"
+              type="number"
+              min={1}
+              max={99}
+              title="완료에 필요한 횟수 (1이면 단일 퀘스트)"
+              value={targetCount}
+              onChange={(e) => {
+                const v = parseInt(e.target.value)
+                if (v >= 1 && v <= 99) setTargetCount(v)
+              }}
+            />
+          </div>
+          <button className="add-task-btn form-submit" type="submit" disabled={!name.trim()}>
+            ＋ 추가
+          </button>
+        </div>
       </form>
 
       {renderSection('daily', '일일 퀘스트')}
