@@ -31,6 +31,7 @@ interface DashboardState {
     location?: string | null
   ) => Promise<void>
   incrementTask: (characterId: string, taskId: string, delta: number) => Promise<void>
+  setTaskExcluded: (characterId: string, taskId: string, excluded: boolean) => Promise<void>
   removeTask: (characterId: string, taskId: string) => Promise<void>
   updateTask: (
     characterId: string,
@@ -90,6 +91,8 @@ export const useDashboardStore = create<DashboardState>((set, get) => {
       ),
     incrementTask: async (characterId, taskId, delta) =>
       apply(await window.api.store.incrementTask(characterId, taskId, delta)),
+    setTaskExcluded: async (characterId, taskId, excluded) =>
+      apply(await window.api.store.setTaskExcluded(characterId, taskId, excluded)),
     removeTask: async (characterId, taskId) =>
       apply(await window.api.store.removeTask(characterId, taskId)),
     updateTask: async (characterId, taskId, patch) =>

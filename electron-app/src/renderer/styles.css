@@ -994,6 +994,45 @@ body {
   color: #fff;
 }
 
+/* 카탈로그 퀘스트 제외 토글 (#25) — 삭제 버튼 대체 */
+.manage-exclude {
+  flex-shrink: 0;
+  padding: 3px 8px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 6px;
+  background: transparent;
+  color: #8a8a98;
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.manage-exclude:hover {
+  background: rgba(255, 176, 32, 0.15);
+  border-color: rgba(255, 176, 32, 0.4);
+  color: #ffcf82;
+}
+
+.manage-exclude-active {
+  background: rgba(255, 176, 32, 0.16);
+  border-color: rgba(255, 176, 32, 0.4);
+  color: #ffcf82;
+}
+
+.task-excluded-row {
+  opacity: 0.6;
+}
+
+.excluded-badge {
+  flex-shrink: 0;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: rgba(255, 176, 32, 0.14);
+  color: #ffcf82;
+  font-size: 10px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
 .catalog-badge {
   flex-shrink: 0;
   font-size: 11px;

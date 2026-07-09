@@ -39,6 +39,10 @@
         "location": {
           "type": ["string", "null"],
           "description": "지역 태그 (#24, 자유 문자열 — 예: 두갈드아일, 던바튼)"
+        },
+        "excluded": {
+          "type": "boolean",
+          "description": "이 캐릭터는 이 카탈로그 퀘스트를 하지 않음 (#25). true면 항상 완료 상태로 고정, 리셋 제외"
         }
       },
       "required": ["done", "mode", "lastDoneAt", "displayName", "period"]

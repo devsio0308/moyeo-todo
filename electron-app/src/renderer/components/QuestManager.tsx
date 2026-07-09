@@ -18,6 +18,7 @@ export default function QuestManager(): React.JSX.Element {
   const addTask = useDashboardStore((s) => s.addTask)
   const removeTask = useDashboardStore((s) => s.removeTask)
   const updateTask = useDashboardStore((s) => s.updateTask)
+  const setTaskExcluded = useDashboardStore((s) => s.setTaskExcluded)
 
   const [name, setName] = useState('')
   const [period, setPeriod] = useState<TaskPeriod>('daily')
@@ -146,7 +147,7 @@ export default function QuestManager(): React.JSX.Element {
             }
 
             return (
-              <li className="task-item" key={taskId}>
+              <li className={`task-item ${task.excluded ? 'task-excluded-row' : ''}`} key={taskId}>
                 <span className="task-name manage-task-name">
                   {task.displayName}
                   {(task.targetCount ?? 1) > 1 && (
@@ -184,21 +185,36 @@ export default function QuestManager(): React.JSX.Element {
                     ✏️
                   </button>
                 )}
-                <button
-                  className={`manage-delete ${confirmId === taskId ? 'manage-delete-confirm' : ''}`}
-                  title={confirmId === taskId ? '한 번 더 클릭하면 삭제' : '퀘스트 삭제'}
-                  onBlur={() => setConfirmId(null)}
-                  onClick={() => {
-                    if (confirmId === taskId) {
-                      void removeTask(activeId, taskId)
-                      setConfirmId(null)
-                    } else {
-                      setConfirmId(taskId)
+                {task.catalogId ? (
+                  // 카탈로그 퀘스트는 삭제해도 동기화로 부활하므로 '제외' 토글로 대체 (#25)
+                  <button
+                    className={`manage-exclude ${task.excluded ? 'manage-exclude-active' : ''}`}
+                    title={
+                      task.excluded
+                        ? '이 캐릭터의 진행 대상으로 다시 포함합니다'
+                        : '이 캐릭터는 안 하는 퀘스트면 제외 — 항상 완료 상태로 유지되고 리셋되지 않습니다'
                     }
-                  }}
-                >
-                  {confirmId === taskId ? '삭제?' : '🗑'}
-                </button>
+                    onClick={() => void setTaskExcluded(activeId, taskId, !task.excluded)}
+                  >
+                    {task.excluded ? '🚫 제외됨' : '제외'}
+                  </button>
+                ) : (
+                  <button
+                    className={`manage-delete ${confirmId === taskId ? 'manage-delete-confirm' : ''}`}
+                    title={confirmId === taskId ? '한 번 더 클릭하면 삭제' : '퀘스트 삭제'}
+                    onBlur={() => setConfirmId(null)}
+                    onClick={() => {
+                      if (confirmId === taskId) {
+                        void removeTask(activeId, taskId)
+                        setConfirmId(null)
+                      } else {
+                        setConfirmId(taskId)
+                      }
+                    }}
+                  >
+                    {confirmId === taskId ? '삭제?' : '🗑'}
+                  </button>
+                )}
               </li>
             )
           })}

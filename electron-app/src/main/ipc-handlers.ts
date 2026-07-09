@@ -85,6 +85,15 @@ export function registerIpcHandlers(
     }
   )
 
+  ipcMain.handle(
+    'store:set-task-excluded',
+    (_e, characterId: string, taskId: string, excluded: boolean) => {
+      const state = dashboardStore.setTaskExcluded(characterId, taskId, excluded)
+      broadcast()
+      return state
+    }
+  )
+
   ipcMain.handle('store:remove-task', (_e, characterId: string, taskId: string) => {
     const state = dashboardStore.removeTask(characterId, taskId)
     broadcast()
