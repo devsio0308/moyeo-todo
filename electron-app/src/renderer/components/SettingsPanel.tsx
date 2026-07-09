@@ -258,14 +258,18 @@ export default function SettingsPanel(): React.JSX.Element {
       </section>
 
       <section className="settings-section">
-        <h3 className="section-title">게임계정 동기화</h3>
+        <h3 className="section-title">동기화 ID 연동</h3>
+        <p className="settings-hint settings-subdescription">
+          마비노기 모바일 <b>환경설정 → 계정 → 이용자 정보</b>에서 확인할 수 있는{' '}
+          <b>회원코드</b>를 입력하세요.
+        </p>
 
         <div className="settings-row">
-          <span className="settings-label">계정 ID</span>
+          <span className="settings-label">동기화 ID</span>
           <input
             className="settings-number settings-input-wide"
             type="text"
-            placeholder="예: 서버명-닉네임"
+            placeholder="회원코드 입력"
             value={accountIdDraft ?? settings.gameAccountId ?? ''}
             onChange={(e) => setAccountIdDraft(e.target.value)}
             onKeyDown={(e) => {

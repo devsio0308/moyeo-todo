@@ -1163,6 +1163,15 @@ body {
   font-size: 12px;
 }
 
+.settings-subdescription {
+  margin-bottom: 8px;
+}
+
+.settings-subdescription b {
+  color: #b6b6c2;
+  font-weight: 600;
+}
+
 .tpl-status {
   flex-shrink: 0;
   font-size: 11px;
