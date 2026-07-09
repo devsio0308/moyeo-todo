@@ -23,6 +23,8 @@ export default function OverlayApp(): React.JSX.Element {
   const activeCharacterId = useDashboardStore((s) => s.activeCharacterId)
   const [engineStatus, setEngineStatus] = useState<EngineStatus>('disconnected')
   const activeAlarms = useAlarms() // 알람은 오버레이가 담당 (#11, #17)
+  const [syncing, setSyncing] = useState(false)
+  const [syncError, setSyncError] = useState<string | null>(null)
 
   useEffect(() => {
     void init()
@@ -41,6 +43,21 @@ export default function OverlayApp(): React.JSX.Element {
     window.api.engine.setActiveCharacter(activeCharacterId)
   }, [activeCharacterId])
 
+  /** 수동 동기화 (#28) — 클릭했을 때만 클라우드에서 가져옴. 자동 폴링 없음(트래픽 절약) */
+  const handleSync = async (): Promise<void> => {
+    setSyncing(true)
+    setSyncError(null)
+    try {
+      const result = await window.api.cloud.pull()
+      if (!result.ok) {
+        setSyncError(result.message)
+        setTimeout(() => setSyncError(null), 4000)
+      }
+    } finally {
+      setSyncing(false)
+    }
+  }
+
   return (
     <div className="overlay-root">
       <header className="titlebar">
@@ -56,6 +73,14 @@ export default function OverlayApp(): React.JSX.Element {
           </>
         )}
         <div className="titlebar-buttons">
+          <button
+            className="titlebar-btn"
+            title={syncError ?? '클라우드에서 최신 데이터 가져오기 (클릭 시에만 동기화)'}
+            onClick={() => void handleSync()}
+            disabled={syncing}
+          >
+            {syncing ? '⏳' : syncError ? '⚠' : '🔄'}
+          </button>
           <button
             className="titlebar-btn"
             title="관리 창 열기"

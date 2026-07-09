@@ -3,6 +3,7 @@ import type {
   CaptureRegion,
   CatalogSyncResult,
   CloudRegisterResult,
+  CloudSyncResult,
   EngineStatus,
   QuestCategory,
   Screenshot,
@@ -124,7 +125,9 @@ const api = {
   cloud: {
     /** 게임계정 ID 등록/연동 (#26) — 원격 있으면 불러오기, 없으면 로컬 업로드 */
     register: (gameAccountId: string): Promise<CloudRegisterResult> =>
-      ipcRenderer.invoke('cloud:register', gameAccountId)
+      ipcRenderer.invoke('cloud:register', gameAccountId),
+    /** 수동 동기화 (#28) — 클릭했을 때만 클라우드에서 최신 데이터를 가져옴 (자동 폴링 없음) */
+    pull: (): Promise<CloudSyncResult> => ipcRenderer.invoke('cloud:pull')
   },
   picker: {
     onInit: (
