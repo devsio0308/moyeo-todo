@@ -1,0 +1,16 @@
+{
+  "name": "모여길드 도비",
+  "short_name": "도비",
+  "description": "마비노기 모바일 퀘스트 체크",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#16161c",
+  "theme_color": "#16161c",
+  "orientation": "portrait",
+  "icons": [
+    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

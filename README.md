@@ -143,6 +143,32 @@ service cloud.firestore {
 - 동기화 대상은 캐릭터/퀘스트/리셋 시각뿐이며, 캡처 리전·매칭 정확도 같은 기기별 설정은
   포함하지 않는다.
 
+## 웹 오버레이 (휴대폰용, #27)
+
+`web-overlay/`는 동기화 ID로 Firestore를 읽고 체크만 하는 별도 웹앱 — 캐릭터/퀘스트
+추가는 없음(Electron 전용). iOS Safari / Android Chrome에서 "홈 화면에 추가"로 앱처럼
+쓸 수 있다.
+
+```bash
+cd web-overlay
+npm install
+cp .env.example .env   # VITE_FIREBASE_PROJECT_ID 채우기
+npm run dev            # http://localhost:5183
+npm run build           # dist/ 생성
+firebase deploy --project <프로젝트ID> --only hosting   # 배포 (firebase login 필요)
+```
+
+**설계 메모:**
+- 알람은 **앱이 열려 있을 때만** 하이라이트+소리 (백그라운드 푸시 아님 — 확정된 범위)
+- 체크/카운트 변경은 Firestore `updateMask`로 **건드린 필드만 부분 업데이트** — 데스크톱과
+  동시에 다른 퀘스트를 바꿔도 서로 덮어쓰지 않는다. 일/주 리셋 캐치업만 예외적으로 문서
+  전체를 덮어쓴다(다수 필드를 한 번에 바꾸므로)
+- 로드 시 웹이 직접 day-boundary를 계산해 리셋을 실행한다 — Electron이 꺼져 있어도
+  폰에서 먼저 열면 리셋이 반영되고 클라우드에도 다시 푸시된다
+- `src/shared/`는 electron-app의 순수 로직(types 일부/alarms/reset-logic)을 그대로
+  복사한 것 — 워크스페이스 패키지 분리 전까지는 electron-app 변경 시 수동으로 맞춰야 함
+- 미등록 ID 입력 시 업로드하지 않고 "데스크톱 앱에서 먼저 연동" 안내만 표시
+
 ## Git 워크플로
 
 gitflow — `master`(릴리스) / `develop`(통합) / `feature/*`(기능 단위, `--no-ff` 머지)
