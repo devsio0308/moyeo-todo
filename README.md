@@ -107,6 +107,75 @@ npm run build && npx electron-builder
 퀘스트 관리 화면의 "📖 추천 퀘스트" 목록으로 표시되고, 골라서 추가하면 **커스텀 퀘스트**로
 등록된다 (캐릭터별 선택, 삭제 자유).
 
+## 게임계정 동기화 (Firestore, #26)
+
+인증 없이 **게임계정 ID를 키**로 캐릭터/퀘스트 진행 상황을 Firestore에 동기화한다. 같은
+ID로 다른 기기(추후 웹 오버레이 포함)에서 등록하면 이어서 볼 수 있다.
+
+```
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /quests/{doc} { allow read: if true; allow write: if false; }
+    match /recommended_quests/{doc} { allow read: if true; allow write: if false; }
+    match /players/{doc} {
+      allow get: if true;
+      allow list: if false;
+      allow write: if true;
+    }
+  }
+}
+```
+
+`players` 컬렉션은 **영구적으로** 이 규칙이어야 한다 — 인증 없이 ID만으로 접근하는
+설계이기 때문이다(위 `quests`/`recommended_quests`처럼 시드 후 잠그는 규칙이 아님).
+`get`(정확한 ID로 문서 하나 조회)만 허용하고 **`list`(컬렉션 전체 나열)는 반드시 차단**
+해야 한다 — `allow read: if true`로 두면 ID를 몰라도 등록된 모든 플레이어의 데이터를
+한 번에 훑어볼 수 있어 "ID를 아는 사람만 접근 가능"이라는 설계 의도가 무력화된다.
+`write`는 여전히 열려 있어 특정 ID를 노린 변조까지 막지는 못하지만(인증 없는 설계의
+근본적 한계), list 차단만으로 무작위 스캔·전체 유출 위험은 사라진다.
+
+동작:
+- ⚙ 설정 → "게임계정 동기화"에서 ID 등록. **원격에 이미 데이터가 있으면 원격 우선**으로
+  로컬을 덮어쓰고, 없으면 **현재 로컬 데이터를 업로드**해 최초 등록으로 삼는다.
+- 등록 후에는 캐릭터/퀘스트 변경이 있을 때마다 자동으로 `players/{id}` 문서에 반영된다
+  (fire-and-forget — 네트워크 실패해도 로컬 동작에는 영향 없음).
+- 동기화 대상은 캐릭터/퀘스트/리셋 시각뿐이며, 캡처 리전·매칭 정확도 같은 기기별 설정은
+  포함하지 않는다.
+- **자동 풀(polling)은 하지 않는다** — 트래픽을 아끼기 위해 로컬 변경은 자동 푸시하지만,
+  다른 기기(폰 등)에서 바뀐 내용은 오버레이 타이틀바의 **🔄 동기화 버튼**을 눌러야
+  가져온다 (#28).
+
+## 웹 오버레이 (휴대폰용, #27)
+
+`web-overlay/`는 동기화 ID로 Firestore를 읽고 체크만 하는 별도 웹앱 — 캐릭터/퀘스트
+추가는 없음(Electron 전용). iOS Safari / Android Chrome에서 "홈 화면에 추가"로 앱처럼
+쓸 수 있다.
+
+```bash
+cd web-overlay
+npm install
+cp .env.example .env   # VITE_FIREBASE_PROJECT_ID 채우기
+npm run dev            # http://localhost:5183
+npm run build           # dist/ 생성
+firebase deploy --project <프로젝트ID> --only hosting   # 배포 (firebase login 필요)
+```
+
+**설계 메모:**
+- 알람은 **앱이 열려 있을 때만** 하이라이트+소리 (백그라운드 푸시 아님 — 확정된 범위)
+- 체크/카운트 변경은 Firestore `updateMask`로 **건드린 필드만 부분 업데이트** — 데스크톱과
+  동시에 다른 퀘스트를 바꿔도 서로 덮어쓰지 않는다. 일/주 리셋 캐치업만 예외적으로 문서
+  전체를 덮어쓴다(다수 필드를 한 번에 바꾸므로)
+- 로드 시 웹이 직접 day-boundary를 계산해 리셋을 실행한다 — Electron이 꺼져 있어도
+  폰에서 먼저 열면 리셋이 반영되고 클라우드에도 다시 푸시된다
+- `src/shared/`는 electron-app의 순수 로직(types 일부/alarms/reset-logic)을 그대로
+  복사한 것 — 워크스페이스 패키지 분리 전까지는 electron-app 변경 시 수동으로 맞춰야 함
+- 미등록 ID 입력 시 업로드하지 않고 "데스크톱 앱에서 먼저 연동" 안내만 표시
+- **자동 폴링은 하지 않는다** (#29) — 앱 최초 진입 시 1회 로드 후에는 타이틀바의
+  **🔄 새로고침 버튼**을 눌러야 최신 데이터를 가져온다. 한 사람이 플랫폼을 오가며
+  쓰는 개인용 도구라 실시간 동기화가 불필요하고, 백그라운드 폴링은 트래픽뿐 아니라
+  배터리 소모도 아깝다 — Electron 쪽 수동 동기화(#28)와 철학을 통일
+
 ## Git 워크플로
 
 gitflow — `master`(릴리스) / `develop`(통합) / `feature/*`(기능 단위, `--no-ff` 머지)

@@ -40,12 +40,11 @@ export default function ManageApp(): React.JSX.Element {
     }
   }, [init, applyState, setCapturePaused])
 
-  const navItem = (v: View, icon: string): React.JSX.Element => (
+  const navItem = (v: View): React.JSX.Element => (
     <button
       className={`side-nav-item ${view === v ? 'side-nav-active' : ''}`}
       onClick={() => setView(v)}
     >
-      <span className="side-nav-icon">{icon}</span>
       {VIEW_TITLE[v]}
     </button>
   )
@@ -58,10 +57,10 @@ export default function ManageApp(): React.JSX.Element {
           <span className="side-brand-name">모여길드 도비</span>
         </div>
         <nav className="side-nav-list">
-          {navItem('dashboard', '🏠')}
-          {navItem('characters', '👥')}
-          {navItem('quests', '📋')}
-          {navItem('settings', '⚙')}
+          {navItem('dashboard')}
+          {navItem('characters')}
+          {navItem('quests')}
+          {navItem('settings')}
         </nav>
         <div className="side-footer">
           {AUTO_DETECT_ENABLED && engineStatus === 'failed' && (

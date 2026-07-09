@@ -27,3 +27,12 @@ service-account*.json
 electron-app/.env
 electron-app/.env.*
 !electron-app/.env.example
+web-overlay/.env
+web-overlay/.env.*
+!web-overlay/.env.example
+
+# web-overlay 빌드 산출물
+web-overlay/node_modules/
+web-overlay/dist/
+web-overlay/.firebase/
+web-overlay/*.tsbuildinfo

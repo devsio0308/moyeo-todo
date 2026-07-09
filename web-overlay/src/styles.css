@@ -1,0 +1,578 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html,
+#root {
+  height: 100%;
+  overflow: hidden;
+  background: #16161c;
+}
+
+/*
+ * body를 position:fixed로 고정 — iOS Safari는 overflow:hidden만으로는 문서 자체의
+ * 탄성 스크롤(바운스)을 완전히 막지 못한다. .content(overflow-y:auto)만이
+ * 유일한 스크롤 영역이 되도록 문서 레벨 스크롤 후보를 원천 차단한다.
+ */
+body {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  overscroll-behavior: none;
+  background: #16161c;
+  font-family:
+    'Pretendard', -apple-system, 'Malgun Gothic', 'Apple SD Gothic Neo', system-ui, sans-serif;
+  font-size: 14px;
+  color: #e8e8ec;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/*
+ * 커스텀 스크롤바 (#31) — 모바일은 대부분 오버레이 스크롤바라 영향 없지만,
+ * Windows 데스크톱 브라우저에서 열었을 때 Chromium 기본 스크롤바 대신
+ * macOS 오버레이 느낌으로 통일한다 (electron-app과 동일 스타일).
+ */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.16) transparent;
+}
+
+*::-webkit-scrollbar {
+  width: 7px;
+  height: 7px;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.14);
+  border-radius: 999px;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.28);
+}
+
+/*
+ * ── 오버레이 컨테이너 — 모바일에서는 전체화면, 노치/홈바 안전영역 확보 ──
+ * height는 100dvh가 아니라 100% — body가 이미 position:fixed로 뷰포트에
+ * 정확히 고정돼 있어서, 그 아래 체인은 전부 %로 물려받는 게 dvh와의 단위
+ * 불일치(특히 PWA standalone 모드에서 발생) 위험이 없다.
+ */
+.overlay-root {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: #16161c;
+  border: none;
+  border-radius: 0;
+  overflow: hidden;
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+.loc-badge {
+  flex-shrink: 0;
+  display: inline-block;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: rgba(140, 160, 255, 0.14);
+  color: #a9b8ff;
+  font-size: 10px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.titlebar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  background: rgba(255, 255, 255, 0.04);
+  flex-shrink: 0;
+}
+
+.titlebar-title {
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.titlebar-btn {
+  padding: 4px 10px;
+  border: none;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  color: #b6b6c2;
+  font-size: 11px;
+  cursor: pointer;
+}
+
+/* 새로고침(#29) 등 아이콘 전용 버튼 — 두 버튼을 함께 우측으로 밀어냄 */
+.titlebar-icon-btn {
+  margin-left: auto;
+  width: 26px;
+  height: 26px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.08);
+  color: #b6b6c2;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.titlebar-icon-btn:hover {
+  background: rgba(255, 255, 255, 0.14);
+  color: #fff;
+}
+
+.titlebar-icon-btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.titlebar-btn:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+}
+
+.content {
+  flex: 1;
+  min-height: 0; /* flex 자식이 내용만큼 늘어나 부모(overlay-root)를 넘치게 하는 것 방지 */
+  padding: 14px;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  /* 리스트 끝에 닿아도 스크롤이 body로 전파되지 않게 — 이게 없으면 리스트를
+     끝까지 당길 때 상위 문서가 같이 튕기는 현상이 남는다 */
+  overscroll-behavior-y: contain;
+}
+
+.placeholder {
+  color: #7a7a88;
+  text-align: center;
+  margin-top: 40px;
+}
+
+.character-tabs {
+  display: flex;
+  gap: 6px;
+  padding: 10px 14px 0;
+  flex-wrap: wrap;
+  flex-shrink: 0;
+}
+
+.tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.06);
+  color: #b6b6c2;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.tab:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.tab-active {
+  background: rgba(94, 129, 255, 0.22);
+  border-color: rgba(94, 129, 255, 0.5);
+  color: #fff;
+}
+
+.section-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.section-head .section-title {
+  margin-bottom: 0;
+  flex-shrink: 0;
+}
+
+.section-progress {
+  flex: 1;
+}
+
+.task-group {
+  margin-bottom: 8px;
+}
+
+.group-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  padding: 6px 6px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: #b6b6c2;
+  font-size: 12px;
+  cursor: pointer;
+  text-align: left;
+}
+
+.group-head:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.group-chevron {
+  width: 12px;
+  color: #7a7a88;
+}
+
+.group-count {
+  margin-left: auto;
+  font-size: 10px;
+  color: #7a7a88;
+  font-variant-numeric: tabular-nums;
+}
+
+.cat-none {
+  background: rgba(160, 160, 175, 0.16);
+  color: #a9a9b8;
+}
+
+.progress-bar {
+  flex: 1;
+  height: 6px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #5e81ff, #7ec8ff);
+  transition: width 0.25s ease;
+}
+
+.progress-text {
+  font-size: 11px;
+  color: #9a9aa8;
+  min-width: 32px;
+  text-align: right;
+}
+
+.task-section {
+  margin-bottom: 18px;
+}
+
+.section-title {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #7a7a88;
+  margin-bottom: 6px;
+}
+
+.task-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.task-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 10px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.task-item:hover {
+  background: rgba(255, 255, 255, 0.07);
+}
+
+.task-label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+  cursor: pointer;
+  min-width: 0;
+}
+
+.task-label input[type='checkbox'] {
+  accent-color: #5e81ff;
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.task-name {
+  white-space: normal;
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+  line-height: 1.35;
+}
+
+.task-done .task-name {
+  color: #6f6f7e;
+  text-decoration: line-through;
+}
+
+@property --alarm-angle {
+  syntax: '<angle>';
+  initial-value: 0deg;
+  inherits: false;
+}
+
+.task-alarm {
+  position: relative;
+}
+
+.task-alarm::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 8px;
+  padding: 1px;
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  animation: alarm-spin 2.5s linear infinite;
+  pointer-events: none;
+}
+
+@keyframes alarm-spin {
+  to {
+    --alarm-angle: 360deg;
+  }
+}
+
+.task-alarm-ominous-rift {
+  background: rgba(168, 108, 255, 0.18);
+}
+
+.task-alarm-ominous-rift:hover {
+  background: rgba(168, 108, 255, 0.26);
+}
+
+.task-alarm-ominous-rift::before {
+  background: conic-gradient(
+    from var(--alarm-angle),
+    #b57bff,
+    #efe0ff,
+    #8a5cff,
+    #b57bff,
+    #ffffff,
+    #b57bff
+  );
+}
+
+.task-alarm-field-boss {
+  background: rgba(255, 176, 32, 0.18);
+}
+
+.task-alarm-field-boss:hover {
+  background: rgba(255, 176, 32, 0.26);
+}
+
+.task-alarm-field-boss::before {
+  background: conic-gradient(
+    from var(--alarm-angle),
+    #ffcf57,
+    #fff8d6,
+    #ffa36b,
+    #ffcf57,
+    #ffffff,
+    #ffcf57
+  );
+}
+
+.cat-badge {
+  flex-shrink: 0;
+  padding: 1px 7px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.cat-combat {
+  background: rgba(255, 99, 99, 0.16);
+  color: #ff8f8f;
+}
+
+.cat-barter {
+  background: rgba(80, 200, 220, 0.16);
+  color: #6fd9ec;
+}
+
+.cat-parttime {
+  background: rgba(110, 210, 130, 0.16);
+  color: #7fdd95;
+}
+
+.cat-purchase {
+  background: rgba(255, 150, 210, 0.16);
+  color: #ff9ed8;
+}
+
+.mode-icon {
+  flex-shrink: 0;
+  font-size: 12px;
+}
+
+.count-ctrl {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.count-btn {
+  width: 26px;
+  height: 26px;
+  border: none;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.08);
+  color: #b6b6c2;
+  font-size: 14px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.count-btn:hover:not(:disabled) {
+  background: rgba(94, 129, 255, 0.3);
+  color: #fff;
+}
+
+.count-btn:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
+.count-text {
+  min-width: 32px;
+  text-align: center;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  color: #b6b6c2;
+}
+
+.count-done {
+  color: #46c46e;
+}
+
+.task-excluded-row {
+  opacity: 0.6;
+}
+
+.excluded-badge {
+  flex-shrink: 0;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: rgba(255, 176, 32, 0.14);
+  color: #ffcf82;
+  font-size: 10px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* ── 동기화 ID 게이트 화면 (#27, 웹 전용) ─────────── */
+.gate {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  padding: 24px;
+  padding-top: calc(24px + env(safe-area-inset-top));
+  padding-bottom: calc(24px + env(safe-area-inset-bottom));
+}
+
+.gate-card {
+  width: 100%;
+  max-width: 360px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.gate-title {
+  font-size: 20px;
+  font-weight: 700;
+  text-align: center;
+  margin-bottom: 4px;
+}
+
+.gate-desc {
+  color: #9a9aa8;
+  font-size: 13px;
+  line-height: 1.5;
+  text-align: center;
+}
+
+.gate-desc b {
+  color: #d0d0da;
+  font-weight: 700;
+}
+
+.gate-input {
+  padding: 12px 14px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.05);
+  color: #fff;
+  font-size: 15px;
+  outline: none;
+  text-align: center;
+}
+
+.gate-input:focus {
+  border-color: rgba(94, 129, 255, 0.6);
+}
+
+.gate-btn {
+  padding: 12px;
+  border: none;
+  border-radius: 10px;
+  background: #5e81ff;
+  color: #fff;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.gate-btn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.gate-btn:not(:disabled):hover {
+  background: #7093ff;
+}
+
+.gate-error {
+  color: #ff8a8e;
+  font-size: 12px;
+  line-height: 1.5;
+  text-align: center;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: rgba(229, 72, 77, 0.12);
+}
+
+.gate-loading {
+  color: #9a9aa8;
+  font-size: 14px;
+}

@@ -2,6 +2,8 @@ import { contextBridge, ipcRenderer } from 'electron'
 import type {
   CaptureRegion,
   CatalogSyncResult,
+  CloudRegisterResult,
+  CloudSyncResult,
   EngineStatus,
   QuestCategory,
   Screenshot,
@@ -20,8 +22,6 @@ const api = {
     showOverlay: (): void => ipcRenderer.send('overlay:show'),
     /** 오버레이 숨기기 (오버레이 타이틀바 버튼) */
     hideOverlay: (): void => ipcRenderer.send('overlay:hide'),
-    /** 관리 창 열기/포커스 (오버레이에서 접근) */
-    openManage: (): void => ipcRenderer.send('manage:show'),
     quit: (): void => ipcRenderer.send('app:quit')
   },
   capture: {
@@ -119,6 +119,13 @@ const api = {
   catalog: {
     /** Firestore 퀘스트 카탈로그 수동 동기화 (#4) */
     sync: (): Promise<CatalogSyncResult> => ipcRenderer.invoke('catalog:sync')
+  },
+  cloud: {
+    /** 게임계정 ID 등록/연동 (#26) — 원격 있으면 불러오기, 없으면 로컬 업로드 */
+    register: (gameAccountId: string): Promise<CloudRegisterResult> =>
+      ipcRenderer.invoke('cloud:register', gameAccountId),
+    /** 수동 동기화 (#28) — 클릭했을 때만 클라우드에서 최신 데이터를 가져옴 (자동 폴링 없음) */
+    pull: (): Promise<CloudSyncResult> => ipcRenderer.invoke('cloud:pull')
   },
   picker: {
     onInit: (
