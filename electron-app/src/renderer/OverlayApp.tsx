@@ -72,7 +72,7 @@ export default function OverlayApp(): React.JSX.Element {
           </button>
         </div>
       </header>
-      <CharacterTabs readonly />
+      <CharacterTabs />
       <main className="content">
         <TaskChecklist activeAlarms={activeAlarms} />
       </main>

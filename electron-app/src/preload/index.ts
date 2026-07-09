@@ -43,11 +43,8 @@ const api = {
   },
   store: {
     getState: (): Promise<StoreShape> => ipcRenderer.invoke('store:get-state'),
-    addCharacter: (
-      displayName: string,
-      copyFromCharacterId?: string | null
-    ): Promise<StoreShape> =>
-      ipcRenderer.invoke('store:add-character', displayName, copyFromCharacterId ?? null),
+    addCharacter: (displayName: string): Promise<StoreShape> =>
+      ipcRenderer.invoke('store:add-character', displayName),
     removeCharacter: (characterId: string): Promise<StoreShape> =>
       ipcRenderer.invoke('store:remove-character', characterId),
     renameCharacter: (characterId: string, displayName: string): Promise<StoreShape> =>

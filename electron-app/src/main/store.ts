@@ -76,36 +76,17 @@ export class DashboardStore {
 
   // ── 캐릭터 CRUD ──────────────────────────────────────────
 
-  /**
-   * 캐릭터 추가.
-   * @param copyFromCharacterId 지정 시 해당 캐릭터의 퀘스트 구성(커스텀 포함)을 복사 (#12).
-   *   이름/주기/횟수/threshold/catalogId는 유지하고 체크 상태·진행 횟수는 초기화.
-   *   미지정(null)이면 캐시된 카탈로그 퀘스트로 채움 (#4).
-   */
-  addCharacter(displayName: string, copyFromCharacterId: string | null = null): StoreShape {
+  /** 캐릭터 추가 — 캐시된 카탈로그 퀘스트로 채운다 (#4).
+   *  프리셋 복사(#12)는 제거됨 — 대신 추천 패널에서 타 캐릭터 커스텀 퀘스트를 골라 추가 (#23) */
+  addCharacter(displayName: string): StoreShape {
     const characters = this.store.get('characters')
     const id = this.nextId('character', Object.keys(characters))
 
     const tasks: Record<string, TaskState> = {}
-    const source = copyFromCharacterId ? characters[copyFromCharacterId] : undefined
-
-    if (source) {
-      // 프리셋 복사 — 퀘스트 id도 그대로 유지 (템플릿 등록 시 일관성)
-      for (const [taskId, task] of Object.entries(source.tasks)) {
-        tasks[taskId] = {
-          ...task,
-          done: false,
-          mode: 'manual',
-          lastDoneAt: null,
-          count: 0
-        }
-      }
-    } else {
-      const catalog = this.store.get('questCatalog', []) ?? []
-      catalog.forEach((item, i) => {
-        tasks[`task_${String(i + 1).padStart(2, '0')}`] = this.catalogTask(item)
-      })
-    }
+    const catalog = this.store.get('questCatalog', []) ?? []
+    catalog.forEach((item, i) => {
+      tasks[`task_${String(i + 1).padStart(2, '0')}`] = this.catalogTask(item)
+    })
 
     const character: Character = { displayName, tasks }
     this.store.set(`characters.${id}`, character)

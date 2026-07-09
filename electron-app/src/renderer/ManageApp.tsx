@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { AUTO_DETECT_ENABLED, type EngineStatus } from '../shared/types'
+import CharactersView from './components/CharactersView'
 import CharacterTabs from './components/CharacterTabs'
 import DashboardView from './components/DashboardView'
 import QuestManager from './components/QuestManager'
@@ -7,11 +8,12 @@ import RecommendedPanel from './components/RecommendedPanel'
 import SettingsPanel from './components/SettingsPanel'
 import { useDashboardStore } from './store/useDashboardStore'
 
-type View = 'dashboard' | 'quests' | 'settings'
+type View = 'dashboard' | 'quests' | 'characters' | 'settings'
 
 const VIEW_TITLE: Record<View, string> = {
   dashboard: '대시보드',
   quests: '퀘스트 관리',
+  characters: '캐릭터',
   settings: '설정'
 }
 
@@ -58,6 +60,7 @@ export default function ManageApp(): React.JSX.Element {
         <nav className="side-nav-list">
           {navItem('dashboard', '🏠')}
           {navItem('quests', '📋')}
+          {navItem('characters', '👥')}
           {navItem('settings', '⚙')}
         </nav>
         <div className="side-footer">
@@ -88,6 +91,10 @@ export default function ManageApp(): React.JSX.Element {
                 <QuestManager />
               </div>
               <RecommendedPanel />
+            </div>
+          ) : view === 'characters' ? (
+            <div className="settings-narrow">
+              <CharactersView />
             </div>
           ) : (
             <div className="settings-narrow">
