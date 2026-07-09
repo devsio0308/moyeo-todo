@@ -72,6 +72,14 @@ export interface CatalogSyncResult {
   updated?: number
 }
 
+/** 게임계정 ID 등록 결과 (#26) */
+export interface CloudRegisterResult {
+  ok: boolean
+  message: string
+  /** true면 원격 데이터를 불러와 로컬을 덮어썼음 (기존 등록 기기) */
+  pulled?: boolean
+}
+
 export interface Character {
   displayName: string
   tasks: Record<string, TaskState>
@@ -96,6 +104,24 @@ export interface Settings {
   firebaseProjectId: string | null
   /** 알람 규칙별 모드 (#11). 키: AlarmRule.id, 없으면 기본 'sound'(UI+소리) */
   alarmModes?: Record<string, import('./alarms').AlarmMode>
+  /** 게임계정 ID (#26) — Firestore 동기화 키. 등록하면 캐릭터/퀘스트 진행 상황이 클라우드에 동기화된다 */
+  gameAccountId?: string | null
+}
+
+/**
+ * Firestore players/{gameAccountId} 문서 형태 (#26).
+ * 기기별 설정(captureRegion, matchThreshold 등)은 제외 — 캐릭터 진행 상황과
+ * 리셋 스케줄만 여러 기기/향후 웹 오버레이 간 동기화 대상.
+ */
+export interface CloudPlayerData {
+  characters: Record<string, Character>
+  characterOrder: string[]
+  lastDailyResetAt: number | null
+  lastWeeklyResetAt: number | null
+  dailyResetHour: number
+  weeklyResetDay: number
+  /** 마지막 푸시 시각 (unix epoch 초) — 디버깅용 */
+  updatedAt: number
 }
 
 export interface StoreShape {

@@ -98,11 +98,16 @@ export async function fetchQuestCatalog(projectId: string): Promise<QuestCatalog
 /** 빌드 시 .env(MAIN_VITE_FIREBASE_PROJECT_ID)에서 주입되는 기본 프로젝트 ID (#14). git 미포함 */
 const DEFAULT_PROJECT_ID: string | null = import.meta.env.MAIN_VITE_FIREBASE_PROJECT_ID ?? null
 
+/** 유효 프로젝트 ID 해석 — 설정 UI 입력값 > .env 기본값. cloud-sync.ts(#26)와 공유 */
+export function getEffectiveProjectId(): string | null {
+  const { settings } = dashboardStore.getState()
+  return settings.firebaseProjectId?.trim() || DEFAULT_PROJECT_ID
+}
+
 /** 설정된 프로젝트에서 카탈로그를 가져와 전체 캐릭터에 동기화.
  *  우선순위: 설정 UI 입력값 > .env 기본값 */
 export async function syncQuestCatalogOnce(): Promise<CatalogSyncResult> {
-  const { settings } = dashboardStore.getState()
-  const projectId = settings.firebaseProjectId?.trim() || DEFAULT_PROJECT_ID
+  const projectId = getEffectiveProjectId()
   if (!projectId) {
     return { ok: false, message: 'Firebase 프로젝트 ID가 설정되지 않았습니다' }
   }

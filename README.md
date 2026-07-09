@@ -107,6 +107,35 @@ npm run build && npx electron-builder
 퀘스트 관리 화면의 "📖 추천 퀘스트" 목록으로 표시되고, 골라서 추가하면 **커스텀 퀘스트**로
 등록된다 (캐릭터별 선택, 삭제 자유).
 
+## 게임계정 동기화 (Firestore, #26)
+
+인증 없이 **게임계정 ID를 키**로 캐릭터/퀘스트 진행 상황을 Firestore에 동기화한다. 같은
+ID로 다른 기기(추후 웹 오버레이 포함)에서 등록하면 이어서 볼 수 있다.
+
+```
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /quests/{doc} { allow read: if true; allow write: if false; }
+    match /recommended_quests/{doc} { allow read: if true; allow write: if false; }
+    match /players/{playerId} { allow read, write: if true; }
+  }
+}
+```
+
+`players` 컬렉션은 **영구적으로** 읽기/쓰기 모두 열려 있어야 한다 — 인증 없이 ID만으로
+접근하는 설계이기 때문이다(위 `quests`/`recommended_quests`처럼 시드 후 잠그는 규칙이
+아님). 민감한 개인정보가 아닌 퀘스트 체크 상태만 다루므로 감수 가능한 트레이드오프로
+판단했다.
+
+동작:
+- ⚙ 설정 → "게임계정 동기화"에서 ID 등록. **원격에 이미 데이터가 있으면 원격 우선**으로
+  로컬을 덮어쓰고, 없으면 **현재 로컬 데이터를 업로드**해 최초 등록으로 삼는다.
+- 등록 후에는 캐릭터/퀘스트 변경이 있을 때마다 자동으로 `players/{id}` 문서에 반영된다
+  (fire-and-forget — 네트워크 실패해도 로컬 동작에는 영향 없음).
+- 동기화 대상은 캐릭터/퀘스트/리셋 시각뿐이며, 캡처 리전·매칭 정확도 같은 기기별 설정은
+  포함하지 않는다.
+
 ## Git 워크플로
 
 gitflow — `master`(릴리스) / `develop`(통합) / `feature/*`(기능 단위, `--no-ff` 머지)

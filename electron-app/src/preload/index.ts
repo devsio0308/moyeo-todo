@@ -2,6 +2,7 @@ import { contextBridge, ipcRenderer } from 'electron'
 import type {
   CaptureRegion,
   CatalogSyncResult,
+  CloudRegisterResult,
   EngineStatus,
   QuestCategory,
   Screenshot,
@@ -119,6 +120,11 @@ const api = {
   catalog: {
     /** Firestore 퀘스트 카탈로그 수동 동기화 (#4) */
     sync: (): Promise<CatalogSyncResult> => ipcRenderer.invoke('catalog:sync')
+  },
+  cloud: {
+    /** 게임계정 ID 등록/연동 (#26) — 원격 있으면 불러오기, 없으면 로컬 업로드 */
+    register: (gameAccountId: string): Promise<CloudRegisterResult> =>
+      ipcRenderer.invoke('cloud:register', gameAccountId)
   },
   picker: {
     onInit: (
