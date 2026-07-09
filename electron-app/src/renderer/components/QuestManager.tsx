@@ -23,6 +23,7 @@ export default function QuestManager(): React.JSX.Element {
   const [period, setPeriod] = useState<TaskPeriod>('daily')
   const [targetCount, setTargetCount] = useState(1)
   const [category, setCategory] = useState<QuestCategory | ''>('')
+  const [location, setLocation] = useState('')
   const [confirmId, setConfirmId] = useState<string | null>(null)
   /** 인라인 수정 중인 커스텀 퀘스트 (#21) */
   const [editing, setEditing] = useState<{
@@ -31,6 +32,7 @@ export default function QuestManager(): React.JSX.Element {
     period: TaskPeriod
     category: QuestCategory | ''
     targetCount: number
+    location: string
   } | null>(null)
 
   if (!data || !activeId || !data.characters[activeId]) {
@@ -43,10 +45,11 @@ export default function QuestManager(): React.JSX.Element {
   const submit = (): void => {
     const trimmed = name.trim()
     if (!trimmed) return
-    void addTask(activeId, trimmed, period, targetCount, category || null)
+    void addTask(activeId, trimmed, period, targetCount, category || null, location.trim() || null)
     setName('')
     setTargetCount(1)
     setCategory('')
+    setLocation('')
   }
 
   /** 인라인 수정 저장 (#21) */
@@ -56,7 +59,8 @@ export default function QuestManager(): React.JSX.Element {
       displayName: editing.name.trim(),
       period: editing.period,
       category: editing.category || null,
-      targetCount: editing.targetCount
+      targetCount: editing.targetCount,
+      location: editing.location.trim() || null
     })
     setEditing(null)
   }
@@ -121,6 +125,12 @@ export default function QuestManager(): React.JSX.Element {
                       if (v >= 1 && v <= 99) setEditing({ ...editing, targetCount: v })
                     }}
                   />
+                  <input
+                    className="add-task-input edit-location-input"
+                    placeholder="지역 (선택)"
+                    value={editing.location}
+                    onChange={(e) => setEditing({ ...editing, location: e.target.value })}
+                  />
                   <button
                     className="add-task-btn"
                     disabled={!editing.name.trim()}
@@ -137,6 +147,7 @@ export default function QuestManager(): React.JSX.Element {
 
             return (
               <li className="task-item" key={taskId}>
+                {task.location && <span className="loc-badge">{task.location}</span>}
                 <span className="task-name manage-task-name">
                   {task.displayName}
                   {(task.targetCount ?? 1) > 1 && (
@@ -165,7 +176,8 @@ export default function QuestManager(): React.JSX.Element {
                         name: task.displayName,
                         period: task.period,
                         category: task.category ?? '',
-                        targetCount: task.targetCount ?? 1
+                        targetCount: task.targetCount ?? 1,
+                        location: task.location ?? ''
                       })
                     }
                   >
@@ -258,6 +270,15 @@ export default function QuestManager(): React.JSX.Element {
                 const v = parseInt(e.target.value)
                 if (v >= 1 && v <= 99) setTargetCount(v)
               }}
+            />
+          </div>
+          <div className="form-field">
+            <label>지역 (선택)</label>
+            <input
+              className="add-task-input loc-input"
+              placeholder="예: 던바튼"
+              value={location}
+              onChange={(e) => setLocation(e.target.value)}
             />
           </div>
           <button className="add-task-btn form-submit" type="submit" disabled={!name.trim()}>

@@ -39,6 +39,7 @@ function collectOtherCustomQuests(
         period: task.period,
         targetCount: task.targetCount ?? 1,
         category: task.category ?? null,
+        location: task.location ?? null,
         owner: character.displayName
       })
     }
@@ -61,6 +62,7 @@ function QuestRow({
 }): React.JSX.Element {
   return (
     <li className="task-item rec-item">
+      {item.location && <span className="loc-badge">{item.location}</span>}
       <span className="task-name manage-task-name">
         {item.name}
         {(item.targetCount ?? 1) > 1 && <span className="target-badge">×{item.targetCount}</span>}
@@ -94,7 +96,14 @@ export default function RecommendedPanel(): React.JSX.Element {
 
   const add = (item: QuestCatalogItem): void => {
     if (!activeId) return
-    void addTask(activeId, item.name, item.period, item.targetCount ?? 1, item.category ?? null)
+    void addTask(
+      activeId,
+      item.name,
+      item.period,
+      item.targetCount ?? 1,
+      item.category ?? null,
+      item.location ?? null
+    )
   }
 
   return (

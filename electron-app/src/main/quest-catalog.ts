@@ -54,17 +54,21 @@ export function parseQuestDocuments(body: unknown): QuestCatalogItem[] {
     const categoryRaw = d.fields.category?.stringValue?.trim()
     const category = isQuestCategory(categoryRaw) ? categoryRaw : null
 
-    items.push({ id, name, period, targetCount, category, order })
+    // 지역 태그 (#24) — 자유 문자열
+    const location = d.fields.location?.stringValue?.trim() || null
+
+    items.push({ id, name, period, targetCount, category, location, order })
   }
 
   // order → 이름 순 정렬 후 order 필드 제거
   items.sort((a, b) => a.order - b.order || a.name.localeCompare(b.name, 'ko'))
-  return items.map(({ id, name, period, targetCount, category }) => ({
+  return items.map(({ id, name, period, targetCount, category, location }) => ({
     id,
     name,
     period,
     targetCount,
-    category
+    category,
+    location
   }))
 }
 
