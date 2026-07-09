@@ -92,11 +92,6 @@ body {
   font-weight: 600;
 }
 
-.side-nav-icon {
-  width: 20px;
-  text-align: center;
-}
-
 .side-footer {
   margin-top: auto;
   display: flex;
