@@ -405,6 +405,11 @@ body {
   color: #7fdd95;
 }
 
+.cat-purchase {
+  background: rgba(255, 150, 210, 0.16);
+  color: #ff9ed8;
+}
+
 .mode-icon {
   flex-shrink: 0;
   font-size: 12px;
