@@ -27,7 +27,8 @@ interface DashboardState {
     displayName: string,
     period: TaskPeriod,
     targetCount?: number,
-    category?: QuestCategory | null
+    category?: QuestCategory | null,
+    location?: string | null
   ) => Promise<void>
   incrementTask: (characterId: string, taskId: string, delta: number) => Promise<void>
   removeTask: (characterId: string, taskId: string) => Promise<void>
@@ -35,7 +36,10 @@ interface DashboardState {
     characterId: string,
     taskId: string,
     patch: Partial<
-      Pick<TaskState, 'displayName' | 'period' | 'threshold' | 'category' | 'targetCount'>
+      Pick<
+        TaskState,
+        'displayName' | 'period' | 'threshold' | 'category' | 'targetCount' | 'location'
+      >
     >
   ) => Promise<void>
   setTaskDone: (characterId: string, taskId: string, done: boolean, mode: TaskMode) => Promise<void>
@@ -73,9 +77,16 @@ export const useDashboardStore = create<DashboardState>((set, get) => {
     removeCharacter: async (id) => apply(await window.api.store.removeCharacter(id)),
     renameCharacter: async (id, name) => apply(await window.api.store.renameCharacter(id, name)),
     reorderCharacters: async (order) => apply(await window.api.store.reorderCharacters(order)),
-    addTask: async (characterId, displayName, period, targetCount, category) =>
+    addTask: async (characterId, displayName, period, targetCount, category, location) =>
       apply(
-        await window.api.store.addTask(characterId, displayName, period, targetCount, category)
+        await window.api.store.addTask(
+          characterId,
+          displayName,
+          period,
+          targetCount,
+          category,
+          location
+        )
       ),
     incrementTask: async (characterId, taskId, delta) =>
       apply(await window.api.store.incrementTask(characterId, taskId, delta)),

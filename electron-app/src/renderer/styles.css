@@ -257,6 +257,28 @@ body {
   margin-right: auto;
 }
 
+/* 지역 태그 (#24) — 값 변동성이 커서 단일 색 고정 */
+.loc-badge {
+  flex-shrink: 0;
+  display: inline-block;
+  padding: 1px 7px;
+  margin-right: 6px;
+  border-radius: 999px;
+  background: rgba(140, 160, 255, 0.14);
+  color: #a9b8ff;
+  font-size: 10px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.loc-input {
+  width: 110px;
+}
+
+.edit-location-input {
+  max-width: 130px;
+}
+
 /* 추천 패널 — 타 캐릭터 커스텀 (#23) */
 .rec-others-title {
   margin-top: 22px;

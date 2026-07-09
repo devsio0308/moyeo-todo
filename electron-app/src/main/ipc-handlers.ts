@@ -59,7 +59,8 @@ export function registerIpcHandlers(
       displayName: string,
       period: TaskPeriod,
       targetCount?: number,
-      category?: import('../shared/types').QuestCategory | null
+      category?: import('../shared/types').QuestCategory | null,
+      location?: string | null
     ) => {
       const state = dashboardStore.addTask(
         characterId,
@@ -67,7 +68,8 @@ export function registerIpcHandlers(
         period,
         null,
         targetCount,
-        category ?? null
+        category ?? null,
+        location ?? null
       )
       broadcast()
       return state
@@ -96,7 +98,10 @@ export function registerIpcHandlers(
       characterId: string,
       taskId: string,
       patch: Partial<
-        Pick<TaskState, 'displayName' | 'period' | 'threshold' | 'category' | 'targetCount'>
+        Pick<
+          TaskState,
+          'displayName' | 'period' | 'threshold' | 'category' | 'targetCount' | 'location'
+        >
       >
     ) => {
       const state = dashboardStore.updateTask(characterId, taskId, patch)

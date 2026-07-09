@@ -35,6 +35,10 @@
         "category": {
           "enum": ["전투", "물물교환", "알바", "구매", null],
           "description": "카테고리 태그 (#13). 없으면 배지 미표시. 배열 순서가 섹션 내 정렬 순서"
+        },
+        "location": {
+          "type": ["string", "null"],
+          "description": "지역 태그 (#24, 자유 문자열 — 예: 두갈드아일, 던바튼)"
         }
       },
       "required": ["done", "mode", "lastDoneAt", "displayName", "period"]
@@ -106,7 +110,8 @@
               "name": { "type": "string" },
               "period": { "enum": ["daily", "weekly"] },
               "targetCount": { "type": "integer", "minimum": 1 },
-              "category": { "enum": ["전투", "물물교환", "알바", "구매", null] }
+              "category": { "enum": ["전투", "물물교환", "알바", "구매", null] },
+              "location": { "type": ["string", "null"] }
             },
             "required": ["id", "name", "period"]
           }

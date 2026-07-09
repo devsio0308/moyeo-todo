@@ -26,8 +26,22 @@ describe('parseQuestDocuments', () => {
       ]
     }
     expect(parseQuestDocuments(body)).toEqual([
-      { id: 'dungeon', name: '일일 던전', period: 'daily', targetCount: 1, category: null },
-      { id: 'raid', name: '주간 레이드', period: 'weekly', targetCount: 1, category: null }
+      {
+        id: 'dungeon',
+        name: '일일 던전',
+        period: 'daily',
+        targetCount: 1,
+        category: null,
+        location: null
+      },
+      {
+        id: 'raid',
+        name: '주간 레이드',
+        period: 'weekly',
+        targetCount: 1,
+        category: null,
+        location: null
+      }
     ])
   })
 
@@ -43,6 +57,23 @@ describe('parseQuestDocuments', () => {
     expect(items.find((i) => i.id === 'combat')?.category).toBe('전투')
     expect(items.find((i) => i.id === 'barter')?.category).toBe('물물교환')
     expect(items.find((i) => i.id === 'invalid')?.category).toBeNull()
+  })
+
+  it('location 필드를 파싱한다 (#24)', () => {
+    const body = {
+      documents: [
+        doc('barter1', {
+          name: { stringValue: '엘빈: 야채볶음 2 → 상급목재 4' },
+          location: { stringValue: '두갈드아일' }
+        }),
+        doc('no-loc', { name: { stringValue: '지역 없음' } }),
+        doc('empty-loc', { name: { stringValue: '빈 지역' }, location: { stringValue: '  ' } })
+      ]
+    }
+    const items = parseQuestDocuments(body)
+    expect(items.find((i) => i.id === 'barter1')?.location).toBe('두갈드아일')
+    expect(items.find((i) => i.id === 'no-loc')?.location).toBeNull()
+    expect(items.find((i) => i.id === 'empty-loc')?.location).toBeNull()
   })
 
   it('targetCount 필드를 파싱한다 (#7)', () => {

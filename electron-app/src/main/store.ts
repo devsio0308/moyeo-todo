@@ -129,7 +129,8 @@ export class DashboardStore {
     period: TaskPeriod,
     catalogId: string | null = null,
     targetCount = 1,
-    category: QuestCategory | null = null
+    category: QuestCategory | null = null,
+    location: string | null = null
   ): StoreShape {
     const character = this.store.get('characters')[characterId]
     if (character) {
@@ -144,7 +145,8 @@ export class DashboardStore {
         catalogId,
         targetCount: Math.max(1, Math.floor(targetCount)),
         count: 0,
-        category
+        category,
+        location
       }
       this.store.set(`characters.${characterId}.tasks.${id}`, task)
     }
@@ -165,7 +167,10 @@ export class DashboardStore {
     characterId: string,
     taskId: string,
     patch: Partial<
-      Pick<TaskState, 'displayName' | 'period' | 'threshold' | 'category' | 'targetCount'>
+      Pick<
+        TaskState,
+        'displayName' | 'period' | 'threshold' | 'category' | 'targetCount' | 'location'
+      >
     >
   ): StoreShape {
     const task = this.store.get('characters')[characterId]?.tasks[taskId]
@@ -295,18 +300,21 @@ export class DashboardStore {
           const t = tasks[existingTaskId]
           const itemTarget = Math.max(1, item.targetCount ?? 1)
           const itemCategory = item.category ?? null
+          const itemLocation = item.location ?? null
           if (
             t.displayName !== item.name ||
             t.period !== item.period ||
             (t.targetCount ?? 1) !== itemTarget ||
-            (t.category ?? null) !== itemCategory
+            (t.category ?? null) !== itemCategory ||
+            (t.location ?? null) !== itemLocation
           ) {
             tasks[existingTaskId] = {
               ...t,
               displayName: item.name,
               period: item.period,
               targetCount: itemTarget,
-              category: itemCategory
+              category: itemCategory,
+              location: itemLocation
             }
             updated++
           }
@@ -335,7 +343,8 @@ export class DashboardStore {
       catalogId: item.id,
       targetCount: Math.max(1, item.targetCount ?? 1),
       count: 0,
-      category: item.category ?? null
+      category: item.category ?? null,
+      location: item.location ?? null
     }
   }
 

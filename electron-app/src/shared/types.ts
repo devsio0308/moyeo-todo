@@ -44,6 +44,8 @@ export interface TaskState {
   count?: number
   /** 카테고리 태그 (#13). 없으면 배지 미표시 */
   category?: QuestCategory | null
+  /** 지역 태그 (#24, 자유 문자열 — 예: 두갈드아일, 던바튼). 없으면 미표시 */
+  location?: string | null
 }
 
 /** Firestore quests 컬렉션에서 가져온 카탈로그 항목 (#4) */
@@ -55,6 +57,8 @@ export interface QuestCatalogItem {
   targetCount?: number
   /** 카테고리 태그 (#13) */
   category?: QuestCategory | null
+  /** 지역 태그 (#24) */
+  location?: string | null
 }
 
 /** 카탈로그 동기화 결과 (#4) */
