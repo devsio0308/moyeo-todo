@@ -1,6 +1,6 @@
 {
   "name": "homework-dashboard",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "게임 숙제 체크 오버레이 대시보드",
   "main": "./out/main/index.js",
   "author": "hrjin",
