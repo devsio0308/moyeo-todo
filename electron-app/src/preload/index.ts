@@ -16,8 +16,12 @@ import type {
 /** 렌더러에 노출하는 최소 API 표면 */
 const api = {
   window: {
-    hide: (): void => ipcRenderer.send('window:hide'),
-    minimize: (): void => ipcRenderer.send('window:minimize'),
+    /** 오버레이 표시 (#17 — 관리 창의 '오버레이 띄우기') */
+    showOverlay: (): void => ipcRenderer.send('overlay:show'),
+    /** 오버레이 숨기기 (오버레이 타이틀바 버튼) */
+    hideOverlay: (): void => ipcRenderer.send('overlay:hide'),
+    /** 관리 창 열기/포커스 (오버레이에서 접근) */
+    openManage: (): void => ipcRenderer.send('manage:show'),
     quit: (): void => ipcRenderer.send('app:quit')
   },
   capture: {
