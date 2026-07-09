@@ -1,11 +1,17 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
-import App from './App'
+import ManageApp from './ManageApp'
+import OverlayApp from './OverlayApp'
 import PickerApp from './PickerApp'
 import './styles.css'
 
-// '#picker' 해시로 열리면 영역 선택 UI, 아니면 대시보드
-const Root = window.location.hash === '#picker' ? PickerApp : App
+// 해시 라우팅 (#17): #overlay = 체크 전용 오버레이, #picker = 영역 선택, 기본 = 관리 창
+const Root =
+  window.location.hash === '#picker'
+    ? PickerApp
+    : window.location.hash === '#overlay'
+      ? OverlayApp
+      : ManageApp
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>

@@ -30,6 +30,69 @@ body {
   overflow: hidden;
 }
 
+/* ── 관리 창 (#17) — 일반 프레임 창, 불투명 배경 ── */
+.manage-root {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: #16161c;
+}
+
+.manage-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  background: rgba(255, 255, 255, 0.04);
+  flex-shrink: 0;
+}
+
+.manage-nav {
+  display: flex;
+  gap: 4px;
+  flex: 1;
+}
+
+.manage-tab {
+  padding: 6px 12px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: transparent;
+  color: #b6b6c2;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.manage-tab:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.manage-tab-active {
+  background: rgba(94, 129, 255, 0.22);
+  border-color: rgba(94, 129, 255, 0.5);
+  color: #fff;
+}
+
+.overlay-launch-btn {
+  flex-shrink: 0;
+  padding: 6px 14px;
+  border: none;
+  border-radius: 8px;
+  background: #5e81ff;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.overlay-launch-btn:hover {
+  background: #7093ff;
+}
+
+.manage-content {
+  padding: 14px;
+}
+
 /* ── 타이틀바: 커스텀 드래그 영역 ───────────────── */
 .titlebar {
   display: flex;

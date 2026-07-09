@@ -15,14 +15,14 @@ interface IpcCallbacks {
 /**
  * renderer ↔ main IPC.
  * 모든 store mutation은 최신 전체 상태를 반환하고,
- * 동시에 'store:changed'로 브로드캐스트한다 (자동 감지 등 main발 변경도 동일 경로로 수신).
+ * 동시에 'store:changed'로 전체 창에 브로드캐스트한다 (#17 — 두 창 상태 공유).
  */
 export function registerIpcHandlers(
-  getWindow: () => BrowserWindow | null,
+  broadcastAll: (channel: string, payload: unknown) => void,
   callbacks: IpcCallbacks = {}
 ): void {
   const broadcast = (): void => {
-    getWindow()?.webContents.send('store:changed', dashboardStore.getState())
+    broadcastAll('store:changed', dashboardStore.getState())
   }
 
   ipcMain.handle('store:get-state', () => dashboardStore.getState())
@@ -129,13 +129,16 @@ export function registerIpcHandlers(
 
   // ── 리전 지정 / 템플릿 등록 플로우 (명세서 §5 SettingsPanel) ──
 
-  /** 오버레이를 숨긴 채 엔진 스크린샷 → 픽커로 영역 선택 */
-  const pickRect = async (message: string): Promise<{
+  /** 요청한 창을 숨긴 채 엔진 스크린샷 → 픽커로 영역 선택 (#17: sender 기준) */
+  const pickRect = async (
+    sender: Electron.WebContents,
+    message: string
+  ): Promise<{
     rect: import('../shared/types').CaptureRegion | null
     screenshot: Screenshot
   }> => {
     if (!callbacks.requestScreenshot) throw new Error('스크린샷 기능이 초기화되지 않았습니다')
-    const win = getWindow()
+    const win = BrowserWindow.fromWebContents(sender)
     const wasVisible = win?.isVisible() ?? false
     win?.hide()
     try {
@@ -149,8 +152,8 @@ export function registerIpcHandlers(
     }
   }
 
-  ipcMain.handle('flow:pick-region', async () => {
-    const { rect } = await pickRect('퀘스트 완료 팝업이 뜨는 영역을 드래그하세요')
+  ipcMain.handle('flow:pick-region', async (e) => {
+    const { rect } = await pickRect(e.sender, '퀘스트 완료 팝업이 뜨는 영역을 드래그하세요')
     if (!rect) return null // 취소
     const state = dashboardStore.updateSettings({ captureRegion: rect })
     callbacks.onSettingsChanged?.()
@@ -165,8 +168,9 @@ export function registerIpcHandlers(
     return state
   })
 
-  ipcMain.handle('flow:register-template', async (_e, characterId: string, taskId: string) => {
+  ipcMain.handle('flow:register-template', async (e, characterId: string, taskId: string) => {
     const { rect, screenshot } = await pickRect(
+      e.sender,
       '이 퀘스트의 완료 팝업(고유한 부분)을 드래그로 지정하세요'
     )
     if (!rect) return null // 취소

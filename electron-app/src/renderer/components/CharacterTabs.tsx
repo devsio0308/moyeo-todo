@@ -1,14 +1,20 @@
 import { useState } from 'react'
 import { useDashboardStore } from '../store/useDashboardStore'
 
+interface Props {
+  /** true면 탭 전환만 가능 (#17 — 오버레이는 체크 전용) */
+  readonly?: boolean
+}
+
 /**
  * 캐릭터 탭 바.
- * - 추가: + 버튼 → 인라인 입력
+ * - 추가: + 버튼 → 인라인 입력 (+ 프리셋 복사 #12)
  * - 이름 변경: 활성 탭 더블클릭 → 인라인 입력
  * - 삭제: + 뒤의 🗑 버튼 — 활성 캐릭터를 2단계 확인 후 삭제 (#6)
  * - 순서 변경: HTML5 drag & drop
+ * readonly 모드(오버레이)에서는 전환만 가능.
  */
-export default function CharacterTabs(): React.JSX.Element {
+export default function CharacterTabs({ readonly = false }: Props): React.JSX.Element {
   const data = useDashboardStore((s) => s.data)
   const activeId = useDashboardStore((s) => s.activeCharacterId)
   const setActive = useDashboardStore((s) => s.setActiveCharacter)
@@ -86,27 +92,28 @@ export default function CharacterTabs(): React.JSX.Element {
           <button
             key={id}
             className={`tab ${isActive ? 'tab-active' : ''} ${dragId === id ? 'tab-dragging' : ''}`}
-            draggable
-            onDragStart={() => setDragId(id)}
+            draggable={!readonly}
+            onDragStart={() => !readonly && setDragId(id)}
             onDragEnd={() => setDragId(null)}
-            onDragOver={(e) => e.preventDefault()}
-            onDrop={() => handleDrop(id)}
+            onDragOver={(e) => !readonly && e.preventDefault()}
+            onDrop={() => !readonly && handleDrop(id)}
             onClick={() => {
               setActive(id)
               setConfirmDelete(false)
             }}
             onDoubleClick={() => {
+              if (readonly) return
               setEditingId(id)
               setEditName(character.displayName)
             }}
-            title="더블클릭: 이름 변경 / 드래그: 순서 변경"
+            title={readonly ? undefined : '더블클릭: 이름 변경 / 드래그: 순서 변경'}
           >
             {character.displayName}
           </button>
         )
       })}
 
-      {adding ? (
+      {readonly ? null : adding ? (
         <span className="tab-add-form">
           <input
             className="tab-edit-input"
@@ -153,7 +160,7 @@ export default function CharacterTabs(): React.JSX.Element {
         </button>
       )}
 
-      {activeCharacter && (
+      {!readonly && activeCharacter && (
         <button
           className={`tab tab-trash ${confirmDelete ? 'tab-trash-confirm' : ''}`}
           title={
