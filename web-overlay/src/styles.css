@@ -31,11 +31,16 @@ body {
   -webkit-tap-highlight-color: transparent;
 }
 
-/* ── 오버레이 컨테이너 — 모바일에서는 전체화면, 노치/홈바 안전영역 확보 ── */
+/*
+ * ── 오버레이 컨테이너 — 모바일에서는 전체화면, 노치/홈바 안전영역 확보 ──
+ * height는 100dvh가 아니라 100% — body가 이미 position:fixed로 뷰포트에
+ * 정확히 고정돼 있어서, 그 아래 체인은 전부 %로 물려받는 게 dvh와의 단위
+ * 불일치(특히 PWA standalone 모드에서 발생) 위험이 없다.
+ */
 .overlay-root {
   display: flex;
   flex-direction: column;
-  height: 100dvh;
+  height: 100%;
   background: #16161c;
   border: none;
   border-radius: 0;
@@ -439,7 +444,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  height: 100dvh;
+  height: 100%;
   padding: 24px;
   padding-top: calc(24px + env(safe-area-inset-top));
   padding-bottom: calc(24px + env(safe-area-inset-bottom));

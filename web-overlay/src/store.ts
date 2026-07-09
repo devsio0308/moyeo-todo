@@ -79,12 +79,17 @@ class WebStore {
     this.set({ gameAccountId: null, data: null, activeCharacterId: null, status: 'idle' })
   }
 
-  private async loadAndCatchUpReset(gameAccountId: string): Promise<void> {
+  private async loadAndCatchUpReset(
+    gameAccountId: string,
+    opts: { silent?: boolean } = {}
+  ): Promise<void> {
     if (!this.projectId) {
-      this.set({ status: 'error', errorMessage: 'Firebase 프로젝트 설정이 누락되었습니다' })
+      if (!opts.silent) this.set({ status: 'error', errorMessage: 'Firebase 프로젝트 설정이 누락되었습니다' })
       return
     }
-    this.set({ status: 'loading', errorMessage: null })
+    // silent(백그라운드 새로고침)는 이미 화면이 떠 있는 상태이므로 로딩 화면으로
+    // 전환하지 않는다 — 안 그러면 30초마다 체크리스트가 사라졌다 나타나며 깜빡인다
+    if (!opts.silent) this.set({ status: 'loading', errorMessage: null })
     try {
       const remote = await getPlayerData(this.projectId, gameAccountId)
       const settings = {
@@ -137,6 +142,11 @@ class WebStore {
 
       this.set({ data: finalData, activeCharacterId: activeId, status: 'ready' })
     } catch (e) {
+      if (opts.silent) {
+        // 백그라운드 갱신 실패는 화면을 건드리지 않고 다음 주기에 재시도
+        console.warn('[store] 백그라운드 새로고침 실패:', e)
+        return
+      }
       if (e instanceof NotRegisteredError) {
         this.set({ status: 'not-registered', errorMessage: null })
       } else {
@@ -150,14 +160,10 @@ class WebStore {
     this.set({ activeCharacterId: id })
   }
 
-  /** 조용히 다시 조회 (백그라운드 새로고침 — 로딩 화면 없이) */
+  /** 조용히 다시 조회 (백그라운드 새로고침 — 로딩 화면으로 전환하지 않음) */
   private async silentRefresh(): Promise<void> {
     if (!this.state.gameAccountId || !this.projectId || document.hidden) return
-    try {
-      await this.loadAndCatchUpReset(this.state.gameAccountId)
-    } catch {
-      // 조용히 무시 — 다음 주기에 재시도
-    }
+    await this.loadAndCatchUpReset(this.state.gameAccountId, { silent: true })
   }
 
   private startAutoRefresh(): void {
