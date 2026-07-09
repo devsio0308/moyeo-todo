@@ -5,13 +5,25 @@
 }
 
 html,
-body,
 #root {
   height: 100%;
+  overflow: hidden;
   background: #16161c;
 }
 
+/*
+ * body를 position:fixed로 고정 — iOS Safari는 overflow:hidden만으로는 문서 자체의
+ * 탄성 스크롤(바운스)을 완전히 막지 못한다. .content(overflow-y:auto)만이
+ * 유일한 스크롤 영역이 되도록 문서 레벨 스크롤 후보를 원천 차단한다.
+ */
 body {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  overscroll-behavior: none;
+  background: #16161c;
   font-family:
     'Pretendard', -apple-system, 'Malgun Gothic', 'Apple SD Gothic Neo', system-ui, sans-serif;
   font-size: 14px;
@@ -76,9 +88,13 @@ body {
 
 .content {
   flex: 1;
+  min-height: 0; /* flex 자식이 내용만큼 늘어나 부모(overlay-root)를 넘치게 하는 것 방지 */
   padding: 14px;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
+  /* 리스트 끝에 닿아도 스크롤이 body로 전파되지 않게 — 이게 없으면 리스트를
+     끝까지 당길 때 상위 문서가 같이 튕기는 현상이 남는다 */
+  overscroll-behavior-y: contain;
 }
 
 .placeholder {
