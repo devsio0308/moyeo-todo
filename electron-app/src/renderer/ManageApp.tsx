@@ -59,8 +59,8 @@ export default function ManageApp(): React.JSX.Element {
         </div>
         <nav className="side-nav-list">
           {navItem('dashboard', '🏠')}
-          {navItem('quests', '📋')}
           {navItem('characters', '👥')}
+          {navItem('quests', '📋')}
           {navItem('settings', '⚙')}
         </nav>
         <div className="side-footer">
