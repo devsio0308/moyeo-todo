@@ -46,6 +46,9 @@ export interface TaskState {
   category?: QuestCategory | null
   /** 지역 태그 (#24, 자유 문자열 — 예: 두갈드아일, 던바튼). 없으면 미표시 */
   location?: string | null
+  /** 이 캐릭터는 이 카탈로그 퀘스트를 하지 않음 (#25).
+   *  true면 항상 완료 상태로 고정되고 리셋 대상에서 제외된다. 커스텀 퀘스트에는 의미 없음 */
+  excluded?: boolean
 }
 
 /** Firestore quests 컬렉션에서 가져온 카탈로그 항목 (#4) */

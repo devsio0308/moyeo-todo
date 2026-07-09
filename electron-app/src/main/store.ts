@@ -217,6 +217,26 @@ export class DashboardStore {
     return this.getState()
   }
 
+  /**
+   * 카탈로그 퀘스트 제외 토글 (#25) — 삭제는 동기화로 부활하므로 대체 기능.
+   * 제외 ON: 항상 완료 상태로 고정 (리셋 시에도 유지). 제외 OFF: 미완료로 초기화해 정상 진행 대상으로 복귀.
+   */
+  setTaskExcluded(characterId: string, taskId: string, excluded: boolean): StoreShape {
+    const task = this.store.get('characters')[characterId]?.tasks[taskId]
+    if (task) {
+      const target = task.targetCount ?? 1
+      const next: TaskState = {
+        ...task,
+        excluded,
+        done: excluded,
+        count: excluded ? target : 0,
+        lastDoneAt: excluded ? Math.floor(Date.now() / 1000) : null
+      }
+      this.store.set(`characters.${characterId}.tasks.${taskId}`, next)
+    }
+    return this.getState()
+  }
+
   /** 카운트 퀘스트 진행 증감 (#7). target 도달 시 완료, 0 미만/target 초과는 클램프 */
   incrementTask(
     characterId: string,
@@ -357,8 +377,14 @@ export class DashboardStore {
     for (const [charId, character] of Object.entries(characters)) {
       const tasks: Record<string, TaskState> = {}
       for (const [taskId, task] of Object.entries(character.tasks)) {
-        tasks[taskId] =
-          task.period === period ? { ...task, done: false, lastDoneAt: null, count: 0 } : task
+        if (task.period !== period) {
+          tasks[taskId] = task
+        } else if (task.excluded) {
+          // 제외된 퀘스트는 리셋해도 완료 상태 유지 (#25)
+          tasks[taskId] = { ...task, done: true, count: task.targetCount ?? 1 }
+        } else {
+          tasks[taskId] = { ...task, done: false, lastDoneAt: null, count: 0 }
+        }
       }
       next[charId] = { ...character, tasks }
     }

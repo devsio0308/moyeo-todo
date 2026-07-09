@@ -70,6 +70,12 @@ const api = {
       ),
     incrementTask: (characterId: string, taskId: string, delta: number): Promise<StoreShape> =>
       ipcRenderer.invoke('store:increment-task', characterId, taskId, delta),
+    setTaskExcluded: (
+      characterId: string,
+      taskId: string,
+      excluded: boolean
+    ): Promise<StoreShape> =>
+      ipcRenderer.invoke('store:set-task-excluded', characterId, taskId, excluded),
     removeTask: (characterId: string, taskId: string): Promise<StoreShape> =>
       ipcRenderer.invoke('store:remove-task', characterId, taskId),
     updateTask: (
