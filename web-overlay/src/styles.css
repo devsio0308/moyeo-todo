@@ -76,7 +76,6 @@ body {
 }
 
 .titlebar-btn {
-  margin-left: auto;
   padding: 4px 10px;
   border: none;
   border-radius: 999px;
@@ -84,6 +83,29 @@ body {
   color: #b6b6c2;
   font-size: 11px;
   cursor: pointer;
+}
+
+/* 새로고침(#29) 등 아이콘 전용 버튼 — 두 버튼을 함께 우측으로 밀어냄 */
+.titlebar-icon-btn {
+  margin-left: auto;
+  width: 26px;
+  height: 26px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.08);
+  color: #b6b6c2;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.titlebar-icon-btn:hover {
+  background: rgba(255, 255, 255, 0.14);
+  color: #fff;
+}
+
+.titlebar-icon-btn:disabled {
+  opacity: 0.5;
+  cursor: default;
 }
 
 .titlebar-btn:hover {

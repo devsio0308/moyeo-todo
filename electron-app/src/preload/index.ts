@@ -22,8 +22,6 @@ const api = {
     showOverlay: (): void => ipcRenderer.send('overlay:show'),
     /** 오버레이 숨기기 (오버레이 타이틀바 버튼) */
     hideOverlay: (): void => ipcRenderer.send('overlay:hide'),
-    /** 관리 창 열기/포커스 (오버레이에서 접근) */
-    openManage: (): void => ipcRenderer.send('manage:show'),
     quit: (): void => ipcRenderer.send('app:quit')
   },
   capture: {

@@ -199,7 +199,6 @@ function startEngine(): void {
 function registerWindowIpc(): void {
   ipcMain.on('overlay:show', () => showOverlayWindow())
   ipcMain.on('overlay:hide', () => overlayWindow?.hide())
-  ipcMain.on('manage:show', () => showManageWindow())
   ipcMain.on('app:quit', () => app.quit())
 
   ipcMain.on('engine:set-active-character', (_e, character: string | null) => {
