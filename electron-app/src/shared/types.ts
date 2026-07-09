@@ -7,15 +7,16 @@ export type TaskMode = 'auto' | 'manual'
 export type TaskPeriod = 'daily' | 'weekly'
 
 /** 퀘스트 카테고리 태그 (#13) — 일일/주간은 섹션으로 구분되므로 배지는 카테고리 표시.
- *  배열 순서 = 섹션 내 정렬 순서 (전투 → 물물교환 → 알바) */
-export const QUEST_CATEGORIES = ['전투', '물물교환', '알바'] as const
+ *  배열 순서 = 섹션 내 정렬 순서 (전투 → 물물교환 → 알바 → 구매) */
+export const QUEST_CATEGORIES = ['전투', '물물교환', '알바', '구매'] as const
 export type QuestCategory = (typeof QUEST_CATEGORIES)[number]
 
 /** 카테고리 → CSS 클래스 접미사 */
 export const QUEST_CATEGORY_CLASS: Record<QuestCategory, string> = {
   전투: 'combat',
   물물교환: 'barter',
-  알바: 'parttime'
+  알바: 'parttime',
+  구매: 'purchase'
 }
 
 export function isQuestCategory(value: unknown): value is QuestCategory {
