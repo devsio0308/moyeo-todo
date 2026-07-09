@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import CharacterTabs from './components/CharacterTabs'
 import SyncIdGate from './components/SyncIdGate'
 import TaskChecklist from './components/TaskChecklist'
@@ -12,13 +12,24 @@ export default function App(): React.JSX.Element {
   const activeAlarms = useAlarms()
   const [refreshing, setRefreshing] = useState(false)
   const [refreshError, setRefreshError] = useState<string | null>(null)
+  const [refreshCooldown, setRefreshCooldown] = useState(false)
+  const cooldownTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  /** 연타 방지 (#30) — 성공/실패 무관하게 1분간 재요청 제한 */
+  const armCooldown = (): void => {
+    setRefreshCooldown(true)
+    if (cooldownTimer.current) clearTimeout(cooldownTimer.current)
+    cooldownTimer.current = setTimeout(() => setRefreshCooldown(false), 60_000)
+  }
 
   useEffect(() => {
-    void webStore.init()
+    // 최초 진입 시 자동 로드도 요청 1회이므로, 열자마자 연타하지 못하게 쿨다운을 같이 건다
+    void webStore.init().then(armCooldown)
   }, [])
 
   /** 수동 새로고침 (#29) — 자동 폴링 없음, 눌렀을 때만 클라우드 조회 */
   const handleRefresh = async (): Promise<void> => {
+    if (refreshing || refreshCooldown) return
     setRefreshing(true)
     setRefreshError(null)
     try {
@@ -29,6 +40,7 @@ export default function App(): React.JSX.Element {
       }
     } finally {
       setRefreshing(false)
+      armCooldown()
     }
   }
 
@@ -52,9 +64,12 @@ export default function App(): React.JSX.Element {
         <span className="titlebar-title">📝 모여길드 도비</span>
         <button
           className="titlebar-icon-btn"
-          title={refreshError ?? '최신 데이터 새로고침'}
+          title={
+            refreshError ??
+            (refreshCooldown ? '1분에 한 번만 새로고침할 수 있어요' : '최신 데이터 새로고침')
+          }
           onClick={() => void handleRefresh()}
-          disabled={refreshing}
+          disabled={refreshing || refreshCooldown}
         >
           {refreshing ? '⏳' : refreshError ? '⚠' : '🔄'}
         </button>
