@@ -16,7 +16,6 @@ import {
 
 const PROJECT_ID = import.meta.env.VITE_FIREBASE_PROJECT_ID as string | undefined
 const ACCOUNT_ID_STORAGE_KEY = 'dobi-sync-id'
-const REFRESH_INTERVAL_MS = 30_000
 
 export interface WebStoreState {
   gameAccountId: string | null
@@ -37,7 +36,6 @@ class WebStore {
     errorMessage: null
   }
   private listeners = new Set<Listener>()
-  private refreshTimer: ReturnType<typeof setInterval> | null = null
 
   getState = (): WebStoreState => this.state
 
@@ -55,12 +53,19 @@ class WebStore {
     return PROJECT_ID ?? null
   }
 
-  /** 저장된 ID가 있으면 자동 로드. 앱 시작 시 1회 호출 */
+  /** 저장된 ID가 있으면 자동 로드. 앱 시작 시 1회 호출 — 이후 자동 갱신은 하지 않음
+   *  (플랫폼을 오가며 쓰는 개인용 도구라 실시간 동기화가 불필요 — 🔄 버튼으로 수동 새로고침) */
   async init(): Promise<void> {
     if (this.state.gameAccountId) {
       await this.loadAndCatchUpReset(this.state.gameAccountId)
     }
-    this.startAutoRefresh()
+  }
+
+  /** 수동 새로고침 — 🔄 버튼에서 호출 */
+  async refresh(): Promise<{ ok: boolean; message?: string }> {
+    if (!this.state.gameAccountId) return { ok: false, message: '동기화 ID가 없습니다' }
+    const ok = await this.loadAndCatchUpReset(this.state.gameAccountId, { silent: true })
+    return ok ? { ok: true } : { ok: false, message: '새로고침 실패 — 잠시 후 다시 시도해주세요' }
   }
 
   /** ID 등록/조회. 없는 ID면 status='not-registered'로 표시 (업로드하지 않음) */
@@ -79,13 +84,14 @@ class WebStore {
     this.set({ gameAccountId: null, data: null, activeCharacterId: null, status: 'idle' })
   }
 
+  /** @returns 성공 여부 — refresh()가 실패를 UI에 알릴 때 사용 */
   private async loadAndCatchUpReset(
     gameAccountId: string,
     opts: { silent?: boolean } = {}
-  ): Promise<void> {
+  ): Promise<boolean> {
     if (!this.projectId) {
       if (!opts.silent) this.set({ status: 'error', errorMessage: 'Firebase 프로젝트 설정이 누락되었습니다' })
-      return
+      return false
     }
     // silent(백그라운드 새로고침)는 이미 화면이 떠 있는 상태이므로 로딩 화면으로
     // 전환하지 않는다 — 안 그러면 30초마다 체크리스트가 사라졌다 나타나며 깜빡인다
@@ -141,11 +147,12 @@ class WebStore {
           : (finalData.characterOrder[0] ?? null)
 
       this.set({ data: finalData, activeCharacterId: activeId, status: 'ready' })
+      return true
     } catch (e) {
       if (opts.silent) {
-        // 백그라운드 갱신 실패는 화면을 건드리지 않고 다음 주기에 재시도
-        console.warn('[store] 백그라운드 새로고침 실패:', e)
-        return
+        // 수동 새로고침 실패는 화면을 건드리지 않고(로딩 화면 전환 없음) 호출자가 처리
+        console.warn('[store] 새로고침 실패:', e)
+        return false
       }
       if (e instanceof NotRegisteredError) {
         this.set({ status: 'not-registered', errorMessage: null })
@@ -153,25 +160,12 @@ class WebStore {
         const msg = e instanceof Error ? e.message : String(e)
         this.set({ status: 'error', errorMessage: msg })
       }
+      return false
     }
   }
 
   setActiveCharacter(id: string): void {
     this.set({ activeCharacterId: id })
-  }
-
-  /** 조용히 다시 조회 (백그라운드 새로고침 — 로딩 화면으로 전환하지 않음) */
-  private async silentRefresh(): Promise<void> {
-    if (!this.state.gameAccountId || !this.projectId || document.hidden) return
-    await this.loadAndCatchUpReset(this.state.gameAccountId, { silent: true })
-  }
-
-  private startAutoRefresh(): void {
-    if (this.refreshTimer) clearInterval(this.refreshTimer)
-    this.refreshTimer = setInterval(() => void this.silentRefresh(), REFRESH_INTERVAL_MS)
-    document.addEventListener('visibilitychange', () => {
-      if (!document.hidden) void this.silentRefresh()
-    })
   }
 
   async setTaskDone(characterId: string, taskId: string, done: boolean, mode: TaskMode): Promise<void> {

@@ -83,13 +83,6 @@ export default function OverlayApp(): React.JSX.Element {
           </button>
           <button
             className="titlebar-btn"
-            title="관리 창 열기"
-            onClick={() => window.api.window.openManage()}
-          >
-            ⚙
-          </button>
-          <button
-            className="titlebar-btn"
             title="오버레이 숨기기"
             onClick={() => window.api.window.hideOverlay()}
           >
