@@ -18,7 +18,7 @@ interface DashboardState {
   setActiveCharacter: (id: string) => void
   setCapturePaused: (paused: boolean) => void
 
-  addCharacter: (displayName: string, copyFromCharacterId?: string | null) => Promise<void>
+  addCharacter: (displayName: string) => Promise<void>
   removeCharacter: (id: string) => Promise<void>
   renameCharacter: (id: string, displayName: string) => Promise<void>
   reorderCharacters: (order: string[]) => Promise<void>
@@ -27,14 +27,21 @@ interface DashboardState {
     displayName: string,
     period: TaskPeriod,
     targetCount?: number,
-    category?: QuestCategory | null
+    category?: QuestCategory | null,
+    location?: string | null
   ) => Promise<void>
   incrementTask: (characterId: string, taskId: string, delta: number) => Promise<void>
+  setTaskExcluded: (characterId: string, taskId: string, excluded: boolean) => Promise<void>
   removeTask: (characterId: string, taskId: string) => Promise<void>
   updateTask: (
     characterId: string,
     taskId: string,
-    patch: Partial<Pick<TaskState, 'displayName' | 'period' | 'threshold'>>
+    patch: Partial<
+      Pick<
+        TaskState,
+        'displayName' | 'period' | 'threshold' | 'category' | 'targetCount' | 'location'
+      >
+    >
   ) => Promise<void>
   setTaskDone: (characterId: string, taskId: string, done: boolean, mode: TaskMode) => Promise<void>
   updateSettings: (patch: Partial<Settings>) => Promise<void>
@@ -62,8 +69,8 @@ export const useDashboardStore = create<DashboardState>((set, get) => {
     setActiveCharacter: (id) => set({ activeCharacterId: id }),
     setCapturePaused: (paused) => set({ capturePaused: paused }),
 
-    addCharacter: async (displayName, copyFromCharacterId) => {
-      const state = await window.api.store.addCharacter(displayName, copyFromCharacterId)
+    addCharacter: async (displayName) => {
+      const state = await window.api.store.addCharacter(displayName)
       // 새로 추가된 캐릭터를 바로 활성 탭으로
       const newId = state.characterOrder[state.characterOrder.length - 1] ?? null
       set({ data: state, activeCharacterId: newId })
@@ -71,12 +78,21 @@ export const useDashboardStore = create<DashboardState>((set, get) => {
     removeCharacter: async (id) => apply(await window.api.store.removeCharacter(id)),
     renameCharacter: async (id, name) => apply(await window.api.store.renameCharacter(id, name)),
     reorderCharacters: async (order) => apply(await window.api.store.reorderCharacters(order)),
-    addTask: async (characterId, displayName, period, targetCount, category) =>
+    addTask: async (characterId, displayName, period, targetCount, category, location) =>
       apply(
-        await window.api.store.addTask(characterId, displayName, period, targetCount, category)
+        await window.api.store.addTask(
+          characterId,
+          displayName,
+          period,
+          targetCount,
+          category,
+          location
+        )
       ),
     incrementTask: async (characterId, taskId, delta) =>
       apply(await window.api.store.incrementTask(characterId, taskId, delta)),
+    setTaskExcluded: async (characterId, taskId, excluded) =>
+      apply(await window.api.store.setTaskExcluded(characterId, taskId, excluded)),
     removeTask: async (characterId, taskId) =>
       apply(await window.api.store.removeTask(characterId, taskId)),
     updateTask: async (characterId, taskId, patch) =>

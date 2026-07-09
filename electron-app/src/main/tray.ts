@@ -1,11 +1,14 @@
-import { BrowserWindow, Menu, Tray, app, nativeImage } from 'electron'
+import { Menu, Tray, app, nativeImage } from 'electron'
 import { AUTO_DETECT_ENABLED } from '../shared/types'
 
 // 16x16 단색 원형 아이콘 (base64 PNG) — 별도 바이너리 리소스 없이 인라인 유지
 const TRAY_ICON_DATA_URL =
   'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAALklEQVR42mOQk1NhoAQz0MqA/zgwQQP+E4lpY8B/EvGoAbQwYODTAVWSMv1zIwBy/duFhqdjUwAAAABJRU5ErkJggg=='
 
-interface TrayCallbacks {
+export interface TrayCallbacks {
+  isOverlayVisible: () => boolean
+  toggleOverlay: () => void
+  openManage: () => void
   onTogglePauseCapture: (paused: boolean) => void
 }
 
@@ -16,7 +19,8 @@ export function isCapturePaused(): boolean {
   return capturePaused
 }
 
-export function createTray(win: BrowserWindow, callbacks: TrayCallbacks): Tray {
+/** 두 창(#17) 어느 쪽이 닫혀 있어도 트레이에서 복구 가능해야 한다 */
+export function createTray(callbacks: TrayCallbacks): Tray {
   const icon = nativeImage.createFromDataURL(TRAY_ICON_DATA_URL)
   if (process.platform === 'darwin') icon.setTemplateImage(true)
   tray = new Tray(icon)
@@ -25,12 +29,15 @@ export function createTray(win: BrowserWindow, callbacks: TrayCallbacks): Tray {
   const rebuildMenu = (): void => {
     const template: Electron.MenuItemConstructorOptions[] = [
       {
-        label: win.isVisible() ? '숨기기' : '보이기',
+        label: callbacks.isOverlayVisible() ? '오버레이 숨기기' : '오버레이 보이기',
         click: () => {
-          if (win.isVisible()) win.hide()
-          else win.show()
+          callbacks.toggleOverlay()
           rebuildMenu()
         }
+      },
+      {
+        label: '관리 창 열기',
+        click: () => callbacks.openManage()
       }
     ]
 
@@ -60,13 +67,11 @@ export function createTray(win: BrowserWindow, callbacks: TrayCallbacks): Tray {
   }
 
   rebuildMenu()
-  win.on('show', rebuildMenu)
-  win.on('hide', rebuildMenu)
 
-  // 좌클릭으로 보이기/숨기기 토글 (Windows 관례)
+  // 좌클릭: 오버레이 토글 (일상 사용 동선)
   tray.on('click', () => {
-    if (win.isVisible()) win.hide()
-    else win.show()
+    callbacks.toggleOverlay()
+    rebuildMenu()
   })
 
   return tray

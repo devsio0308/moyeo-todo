@@ -18,7 +18,7 @@ const COMPLEMENT_CHECK_INTERVAL_MS = 60_000
  */
 export class ResetScheduler {
   private timer: NodeJS.Timeout | null = null
-  private detachWindow: (() => void) | null = null
+  private detachers: Array<() => void> = []
 
   constructor(private onAfterReset: () => void) {}
 
@@ -29,23 +29,27 @@ export class ResetScheduler {
     this.timer = setInterval(this.check, COMPLEMENT_CHECK_INTERVAL_MS)
   }
 
-  /** 창 생명주기 이벤트에 붙인다 (창 재생성 시 재호출) */
+  /** 창 생명주기 이벤트에 붙인다 — 여러 창 지원 (#17), 창이 닫히면 자동 해제 */
   attachWindow(win: BrowserWindow): void {
-    this.detachWindow?.()
     win.on('show', this.check)
     win.on('focus', this.check)
-    this.detachWindow = () => {
+    const detach = (): void => {
       if (!win.isDestroyed()) {
         win.removeListener('show', this.check)
         win.removeListener('focus', this.check)
       }
     }
+    win.once('closed', () => {
+      this.detachers = this.detachers.filter((d) => d !== detach)
+    })
+    this.detachers.push(detach)
   }
 
   stop(): void {
     if (this.timer) clearInterval(this.timer)
     this.timer = null
-    this.detachWindow?.()
+    for (const detach of this.detachers) detach()
+    this.detachers = []
     powerMonitor.removeListener('resume', this.check)
     powerMonitor.removeListener('unlock-screen', this.check)
   }

@@ -15,8 +15,12 @@ extraResources:
     to: engine/
 
 win:
+  # 아키텍처 명시 필수 — Apple Silicon에서 크로스 빌드 시 지정하지 않으면
+  # 호스트를 따라 arm64로 빌드되어 x64 Windows에서 빈 설치가 됨 (v0.1.0 사고)
   target:
-    - nsis
+    - target: nsis
+      arch:
+        - x64
 nsis:
   oneClick: false
   allowToChangeInstallationDirectory: true

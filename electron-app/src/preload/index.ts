@@ -16,8 +16,12 @@ import type {
 /** 렌더러에 노출하는 최소 API 표면 */
 const api = {
   window: {
-    hide: (): void => ipcRenderer.send('window:hide'),
-    minimize: (): void => ipcRenderer.send('window:minimize'),
+    /** 오버레이 표시 (#17 — 관리 창의 '오버레이 띄우기') */
+    showOverlay: (): void => ipcRenderer.send('overlay:show'),
+    /** 오버레이 숨기기 (오버레이 타이틀바 버튼) */
+    hideOverlay: (): void => ipcRenderer.send('overlay:hide'),
+    /** 관리 창 열기/포커스 (오버레이에서 접근) */
+    openManage: (): void => ipcRenderer.send('manage:show'),
     quit: (): void => ipcRenderer.send('app:quit')
   },
   capture: {
@@ -39,11 +43,8 @@ const api = {
   },
   store: {
     getState: (): Promise<StoreShape> => ipcRenderer.invoke('store:get-state'),
-    addCharacter: (
-      displayName: string,
-      copyFromCharacterId?: string | null
-    ): Promise<StoreShape> =>
-      ipcRenderer.invoke('store:add-character', displayName, copyFromCharacterId ?? null),
+    addCharacter: (displayName: string): Promise<StoreShape> =>
+      ipcRenderer.invoke('store:add-character', displayName),
     removeCharacter: (characterId: string): Promise<StoreShape> =>
       ipcRenderer.invoke('store:remove-character', characterId),
     renameCharacter: (characterId: string, displayName: string): Promise<StoreShape> =>
@@ -55,7 +56,8 @@ const api = {
       displayName: string,
       period: TaskPeriod,
       targetCount?: number,
-      category?: QuestCategory | null
+      category?: QuestCategory | null,
+      location?: string | null
     ): Promise<StoreShape> =>
       ipcRenderer.invoke(
         'store:add-task',
@@ -63,16 +65,28 @@ const api = {
         displayName,
         period,
         targetCount,
-        category ?? null
+        category ?? null,
+        location ?? null
       ),
     incrementTask: (characterId: string, taskId: string, delta: number): Promise<StoreShape> =>
       ipcRenderer.invoke('store:increment-task', characterId, taskId, delta),
+    setTaskExcluded: (
+      characterId: string,
+      taskId: string,
+      excluded: boolean
+    ): Promise<StoreShape> =>
+      ipcRenderer.invoke('store:set-task-excluded', characterId, taskId, excluded),
     removeTask: (characterId: string, taskId: string): Promise<StoreShape> =>
       ipcRenderer.invoke('store:remove-task', characterId, taskId),
     updateTask: (
       characterId: string,
       taskId: string,
-      patch: Partial<Pick<TaskState, 'displayName' | 'period' | 'threshold'>>
+      patch: Partial<
+        Pick<
+          TaskState,
+          'displayName' | 'period' | 'threshold' | 'category' | 'targetCount' | 'location'
+        >
+      >
     ): Promise<StoreShape> => ipcRenderer.invoke('store:update-task', characterId, taskId, patch),
     setTaskDone: (
       characterId: string,

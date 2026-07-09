@@ -81,7 +81,8 @@ npm run build && npx electron-builder
    period:      "daily" | "weekly" (string, 기본 daily)
    order:       1                  (number, 표시 순서 — 선택)
    targetCount: 5                  (number, 완료 필요 횟수 — 선택, 기본 1)
-   category:    "전투"             (string, "전투"|"물물교환"|"알바" — 선택)
+   category:    "전투"             (string, "전투"|"물물교환"|"알바"|"구매" — 선택)
+   location:    "던바튼"           (string, 지역 태그 — 선택)
    ```
 3. 공개 읽기 규칙 설정:
    ```

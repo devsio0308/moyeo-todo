@@ -7,15 +7,16 @@ export type TaskMode = 'auto' | 'manual'
 export type TaskPeriod = 'daily' | 'weekly'
 
 /** 퀘스트 카테고리 태그 (#13) — 일일/주간은 섹션으로 구분되므로 배지는 카테고리 표시.
- *  배열 순서 = 섹션 내 정렬 순서 (전투 → 물물교환 → 알바) */
-export const QUEST_CATEGORIES = ['전투', '물물교환', '알바'] as const
+ *  배열 순서 = 섹션 내 정렬 순서 (전투 → 물물교환 → 알바 → 구매) */
+export const QUEST_CATEGORIES = ['전투', '물물교환', '알바', '구매'] as const
 export type QuestCategory = (typeof QUEST_CATEGORIES)[number]
 
 /** 카테고리 → CSS 클래스 접미사 */
 export const QUEST_CATEGORY_CLASS: Record<QuestCategory, string> = {
   전투: 'combat',
   물물교환: 'barter',
-  알바: 'parttime'
+  알바: 'parttime',
+  구매: 'purchase'
 }
 
 export function isQuestCategory(value: unknown): value is QuestCategory {
@@ -43,6 +44,11 @@ export interface TaskState {
   count?: number
   /** 카테고리 태그 (#13). 없으면 배지 미표시 */
   category?: QuestCategory | null
+  /** 지역 태그 (#24, 자유 문자열 — 예: 두갈드아일, 던바튼). 없으면 미표시 */
+  location?: string | null
+  /** 이 캐릭터는 이 카탈로그 퀘스트를 하지 않음 (#25).
+   *  true면 항상 완료 상태로 고정되고 리셋 대상에서 제외된다. 커스텀 퀘스트에는 의미 없음 */
+  excluded?: boolean
 }
 
 /** Firestore quests 컬렉션에서 가져온 카탈로그 항목 (#4) */
@@ -54,6 +60,8 @@ export interface QuestCatalogItem {
   targetCount?: number
   /** 카테고리 태그 (#13) */
   category?: QuestCategory | null
+  /** 지역 태그 (#24) */
+  location?: string | null
 }
 
 /** 카탈로그 동기화 결과 (#4) */

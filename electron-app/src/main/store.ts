@@ -76,36 +76,17 @@ export class DashboardStore {
 
   // ── 캐릭터 CRUD ──────────────────────────────────────────
 
-  /**
-   * 캐릭터 추가.
-   * @param copyFromCharacterId 지정 시 해당 캐릭터의 퀘스트 구성(커스텀 포함)을 복사 (#12).
-   *   이름/주기/횟수/threshold/catalogId는 유지하고 체크 상태·진행 횟수는 초기화.
-   *   미지정(null)이면 캐시된 카탈로그 퀘스트로 채움 (#4).
-   */
-  addCharacter(displayName: string, copyFromCharacterId: string | null = null): StoreShape {
+  /** 캐릭터 추가 — 캐시된 카탈로그 퀘스트로 채운다 (#4).
+   *  프리셋 복사(#12)는 제거됨 — 대신 추천 패널에서 타 캐릭터 커스텀 퀘스트를 골라 추가 (#23) */
+  addCharacter(displayName: string): StoreShape {
     const characters = this.store.get('characters')
     const id = this.nextId('character', Object.keys(characters))
 
     const tasks: Record<string, TaskState> = {}
-    const source = copyFromCharacterId ? characters[copyFromCharacterId] : undefined
-
-    if (source) {
-      // 프리셋 복사 — 퀘스트 id도 그대로 유지 (템플릿 등록 시 일관성)
-      for (const [taskId, task] of Object.entries(source.tasks)) {
-        tasks[taskId] = {
-          ...task,
-          done: false,
-          mode: 'manual',
-          lastDoneAt: null,
-          count: 0
-        }
-      }
-    } else {
-      const catalog = this.store.get('questCatalog', []) ?? []
-      catalog.forEach((item, i) => {
-        tasks[`task_${String(i + 1).padStart(2, '0')}`] = this.catalogTask(item)
-      })
-    }
+    const catalog = this.store.get('questCatalog', []) ?? []
+    catalog.forEach((item, i) => {
+      tasks[`task_${String(i + 1).padStart(2, '0')}`] = this.catalogTask(item)
+    })
 
     const character: Character = { displayName, tasks }
     this.store.set(`characters.${id}`, character)
@@ -148,7 +129,8 @@ export class DashboardStore {
     period: TaskPeriod,
     catalogId: string | null = null,
     targetCount = 1,
-    category: QuestCategory | null = null
+    category: QuestCategory | null = null,
+    location: string | null = null
   ): StoreShape {
     const character = this.store.get('characters')[characterId]
     if (character) {
@@ -163,7 +145,8 @@ export class DashboardStore {
         catalogId,
         targetCount: Math.max(1, Math.floor(targetCount)),
         count: 0,
-        category
+        category,
+        location
       }
       this.store.set(`characters.${characterId}.tasks.${id}`, task)
     }
@@ -183,11 +166,30 @@ export class DashboardStore {
   updateTask(
     characterId: string,
     taskId: string,
-    patch: Partial<Pick<TaskState, 'displayName' | 'period' | 'threshold'>>
+    patch: Partial<
+      Pick<
+        TaskState,
+        'displayName' | 'period' | 'threshold' | 'category' | 'targetCount' | 'location'
+      >
+    >
   ): StoreShape {
     const task = this.store.get('characters')[characterId]?.tasks[taskId]
     if (task) {
-      this.store.set(`characters.${characterId}.tasks.${taskId}`, { ...task, ...patch })
+      const next: TaskState = { ...task, ...patch }
+      // 횟수 변경(#21): count 클램프 + 완료 상태 재계산
+      if (patch.targetCount !== undefined) {
+        const target = Math.max(1, Math.floor(patch.targetCount))
+        const count = Math.min(task.count ?? 0, target)
+        next.targetCount = target
+        next.count = count
+        next.done = count >= target
+        next.lastDoneAt = next.done
+          ? task.done
+            ? task.lastDoneAt
+            : Math.floor(Date.now() / 1000)
+          : null
+      }
+      this.store.set(`characters.${characterId}.tasks.${taskId}`, next)
     }
     return this.getState()
   }
@@ -209,6 +211,26 @@ export class DashboardStore {
         count: done ? (task.targetCount ?? 1) : 0,
         mode: done ? mode : task.mode,
         lastDoneAt: done ? (at ?? Math.floor(Date.now() / 1000)) : null
+      }
+      this.store.set(`characters.${characterId}.tasks.${taskId}`, next)
+    }
+    return this.getState()
+  }
+
+  /**
+   * 카탈로그 퀘스트 제외 토글 (#25) — 삭제는 동기화로 부활하므로 대체 기능.
+   * 제외 ON: 항상 완료 상태로 고정 (리셋 시에도 유지). 제외 OFF: 미완료로 초기화해 정상 진행 대상으로 복귀.
+   */
+  setTaskExcluded(characterId: string, taskId: string, excluded: boolean): StoreShape {
+    const task = this.store.get('characters')[characterId]?.tasks[taskId]
+    if (task) {
+      const target = task.targetCount ?? 1
+      const next: TaskState = {
+        ...task,
+        excluded,
+        done: excluded,
+        count: excluded ? target : 0,
+        lastDoneAt: excluded ? Math.floor(Date.now() / 1000) : null
       }
       this.store.set(`characters.${characterId}.tasks.${taskId}`, next)
     }
@@ -298,18 +320,21 @@ export class DashboardStore {
           const t = tasks[existingTaskId]
           const itemTarget = Math.max(1, item.targetCount ?? 1)
           const itemCategory = item.category ?? null
+          const itemLocation = item.location ?? null
           if (
             t.displayName !== item.name ||
             t.period !== item.period ||
             (t.targetCount ?? 1) !== itemTarget ||
-            (t.category ?? null) !== itemCategory
+            (t.category ?? null) !== itemCategory ||
+            (t.location ?? null) !== itemLocation
           ) {
             tasks[existingTaskId] = {
               ...t,
               displayName: item.name,
               period: item.period,
               targetCount: itemTarget,
-              category: itemCategory
+              category: itemCategory,
+              location: itemLocation
             }
             updated++
           }
@@ -338,7 +363,8 @@ export class DashboardStore {
       catalogId: item.id,
       targetCount: Math.max(1, item.targetCount ?? 1),
       count: 0,
-      category: item.category ?? null
+      category: item.category ?? null,
+      location: item.location ?? null
     }
   }
 
@@ -351,8 +377,14 @@ export class DashboardStore {
     for (const [charId, character] of Object.entries(characters)) {
       const tasks: Record<string, TaskState> = {}
       for (const [taskId, task] of Object.entries(character.tasks)) {
-        tasks[taskId] =
-          task.period === period ? { ...task, done: false, lastDoneAt: null, count: 0 } : task
+        if (task.period !== period) {
+          tasks[taskId] = task
+        } else if (task.excluded) {
+          // 제외된 퀘스트는 리셋해도 완료 상태 유지 (#25)
+          tasks[taskId] = { ...task, done: true, count: task.targetCount ?? 1 }
+        } else {
+          tasks[taskId] = { ...task, done: false, lastDoneAt: null, count: 0 }
+        }
       }
       next[charId] = { ...character, tasks }
     }

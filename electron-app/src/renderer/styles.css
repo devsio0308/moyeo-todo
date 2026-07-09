@@ -30,6 +30,374 @@ body {
   overflow: hidden;
 }
 
+/* ── 관리 창 어드민 레이아웃 (#22) ─────────────── */
+.admin-root {
+  display: flex;
+  height: 100%;
+  background: #111116;
+  font-size: 14px;
+}
+
+.side-nav {
+  display: flex;
+  flex-direction: column;
+  width: 220px;
+  flex-shrink: 0;
+  padding: 18px 12px;
+  background: #191920;
+  border-right: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.side-brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 10px 22px;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.side-brand-icon {
+  font-size: 20px;
+}
+
+.side-nav-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.side-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: #b6b6c2;
+  font-size: 14px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.side-nav-item:hover {
+  background: rgba(255, 255, 255, 0.06);
+  color: #fff;
+}
+
+.side-nav-active {
+  background: rgba(94, 129, 255, 0.22);
+  color: #fff;
+  font-weight: 600;
+}
+
+.side-nav-icon {
+  width: 20px;
+  text-align: center;
+}
+
+.side-footer {
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.overlay-launch-btn {
+  flex-shrink: 0;
+  padding: 10px 14px;
+  border: none;
+  border-radius: 8px;
+  background: #5e81ff;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.overlay-launch-btn:hover {
+  background: #7093ff;
+}
+
+.admin-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.admin-header {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 18px 24px 10px;
+  flex-shrink: 0;
+}
+
+.admin-title {
+  font-size: 20px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.admin-header .character-tabs {
+  padding: 0;
+  flex: 1;
+}
+
+.admin-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 14px 24px 24px;
+}
+
+/* 퀘스트 관리: 본문 + 추천 패널 2단 (#22) */
+.quest-cols {
+  display: flex;
+  gap: 24px;
+  align-items: flex-start;
+}
+
+/* 창 폭이 줄면 추천 패널이 먼저 줄어들고 퀘스트 등록/목록 폭은 유지 */
+.quest-main {
+  flex: 1 1 640px;
+  min-width: 460px;
+  max-width: 680px;
+}
+
+.rec-panel {
+  flex: 1 6 380px; /* shrink 가중치를 크게 — 좁아질 때 이쪽이 먼저 줄어듦 */
+  min-width: 190px;
+  max-width: 420px;
+  padding: 16px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+/* 일정 폭 이하에서는 추천 패널을 아래로 (사이드바 220px 포함 기준) */
+@media (max-width: 1320px) {
+  .quest-cols {
+    flex-direction: column;
+  }
+
+  .quest-main {
+    min-width: 0;
+    max-width: 680px;
+    width: 100%;
+  }
+
+  .rec-panel {
+    flex: none;
+    width: 100%;
+    max-width: 680px;
+    min-width: 0;
+  }
+}
+
+.settings-narrow {
+  max-width: 640px;
+}
+
+/* 카드형 폼 (#23) — 퀘스트/캐릭터 추가 */
+.add-quest-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+  margin-bottom: 18px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.form-field label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #8a8a98;
+}
+
+.form-row {
+  display: flex;
+  gap: 12px;
+  align-items: flex-end;
+}
+
+.form-inline {
+  display: flex;
+  gap: 8px;
+}
+
+.form-submit {
+  margin-left: auto;
+  padding: 8px 18px;
+}
+
+/* 캐릭터 관리 뷰 (#23) */
+.char-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.char-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.char-order-btns {
+  display: flex;
+  gap: 3px;
+}
+
+.char-name {
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.char-name-input {
+  max-width: 180px;
+}
+
+.char-meta {
+  color: #7a7a88;
+  font-size: 12px;
+  margin-right: auto;
+}
+
+/* 지역 태그 (#24) — 값 변동성이 커서 단일 색 고정. 카테고리 태그 바로 앞에 표시 */
+.loc-badge {
+  flex-shrink: 0;
+  display: inline-block;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: rgba(140, 160, 255, 0.14);
+  color: #a9b8ff;
+  font-size: 10px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.loc-input {
+  width: 110px;
+}
+
+.edit-location-input {
+  max-width: 130px;
+}
+
+/* 추천 패널 — 타 캐릭터 커스텀 (#23) */
+.rec-others-title {
+  margin-top: 22px;
+}
+
+.rec-owner {
+  display: inline-block;
+  margin-left: 8px;
+  font-size: 10px;
+  color: #7a7a88;
+}
+
+/* ── 대시보드 (#22) ────────────────────────────── */
+.dashboard {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+.dash-section-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: #b6b6c2;
+  margin-bottom: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.dash-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 14px;
+}
+
+.dash-card {
+  padding: 16px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.dash-card-done {
+  border-color: rgba(70, 196, 110, 0.35);
+}
+
+.dash-card-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.dash-card-title {
+  font-weight: 700;
+  font-size: 14px;
+}
+
+.dash-card-count {
+  font-size: 11px;
+  color: #7a7a88;
+  flex-shrink: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.dash-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.dash-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgba(255, 176, 32, 0.14);
+  color: #ffcf82;
+  font-size: 12px;
+}
+
+.dash-chip-progress {
+  font-size: 10px;
+  color: #d8a75a;
+  font-variant-numeric: tabular-nums;
+}
+
+.dash-all-done {
+  color: #46c46e;
+  font-size: 13px;
+}
+
+.dash-empty {
+  color: #6f6f7e;
+  font-size: 12px;
+}
+
 /* ── 타이틀바: 커스텀 드래그 영역 ───────────────── */
 .titlebar {
   display: flex;
@@ -153,68 +521,65 @@ body {
   color: #fff;
 }
 
-.tab-dragging {
-  opacity: 0.4;
-}
-
-.tab-add {
-  font-weight: 700;
-  padding: 5px 12px;
-}
-
-.tab-trash {
-  padding: 5px 10px;
-}
-
-.tab-trash:hover {
-  background: rgba(229, 72, 77, 0.18);
-}
-
-.tab-trash-confirm {
-  background: #e5484d;
-  color: #fff;
-  font-weight: 700;
-}
-
-.tab-trash-confirm:hover {
-  background: #f25e63;
-}
-
-/* 캐릭터 추가 폼 (#12) — 이름 + 프리셋 선택 + 추가/취소 */
-.tab-add-form {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.tab-preset-select {
-  padding: 5px 6px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 8px;
-  background: rgba(30, 30, 38, 0.9);
-  color: #d0d0da;
-  font-size: 12px;
-  outline: none;
-  max-width: 130px;
-}
-
-.tab-add:disabled {
-  opacity: 0.4;
-  cursor: default;
-}
-
-.tab-edit-input {
-  width: 110px;
-  padding: 5px 8px;
-  border: 1px solid rgba(94, 129, 255, 0.6);
-  border-radius: 8px;
-  background: rgba(0, 0, 0, 0.35);
-  color: #fff;
-  font-size: 12px;
-  outline: none;
-}
-
 /* ── 진행률 ────────────────────────────────────── */
+/* 섹션 헤더: 제목 + 섹션별 프로그레스 (#18) */
+.section-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.section-head .section-title {
+  margin-bottom: 0;
+  flex-shrink: 0;
+}
+
+.section-progress {
+  flex: 1;
+}
+
+/* 카테고리 그룹 접기 (#19) */
+.task-group {
+  margin-bottom: 6px;
+}
+
+.group-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  padding: 4px 6px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: #b6b6c2;
+  font-size: 11px;
+  cursor: pointer;
+  text-align: left;
+}
+
+.group-head:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.group-chevron {
+  width: 12px;
+  color: #7a7a88;
+}
+
+.group-count {
+  margin-left: auto;
+  font-size: 10px;
+  color: #7a7a88;
+  font-variant-numeric: tabular-nums;
+}
+
+.cat-none {
+  background: rgba(160, 160, 175, 0.16);
+  color: #a9a9b8;
+}
+
 .progress-row {
   display: flex;
   align-items: center;
@@ -295,10 +660,12 @@ body {
   flex-shrink: 0;
 }
 
+/* 긴 이름은 말줄임 대신 줄바꿈 (#20) — 한국어 단어 단위 유지 */
 .task-name {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  white-space: normal;
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+  line-height: 1.35;
 }
 
 .task-done .task-name {
@@ -405,6 +772,11 @@ body {
   color: #7fdd95;
 }
 
+.cat-purchase {
+  background: rgba(255, 150, 210, 0.16);
+  color: #ff9ed8;
+}
+
 .mode-icon {
   flex-shrink: 0;
   font-size: 12px;
@@ -459,28 +831,6 @@ body {
 }
 
 /* ── 추천 퀘스트 목록 (#15) ────────────────────── */
-.rec-toggle {
-  width: 100%;
-  padding: 7px 10px;
-  border: 1px dashed rgba(255, 255, 255, 0.18);
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.03);
-  color: #b6b6c2;
-  font-size: 12px;
-  text-align: left;
-  cursor: pointer;
-}
-
-.rec-toggle:hover {
-  background: rgba(94, 129, 255, 0.12);
-  border-color: rgba(94, 129, 255, 0.4);
-  color: #fff;
-}
-
-.rec-section-title {
-  margin-top: 8px;
-}
-
 .rec-item {
   background: rgba(255, 255, 255, 0.02);
 }
@@ -570,11 +920,13 @@ body {
 /* ── 퀘스트 관리 화면 (#5) ─────────────────────── */
 .manage-title {
   color: #b6b6c2;
-  font-size: 12px;
+  font-size: 17px;
+  margin-bottom: 4px;
 }
 
 .manage-title b {
   color: #fff;
+  font-size: 18px;
 }
 
 .manage-add-form {
@@ -585,6 +937,34 @@ body {
 .manage-task-name {
   flex: 1;
   min-width: 0;
+  white-space: normal;
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+}
+
+.manage-edit {
+  flex-shrink: 0;
+  padding: 3px 6px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  font-size: 12px;
+  cursor: pointer;
+  opacity: 0.55;
+}
+
+.manage-edit:hover {
+  background: rgba(94, 129, 255, 0.2);
+  opacity: 1;
+}
+
+.edit-row {
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.edit-row .add-task-input {
+  flex: 1 1 100%;
 }
 
 .manage-delete {
@@ -612,6 +992,45 @@ body {
 .manage-delete-confirm:hover {
   background: #f25e63;
   color: #fff;
+}
+
+/* 카탈로그 퀘스트 제외 토글 (#25) — 삭제 버튼 대체 */
+.manage-exclude {
+  flex-shrink: 0;
+  padding: 3px 8px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 6px;
+  background: transparent;
+  color: #8a8a98;
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.manage-exclude:hover {
+  background: rgba(255, 176, 32, 0.15);
+  border-color: rgba(255, 176, 32, 0.4);
+  color: #ffcf82;
+}
+
+.manage-exclude-active {
+  background: rgba(255, 176, 32, 0.16);
+  border-color: rgba(255, 176, 32, 0.4);
+  color: #ffcf82;
+}
+
+.task-excluded-row {
+  opacity: 0.6;
+}
+
+.excluded-badge {
+  flex-shrink: 0;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: rgba(255, 176, 32, 0.14);
+  color: #ffcf82;
+  font-size: 10px;
+  font-weight: 600;
+  white-space: nowrap;
 }
 
 .catalog-badge {

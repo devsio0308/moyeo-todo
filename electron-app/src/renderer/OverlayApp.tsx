@@ -1,8 +1,6 @@
 import { useEffect, useState } from 'react'
 import { AUTO_DETECT_ENABLED, type EngineStatus } from '../shared/types'
 import CharacterTabs from './components/CharacterTabs'
-import QuestManager from './components/QuestManager'
-import SettingsPanel from './components/SettingsPanel'
 import TaskChecklist from './components/TaskChecklist'
 import { useAlarms } from './hooks/useAlarms'
 import { useDashboardStore } from './store/useDashboardStore'
@@ -13,21 +11,18 @@ const ENGINE_STATUS_LABEL: Record<EngineStatus, string> = {
   failed: '엔진 시작 실패 — 재시작 중단됨'
 }
 
-/** 체크리스트 / 퀘스트 관리(#5) / 설정 */
-type View = 'checklist' | 'manage' | 'settings'
-
-export default function App(): React.JSX.Element {
+/**
+ * 게임 위에 떠 있는 체크 전용 오버레이 (#17).
+ * 캐릭터 탭 전환 + 체크/카운터 + 알람만. 관리(추가/수정/설정)는 관리 창에서.
+ */
+export default function OverlayApp(): React.JSX.Element {
   const capturePaused = useDashboardStore((s) => s.capturePaused)
   const setCapturePaused = useDashboardStore((s) => s.setCapturePaused)
   const init = useDashboardStore((s) => s.init)
   const applyState = useDashboardStore((s) => s.applyState)
   const activeCharacterId = useDashboardStore((s) => s.activeCharacterId)
   const [engineStatus, setEngineStatus] = useState<EngineStatus>('disconnected')
-  const [view, setView] = useState<View>('checklist')
-  const activeAlarms = useAlarms() // 지금 하이라이트할 알람 (#11)
-
-  const toggleView = (target: View): void =>
-    setView((v) => (v === target ? 'checklist' : target))
+  const activeAlarms = useAlarms() // 알람은 오버레이가 담당 (#11, #17)
 
   useEffect(() => {
     void init()
@@ -50,7 +45,6 @@ export default function App(): React.JSX.Element {
     <div className="overlay-root">
       <header className="titlebar">
         <span className="titlebar-title">📝 모여길드 도비</span>
-        {/* 자동 감지 비활성 버전(#10)에서는 엔진 상태 UI 숨김 */}
         {AUTO_DETECT_ENABLED && (
           <>
             <span
@@ -63,40 +57,24 @@ export default function App(): React.JSX.Element {
         )}
         <div className="titlebar-buttons">
           <button
-            className={`titlebar-btn ${view === 'manage' ? 'titlebar-btn-active' : ''}`}
-            title="퀘스트 관리 (추가/삭제)"
-            onClick={() => toggleView('manage')}
-          >
-            📋
-          </button>
-          <button
-            className={`titlebar-btn ${view === 'settings' ? 'titlebar-btn-active' : ''}`}
-            title="설정"
-            onClick={() => toggleView('settings')}
+            className="titlebar-btn"
+            title="관리 창 열기"
+            onClick={() => window.api.window.openManage()}
           >
             ⚙
           </button>
           <button
             className="titlebar-btn"
-            title="숨기기 (트레이로)"
-            onClick={() => window.api.window.hide()}
+            title="오버레이 숨기기"
+            onClick={() => window.api.window.hideOverlay()}
           >
             —
-          </button>
-          <button className="titlebar-btn" title="종료" onClick={() => window.api.window.quit()}>
-            ✕
           </button>
         </div>
       </header>
       <CharacterTabs />
       <main className="content">
-        {view === 'settings' ? (
-          <SettingsPanel />
-        ) : view === 'manage' ? (
-          <QuestManager />
-        ) : (
-          <TaskChecklist activeAlarms={activeAlarms} />
-        )}
+        <TaskChecklist activeAlarms={activeAlarms} />
       </main>
     </div>
   )

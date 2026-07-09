@@ -30,19 +30,32 @@ export default function TaskItem({
   return (
     <li
       className={`task-item ${task.done ? 'task-done' : ''} ${
-        alarmRuleId ? `task-alarm task-alarm-${alarmRuleId}` : ''
-      }`}
+        task.excluded ? 'task-excluded-row' : ''
+      } ${alarmRuleId ? `task-alarm task-alarm-${alarmRuleId}` : ''}`}
     >
       <label className="task-label">
         <input
           type="checkbox"
           checked={task.done}
-          title={isCounted ? '체크: 전체 완료 / 해제: 0회로 초기화' : undefined}
+          disabled={task.excluded}
+          title={
+            task.excluded
+              ? '제외된 퀘스트 — 퀘스트 관리에서 해제할 수 있습니다'
+              : isCounted
+                ? '체크: 전체 완료 / 해제: 0회로 초기화'
+                : undefined
+          }
           onChange={(e) => void setTaskDone(characterId, taskId, e.target.checked, 'manual')}
         />
         <span className="task-name">{task.displayName}</span>
       </label>
-      {isCounted && (
+      {task.excluded && (
+        <span className="excluded-badge" title="이 캐릭터는 제외한 퀘스트">
+          🚫 제외
+        </span>
+      )}
+      {task.location && <span className="loc-badge">{task.location}</span>}
+      {isCounted && !task.excluded && (
         <span className="count-ctrl">
           <button
             className="count-btn"
