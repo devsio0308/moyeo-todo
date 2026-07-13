@@ -1,6 +1,6 @@
 {
-  "name": "모여길드 도비",
-  "short_name": "도비",
+  "name": "뭐해야하더라",
+  "short_name": "뭐해야하더라",
   "description": "마비노기 모바일 퀘스트 체크",
   "start_url": "/",
   "display": "standalone",

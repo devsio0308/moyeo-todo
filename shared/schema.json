@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "homework-dashboard/shared/schema.json",
+  "$id": "moyeo-todo/shared/schema.json",
   "title": "숙제 대시보드 공용 스키마",
   "description": "electron-app ↔ web-overlay 간 공유되는 데이터 스키마.",
   "$defs": {

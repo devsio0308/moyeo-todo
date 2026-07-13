@@ -61,7 +61,7 @@ export default function App(): React.JSX.Element {
   return (
     <div className="overlay-root">
       <header className="titlebar">
-        <span className="titlebar-title">📝 모여길드 도비</span>
+        <span className="titlebar-title">📝 뭐해야하더라</span>
         <button
           className="titlebar-icon-btn"
           title={

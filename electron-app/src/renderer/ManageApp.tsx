@@ -46,8 +46,8 @@ export default function ManageApp(): React.JSX.Element {
     <div className="admin-root">
       <aside className="side-nav">
         <div className="side-brand">
-          <span className="side-brand-icon">🧦</span>
-          <span className="side-brand-name">모여길드 도비</span>
+          <span className="side-brand-icon">📝</span>
+          <span className="side-brand-name">뭐해야하더라</span>
         </div>
         <nav className="side-nav-list">
           {navItem('dashboard')}

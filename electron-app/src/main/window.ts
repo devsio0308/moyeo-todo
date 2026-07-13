@@ -64,7 +64,7 @@ export function createManageWindow(): BrowserWindow {
     minHeight: 600,
     autoHideMenuBar: true,
     backgroundColor: '#111116',
-    title: '모여길드 도비',
+    title: '뭐해야하더라',
     show: false,
     webPreferences: {
       preload: PRELOAD,

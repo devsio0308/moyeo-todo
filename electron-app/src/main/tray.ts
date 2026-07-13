@@ -17,7 +17,7 @@ export function createTray(callbacks: TrayCallbacks): Tray {
   const icon = nativeImage.createFromDataURL(TRAY_ICON_DATA_URL)
   if (process.platform === 'darwin') icon.setTemplateImage(true)
   tray = new Tray(icon)
-  tray.setToolTip('모여길드 도비')
+  tray.setToolTip('뭐해야하더라')
 
   const rebuildMenu = (): void => {
     const template: Electron.MenuItemConstructorOptions[] = [

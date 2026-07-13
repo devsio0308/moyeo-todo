@@ -1,5 +1,5 @@
 {
-  "name": "homework-dashboard",
+  "name": "moyeo-todo",
   "version": "0.3.0",
   "description": "게임 숙제 체크 오버레이 대시보드",
   "main": "./out/main/index.js",
@@ -36,5 +36,5 @@
     "vite": "^6.0.7",
     "vitest": "^4.1.10"
   },
-  "repository": "https://github.com/hrjin0308/mobi-homework-helper"
+  "repository": "https://github.com/devsio0308/moyeo-todo"
 }
