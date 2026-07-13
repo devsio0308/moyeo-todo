@@ -41,11 +41,9 @@ describe('toFirestoreValue / fromFirestoreValue', () => {
           tasks: {
             task_01: {
               done: true,
-              mode: 'auto',
               lastDoneAt: 1720000000,
               displayName: '요일 던전',
               period: 'daily',
-              threshold: null,
               targetCount: 7,
               count: 3,
               category: '전투',

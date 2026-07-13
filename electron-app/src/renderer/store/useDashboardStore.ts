@@ -1,22 +1,13 @@
 import { create } from 'zustand'
-import type {
-  QuestCategory,
-  Settings,
-  StoreShape,
-  TaskMode,
-  TaskPeriod,
-  TaskState
-} from '../../shared/types'
+import type { QuestCategory, Settings, StoreShape, TaskPeriod, TaskState } from '../../shared/types'
 
 interface DashboardState {
   data: StoreShape | null
   activeCharacterId: string | null
-  capturePaused: boolean
 
   init: () => Promise<void>
   applyState: (state: StoreShape) => void
   setActiveCharacter: (id: string) => void
-  setCapturePaused: (paused: boolean) => void
 
   addCharacter: (displayName: string) => Promise<void>
   removeCharacter: (id: string) => Promise<void>
@@ -36,14 +27,9 @@ interface DashboardState {
   updateTask: (
     characterId: string,
     taskId: string,
-    patch: Partial<
-      Pick<
-        TaskState,
-        'displayName' | 'period' | 'threshold' | 'category' | 'targetCount' | 'location'
-      >
-    >
+    patch: Partial<Pick<TaskState, 'displayName' | 'period' | 'category' | 'targetCount' | 'location'>>
   ) => Promise<void>
-  setTaskDone: (characterId: string, taskId: string, done: boolean, mode: TaskMode) => Promise<void>
+  setTaskDone: (characterId: string, taskId: string, done: boolean) => Promise<void>
   updateSettings: (patch: Partial<Settings>) => Promise<void>
 }
 
@@ -60,14 +46,12 @@ export const useDashboardStore = create<DashboardState>((set, get) => {
   return {
     data: null,
     activeCharacterId: null,
-    capturePaused: false,
 
     init: async () => {
       apply(await window.api.store.getState())
     },
     applyState: apply,
     setActiveCharacter: (id) => set({ activeCharacterId: id }),
-    setCapturePaused: (paused) => set({ capturePaused: paused }),
 
     addCharacter: async (displayName) => {
       const state = await window.api.store.addCharacter(displayName)
@@ -97,8 +81,8 @@ export const useDashboardStore = create<DashboardState>((set, get) => {
       apply(await window.api.store.removeTask(characterId, taskId)),
     updateTask: async (characterId, taskId, patch) =>
       apply(await window.api.store.updateTask(characterId, taskId, patch)),
-    setTaskDone: async (characterId, taskId, done, mode) =>
-      apply(await window.api.store.setTaskDone(characterId, taskId, done, mode)),
+    setTaskDone: async (characterId, taskId, done) =>
+      apply(await window.api.store.setTaskDone(characterId, taskId, done)),
     updateSettings: async (patch) => apply(await window.api.store.updateSettings(patch))
   }
 })

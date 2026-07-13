@@ -472,38 +472,6 @@ body {
   font-weight: 600;
 }
 
-.badge-paused {
-  background: rgba(255, 176, 32, 0.18);
-  color: #ffb020;
-}
-
-.badge-failed {
-  background: rgba(229, 72, 77, 0.2);
-  color: #ff6b70;
-}
-
-/* ── 엔진 연결 상태 점 ─────────────────────────── */
-.engine-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  flex-shrink: 0;
-}
-
-.engine-connected {
-  background: #46c46e;
-  box-shadow: 0 0 6px rgba(70, 196, 110, 0.7);
-}
-
-.engine-disconnected {
-  background: #8a8a98;
-}
-
-.engine-failed {
-  background: #e5484d;
-  box-shadow: 0 0 6px rgba(229, 72, 77, 0.7);
-}
-
 .content {
   flex: 1;
   padding: 12px;
@@ -802,11 +770,6 @@ body {
 .cat-purchase {
   background: rgba(255, 150, 210, 0.16);
   color: #ff9ed8;
-}
-
-.mode-icon {
-  flex-shrink: 0;
-  font-size: 12px;
 }
 
 /* ── 카운트형 퀘스트 (#7) ──────────────────────── */
@@ -1199,80 +1162,3 @@ body {
   font-weight: 600;
 }
 
-.tpl-status {
-  flex-shrink: 0;
-  font-size: 11px;
-  color: #7a7a88;
-}
-
-.tpl-ok {
-  color: #46c46e;
-}
-
-/* ── 픽커 (영역 선택 창) ───────────────────────── */
-.picker-root {
-  position: fixed;
-  inset: 0;
-  cursor: crosshair;
-  overflow: hidden;
-  border-radius: 0;
-  background: #000;
-}
-
-.picker-screenshot {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  user-select: none;
-  -webkit-user-drag: none;
-}
-
-.picker-dim {
-  position: absolute;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.45);
-  pointer-events: none;
-}
-
-.picker-selection {
-  position: absolute;
-  border: 2px solid #5e81ff;
-  background: rgba(94, 129, 255, 0.12);
-  box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.25);
-  pointer-events: none;
-}
-
-.picker-size {
-  position: absolute;
-  top: -22px;
-  left: 0;
-  padding: 2px 6px;
-  border-radius: 4px;
-  background: #5e81ff;
-  color: #fff;
-  font-size: 11px;
-  white-space: nowrap;
-}
-
-.picker-help {
-  position: absolute;
-  top: 24px;
-  left: 50%;
-  transform: translateX(-50%);
-  padding: 8px 16px;
-  border-radius: 999px;
-  background: rgba(20, 20, 26, 0.9);
-  color: #e8e8ec;
-  font-size: 13px;
-  pointer-events: none;
-}
-
-.picker-help kbd {
-  padding: 1px 6px;
-  border-radius: 4px;
-  background: rgba(255, 255, 255, 0.15);
-  font-family: inherit;
-  font-size: 11px;
-  margin-left: 6px;
-}

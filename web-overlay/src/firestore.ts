@@ -122,7 +122,7 @@ export async function patchTaskFields(
   gameAccountId: string,
   characterId: string,
   taskId: string,
-  patch: Partial<Pick<TaskState, 'done' | 'mode' | 'lastDoneAt' | 'count'>>
+  patch: Partial<Pick<TaskState, 'done' | 'lastDoneAt' | 'count'>>
 ): Promise<void> {
   const prefix = `characters.${characterId}.tasks.${taskId}`
   const maskParams = Object.keys(patch)

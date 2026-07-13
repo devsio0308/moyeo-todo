@@ -3,7 +3,6 @@
  * main / preload / renderer 모두에서 import 한다.
  */
 
-export type TaskMode = 'auto' | 'manual'
 export type TaskPeriod = 'daily' | 'weekly'
 
 /** 퀘스트 카테고리 태그 (#13) — 일일/주간은 섹션으로 구분되므로 배지는 카테고리 표시.
@@ -30,12 +29,9 @@ export function questCategoryOrder(category?: QuestCategory | null): number {
 
 export interface TaskState {
   done: boolean
-  mode: TaskMode
   lastDoneAt: number | null // unix epoch (초)
   displayName: string
   period: TaskPeriod
-  /** 매칭 threshold 개별 오버라이드. null이면 전역값 사용 */
-  threshold: number | null
   /** Firebase 카탈로그 출처 퀘스트면 해당 문서 id (#4). 수동 추가는 null/없음 */
   catalogId?: string | null
   /** 완료에 필요한 횟수 (#7). 없으면 1 (단일 퀘스트) */
@@ -91,21 +87,10 @@ export interface Character {
   tasks: Record<string, TaskState>
 }
 
-export interface CaptureRegion {
-  left: number
-  top: number
-  width: number
-  height: number
-}
-
 export interface Settings {
-  captureIntervalSec: number
   /** 0=일요일 ... 6=토요일 */
   weeklyResetDay: number
   dailyResetHour: number
-  /** 전역 기본 매칭 threshold */
-  matchThreshold: number
-  captureRegion: CaptureRegion | null
   /** 퀘스트 카탈로그를 가져올 Firebase 프로젝트 ID (#4). null이면 비활성 */
   firebaseProjectId: string | null
   /** 알람 규칙별 모드 (#11). 키: AlarmRule.id, 없으면 기본 'sound'(UI+소리) */
@@ -116,8 +101,7 @@ export interface Settings {
 
 /**
  * Firestore players/{gameAccountId} 문서 형태 (#26).
- * 기기별 설정(captureRegion, matchThreshold 등)은 제외 — 캐릭터 진행 상황과
- * 리셋 스케줄만 여러 기기/향후 웹 오버레이 간 동기화 대상.
+ * 기기별 설정은 제외 — 캐릭터 진행 상황과 리셋 스케줄만 여러 기기/웹 오버레이 간 동기화 대상.
  */
 export interface CloudPlayerData {
   characters: Record<string, Character>
@@ -143,77 +127,3 @@ export interface StoreShape {
   /** 스토어 마이그레이션 버전 (내부용) */
   metaVersion?: number
 }
-
-// ── WebSocket 메시지 (명세서 §2) ─────────────────────────────
-
-export interface TaskDetectedMessage {
-  type: 'task_detected'
-  character: string
-  task: string
-  confidence: number
-  timestamp: number
-}
-
-export interface HeartbeatMessage {
-  type: 'heartbeat'
-  timestamp: number
-}
-
-export interface ActiveCharacterMessage {
-  type: 'active_character'
-  character: string
-}
-
-export interface ReloadConfigMessage {
-  type: 'reload_config'
-}
-
-export interface SetPausedMessage {
-  type: 'set_paused'
-  paused: boolean
-}
-
-export interface CaptureScreenshotMessage {
-  type: 'capture_screenshot'
-}
-
-/** Python → Electron: capture_screenshot 응답 (요청자에게만 전송) */
-export interface ScreenshotMessage {
-  type: 'screenshot'
-  image?: string // base64 PNG — 실패 시 없음
-  width?: number
-  height?: number
-  error?: string
-}
-
-/** Python → Electron */
-export type EngineMessage = TaskDetectedMessage | HeartbeatMessage | ScreenshotMessage
-
-/** Electron → Python */
-export type ClientMessage =
-  | ActiveCharacterMessage
-  | ReloadConfigMessage
-  | SetPausedMessage
-  | CaptureScreenshotMessage
-
-/** 엔진 스크린샷 (픽커 UI에 전달) — 좌표계는 mss 이미지 픽셀 */
-export interface Screenshot {
-  image: string // base64 PNG
-  width: number
-  height: number
-}
-
-/** 캐릭터별 등록된 템플릿 task id 목록 */
-export type TemplateIndex = Record<string, string[]>
-
-/** 엔진 연결 상태 (UI 배지 표시용) */
-export type EngineStatus = 'connected' | 'disconnected' | 'failed'
-
-export const WS_PORT = 47231
-export const WS_URL = `ws://127.0.0.1:${WS_PORT}`
-
-/**
- * 자동 감지(화면 캡처) 기능 플래그 (#10).
- * 추가 검증 후 배포 예정 — true로 바꾸면 엔진 스폰/WS 연결/관련 UI가 전부 복원된다.
- */
-export const AUTO_DETECT_ENABLED = false

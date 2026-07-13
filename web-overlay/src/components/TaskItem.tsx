@@ -30,7 +30,7 @@ export default function TaskItem({
           type="checkbox"
           checked={task.done}
           disabled={task.excluded}
-          onChange={(e) => void webStore.setTaskDone(characterId, taskId, e.target.checked, 'manual')}
+          onChange={(e) => void webStore.setTaskDone(characterId, taskId, e.target.checked)}
         />
         <span className="task-name">{task.displayName}</span>
       </label>
@@ -60,11 +60,6 @@ export default function TaskItem({
       {task.category && (
         <span className={`cat-badge cat-${QUEST_CATEGORY_CLASS[task.category]}`}>
           {task.category}
-        </span>
-      )}
-      {task.done && task.mode === 'auto' && (
-        <span className="mode-icon" title="자동 감지됨">
-          🤖
         </span>
       )}
     </li>
