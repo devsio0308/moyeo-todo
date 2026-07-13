@@ -83,7 +83,7 @@ export default function ManageApp(): React.JSX.Element {
             </div>
           ) : view === 'characters' ? (
             <div className="settings-narrow">
-              <CharactersView />
+              <CharactersView onGoToSettings={() => setView('settings')} />
             </div>
           ) : (
             <div className="settings-narrow">
