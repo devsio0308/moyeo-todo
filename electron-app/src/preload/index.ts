@@ -15,8 +15,9 @@ const api = {
   window: {
     /** 오버레이 표시 (#17 — 관리 창의 '오버레이 띄우기') */
     showOverlay: (): void => ipcRenderer.send('overlay:show'),
-    /** 오버레이 숨기기 (오버레이 타이틀바 버튼) */
-    hideOverlay: (): void => ipcRenderer.send('overlay:hide'),
+    /** 오버레이 닫기 (오버레이 타이틀바 버튼) — 관리 프로그램이 떠 있는 동안은 숨김,
+     *  프로그램 종료 시 함께 사라짐 */
+    closeOverlay: (): void => ipcRenderer.send('overlay:close'),
     quit: (): void => ipcRenderer.send('app:quit')
   },
   store: {

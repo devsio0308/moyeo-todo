@@ -70,6 +70,13 @@ export default function ManageApp(): React.JSX.Element {
         <header className="admin-header">
           <h1 className="admin-title">{VIEW_TITLE[view]}</h1>
           {view === 'quests' && <CharacterTabs />}
+          <button
+            className="titlebar-btn admin-quit-btn"
+            title="종료 (오버레이가 떠 있으면 함께 종료됩니다)"
+            onClick={() => window.api.window.quit()}
+          >
+            ✕
+          </button>
         </header>
         <main className="admin-content">
           {view === 'dashboard' ? (
