@@ -1,4 +1,4 @@
-# 📝 mobi-homework-helper — 모여길드 도비
+# 📝 moyeo-todo — 뭐해야하더라
 
 다중 캐릭터 육성 유저를 위한 **게임 퀘스트 체크 오버레이 대시보드**.
 
@@ -38,12 +38,12 @@ npm run build && npx electron-builder
 떠 있는 오버레이라 백그라운드에서 계속 살아있어야 함). 창만 닫은 상태로는
 프로세스가 여전히 실행 중이라, 업데이트 설치 시 다음 메시지가 뜰 수 있다:
 
-> HomeworkDashboard cannot be closed. Please close it manually and click Retry to continue.
+> MoyeoTodo cannot be closed. Please close it manually and click Retry to continue.
 
 **해결:** 작업 표시줄 트레이 아이콘(`^` 화살표로 숨겨진 아이콘 포함)에서
-**모여길드 도비 우클릭 → 종료**를 먼저 실행한 뒤 설치 창에서 **Retry**.
+**뭐해야하더라 우클릭 → 종료**를 먼저 실행한 뒤 설치 창에서 **Retry**.
 트레이 아이콘을 못 찾으면 작업 관리자(`Ctrl+Shift+Esc`)에서
-`HomeworkDashboard.exe`를 찾아 작업 끝내기.
+`MoyeoTodo.exe`를 찾아 작업 끝내기.
 
 ## 주요 동작
 

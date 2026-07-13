@@ -12,7 +12,7 @@
 ## 1. 레포 구조
 
 ```
-homework-dashboard/
+moyeo-todo/
 ├── electron-app/
 │   ├── src/
 │   │   ├── main/

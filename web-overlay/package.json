@@ -1,7 +1,7 @@
 {
   "name": "web-overlay",
   "version": "0.1.0",
-  "description": "모여길드 도비 — 휴대폰 퀘스트 체크 웹앱",
+  "description": "뭐해야하더라 — 휴대폰 퀘스트 체크 웹앱",
   "private": true,
   "type": "module",
   "scripts": {

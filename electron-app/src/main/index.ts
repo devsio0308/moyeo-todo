@@ -71,7 +71,7 @@ if (!app.requestSingleInstanceLock()) {
   })
 
   app.whenReady().then(() => {
-    electronApp.setAppUserModelId('com.hrjin.homework-dashboard')
+    electronApp.setAppUserModelId('com.hrjin.moyeo-todo')
 
     app.on('browser-window-created', (_, window) => {
       optimizer.watchWindowShortcuts(window)
