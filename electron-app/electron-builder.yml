@@ -23,6 +23,8 @@ win:
         - x64
 nsis:
   oneClick: false
+  # 사용자/전체 선택 화면 없이 항상 전체(모든 사용자, Program Files) 설치 — 관리자 권한 요구
+  perMachine: true
   allowToChangeInstallationDirectory: true
   createDesktopShortcut: always
   shortcutName: 뭐해야하더라
