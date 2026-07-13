@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { ALARM_RULES, DEFAULT_ALARM_MODE, type AlarmMode } from '../../shared/alarms'
 import { useDashboardStore } from '../store/useDashboardStore'
 
@@ -16,13 +16,19 @@ export default function SettingsPanel(): React.JSX.Element {
 
   const [busy, setBusy] = useState(false)
   const [projectIdDraft, setProjectIdDraft] = useState<string | null>(null)
+  const [defaultProjectId, setDefaultProjectId] = useState<string | null>(null)
   const [syncMessage, setSyncMessage] = useState<string | null>(null)
   const [accountIdDraft, setAccountIdDraft] = useState<string | null>(null)
   const [cloudMessage, setCloudMessage] = useState<string | null>(null)
 
+  useEffect(() => {
+    void window.api.catalog.getDefaultProjectId().then(setDefaultProjectId)
+  }, [])
+
   if (!data) return <></>
   const { settings } = data
-  const projectId = projectIdDraft ?? settings.firebaseProjectId ?? ''
+  // 우선순위: 입력 중인 값 > 저장된 설정값 > .env 기본값 (#14) — 실제 동기화 로직과 동일
+  const projectId = projectIdDraft ?? settings.firebaseProjectId ?? defaultProjectId ?? ''
 
   const saveProjectId = (): void => {
     const value = projectId.trim() || null
