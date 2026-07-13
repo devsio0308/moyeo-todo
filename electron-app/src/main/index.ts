@@ -3,6 +3,7 @@ import { electronApp, optimizer } from '@electron-toolkit/utils'
 import { createManageWindow, createOverlayWindow } from './window'
 import { createTray } from './tray'
 import { registerIpcHandlers } from './ipc-handlers'
+import { checkForUpdates } from './auto-update'
 import { dashboardStore } from './store'
 import { ResetScheduler } from './reset-scheduler'
 import { syncQuestCatalogOnce } from './quest-catalog'
@@ -95,6 +96,9 @@ if (!app.requestSingleInstanceLock()) {
 
     registerWindowIpc()
     registerIpcHandlers(broadcastAll)
+
+    // 시작 시 업데이트 확인 — 새 버전 있으면 백그라운드 다운로드 후 알림
+    checkForUpdates()
 
     // 시작 시 퀘스트 카탈로그 자동 동기화 (#4) — 실패해도 앱 동작에는 영향 없음
     void syncQuestCatalogOnce().then((result) => {
