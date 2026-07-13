@@ -1162,3 +1162,44 @@ body {
   font-weight: 600;
 }
 
+/* ── 안내 팝업 (동기화 ID 등록 유도) ─────────────── */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.55);
+  z-index: 100;
+}
+
+.modal-card {
+  width: 340px;
+  max-width: calc(100vw - 48px);
+  padding: 20px;
+  border-radius: 12px;
+  background: #1e1e26;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.4);
+}
+
+.modal-title {
+  margin: 0 0 8px;
+  font-size: 15px;
+  font-weight: 700;
+  color: #e8e8ec;
+}
+
+.modal-desc {
+  margin: 0 0 16px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: #b6b6c2;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+

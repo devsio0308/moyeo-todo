@@ -1,11 +1,16 @@
 import { useState } from 'react'
 import { useDashboardStore } from '../store/useDashboardStore'
+import SyncIdPromptModal from './SyncIdPromptModal'
+
+interface Props {
+  onGoToSettings: () => void
+}
 
 /**
  * 캐릭터 관리 뷰 (#23) — 추가/이름변경/순서/삭제는 여기서만.
  * 새 캐릭터는 카탈로그 퀘스트로 채워진다 (#4).
  */
-export default function CharactersView(): React.JSX.Element {
+export default function CharactersView({ onGoToSettings }: Props): React.JSX.Element {
   const data = useDashboardStore((s) => s.data)
   const addCharacter = useDashboardStore((s) => s.addCharacter)
   const removeCharacter = useDashboardStore((s) => s.removeCharacter)
@@ -16,6 +21,7 @@ export default function CharactersView(): React.JSX.Element {
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editName, setEditName] = useState('')
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
+  const [syncPromptDismissed, setSyncPromptDismissed] = useState(false)
 
   if (!data) return <></>
   const order = data.characterOrder
@@ -42,8 +48,21 @@ export default function CharactersView(): React.JSX.Element {
     void reorderCharacters(next)
   }
 
+  // 첫 실행(캐릭터 0명)이면서 동기화 ID도 없으면 안내 팝업으로 등록을 유도 (#26)
+  const showSyncPrompt = order.length === 0 && !data.settings.gameAccountId && !syncPromptDismissed
+
   return (
     <div className="chars-view">
+      {showSyncPrompt && (
+        <SyncIdPromptModal
+          onDismiss={() => setSyncPromptDismissed(true)}
+          onGoToSettings={() => {
+            setSyncPromptDismissed(true)
+            onGoToSettings()
+          }}
+        />
+      )}
+
       <div className="add-quest-card">
         <div className="form-field">
           <label>새 캐릭터 이름</label>
