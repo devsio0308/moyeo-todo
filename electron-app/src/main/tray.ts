@@ -1,5 +1,4 @@
 import { Menu, Tray, app, nativeImage } from 'electron'
-import { AUTO_DETECT_ENABLED } from '../shared/types'
 
 // 16x16 단색 원형 아이콘 (base64 PNG) — 별도 바이너리 리소스 없이 인라인 유지
 const TRAY_ICON_DATA_URL =
@@ -9,15 +8,9 @@ export interface TrayCallbacks {
   isOverlayVisible: () => boolean
   toggleOverlay: () => void
   openManage: () => void
-  onTogglePauseCapture: (paused: boolean) => void
 }
 
 let tray: Tray | null = null
-let capturePaused = false
-
-export function isCapturePaused(): boolean {
-  return capturePaused
-}
 
 /** 두 창(#17) 어느 쪽이 닫혀 있어도 트레이에서 복구 가능해야 한다 */
 export function createTray(callbacks: TrayCallbacks): Tray {
@@ -38,23 +31,7 @@ export function createTray(callbacks: TrayCallbacks): Tray {
       {
         label: '관리 창 열기',
         click: () => callbacks.openManage()
-      }
-    ]
-
-    // 자동 감지 비활성 버전(#10)에서는 캡처 관련 메뉴 숨김
-    if (AUTO_DETECT_ENABLED) {
-      template.push({
-        label: '캡처 일시정지',
-        type: 'checkbox',
-        checked: capturePaused,
-        click: (item) => {
-          capturePaused = item.checked
-          callbacks.onTogglePauseCapture(capturePaused)
-        }
-      })
-    }
-
-    template.push(
+      },
       { type: 'separator' },
       {
         label: '종료',
@@ -62,7 +39,7 @@ export function createTray(callbacks: TrayCallbacks): Tray {
           app.quit()
         }
       }
-    )
+    ]
     tray?.setContextMenu(Menu.buildFromTemplate(template))
   }
 

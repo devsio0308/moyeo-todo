@@ -8,12 +8,6 @@ files:
   - out/**/*
   - package.json
 
-# PyInstaller로 빌드된 캡처 엔진을 설치 패키지에 동봉
-# (빌드 순서: npm run build:engine 이 resources/engine/ 에 복사해 둠)
-extraResources:
-  - from: resources/engine/
-    to: engine/
-
 win:
   # 아키텍처 명시 필수 — Apple Silicon에서 크로스 빌드 시 지정하지 않으면
   # 호스트를 따라 arm64로 빌드되어 x64 Windows에서 빈 설치가 됨 (v0.1.0 사고)

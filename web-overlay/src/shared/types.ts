@@ -4,7 +4,6 @@
  * 워크스페이스 패키지 분리 전까지는 electron-app 쪽 변경 시 수동으로 맞춰야 한다.
  */
 
-export type TaskMode = 'auto' | 'manual'
 export type TaskPeriod = 'daily' | 'weekly'
 
 export const QUEST_CATEGORIES = ['전투', '물물교환', '알바', '구매'] as const
@@ -23,11 +22,9 @@ export function questCategoryOrder(category?: QuestCategory | null): number {
 
 export interface TaskState {
   done: boolean
-  mode: TaskMode
   lastDoneAt: number | null
   displayName: string
   period: TaskPeriod
-  threshold: number | null
   catalogId?: string | null
   targetCount?: number
   count?: number

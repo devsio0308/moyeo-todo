@@ -6,17 +6,13 @@ import type {
   QuestCategory,
   Settings,
   StoreShape,
-  TaskMode,
   TaskPeriod,
   TaskState
 } from '../shared/types'
 
 const DEFAULT_SETTINGS: Settings = {
-  captureIntervalSec: 2.5,
   weeklyResetDay: 1, // 월요일 오전 6시 주간 리셋 (#1)
   dailyResetHour: 6, // 매일 오전 6시 일일 리셋 (#1)
-  matchThreshold: 0.85,
-  captureRegion: null,
   firebaseProjectId: null, // 퀘스트 카탈로그 소스 (#4)
   gameAccountId: null // Firestore 동기화 키 (#26)
 }
@@ -57,11 +53,6 @@ export class DashboardStore {
       console.log('[store] 마이그레이션 v2: 리셋 기본값 → 일일 06:00 / 월요일')
     }
     if (version !== META_VERSION) this.store.set('metaVersion', META_VERSION)
-  }
-
-  /** electron-store 데이터 파일 경로 (python 엔진 설정 전달 등에 사용) */
-  get filePath(): string {
-    return this.store.path
   }
 
   getState(): StoreShape {
@@ -139,11 +130,9 @@ export class DashboardStore {
       const id = this.nextId('task', Object.keys(character.tasks))
       const task: TaskState = {
         done: false,
-        mode: 'manual',
         lastDoneAt: null,
         displayName,
         period,
-        threshold: null,
         catalogId,
         targetCount: Math.max(1, Math.floor(targetCount)),
         count: 0,
@@ -168,12 +157,7 @@ export class DashboardStore {
   updateTask(
     characterId: string,
     taskId: string,
-    patch: Partial<
-      Pick<
-        TaskState,
-        'displayName' | 'period' | 'threshold' | 'category' | 'targetCount' | 'location'
-      >
-    >
+    patch: Partial<Pick<TaskState, 'displayName' | 'period' | 'category' | 'targetCount' | 'location'>>
   ): StoreShape {
     const task = this.store.get('characters')[characterId]?.tasks[taskId]
     if (task) {
@@ -196,22 +180,15 @@ export class DashboardStore {
     return this.getState()
   }
 
-  /** 체크 상태 변경. done=true일 때만 mode/lastDoneAt 갱신. at: unix epoch(초), 기본 현재 시각.
+  /** 체크 상태 변경. done=true일 때만 lastDoneAt 갱신. at: unix epoch(초), 기본 현재 시각.
    *  카운트 퀘스트(#7): 완료 체크 = count를 target으로, 해제 = 0으로 */
-  setTaskDone(
-    characterId: string,
-    taskId: string,
-    done: boolean,
-    mode: TaskMode,
-    at?: number
-  ): StoreShape {
+  setTaskDone(characterId: string, taskId: string, done: boolean, at?: number): StoreShape {
     const task = this.store.get('characters')[characterId]?.tasks[taskId]
     if (task) {
       const next: TaskState = {
         ...task,
         done,
         count: done ? (task.targetCount ?? 1) : 0,
-        mode: done ? mode : task.mode,
         lastDoneAt: done ? (at ?? Math.floor(Date.now() / 1000)) : null
       }
       this.store.set(`characters.${characterId}.tasks.${taskId}`, next)
@@ -240,13 +217,7 @@ export class DashboardStore {
   }
 
   /** 카운트 퀘스트 진행 증감 (#7). target 도달 시 완료, 0 미만/target 초과는 클램프 */
-  incrementTask(
-    characterId: string,
-    taskId: string,
-    delta: number,
-    mode: TaskMode = 'manual',
-    at?: number
-  ): StoreShape {
+  incrementTask(characterId: string, taskId: string, delta: number, at?: number): StoreShape {
     const task = this.store.get('characters')[characterId]?.tasks[taskId]
     if (task) {
       const target = task.targetCount ?? 1
@@ -256,29 +227,11 @@ export class DashboardStore {
         ...task,
         count,
         done,
-        mode: done ? mode : task.mode,
         lastDoneAt: done ? (at ?? Math.floor(Date.now() / 1000)) : null
       }
       this.store.set(`characters.${characterId}.tasks.${taskId}`, next)
     }
     return this.getState()
-  }
-
-  /**
-   * 자동 감지 이벤트 반영 (명세서 §5).
-   * 존재하지 않는 조합이거나 이미 완료된 퀘스트(수동 체크 포함)는 건드리지 않는다.
-   * @returns 상태가 실제로 바뀌었는지
-   */
-  applyDetection(characterId: string, taskId: string, timestamp: number): boolean {
-    const task = this.store.get('characters')[characterId]?.tasks[taskId]
-    if (!task) {
-      console.warn(`[store] 알 수 없는 감지 이벤트 무시: ${characterId}/${taskId}`)
-      return false
-    }
-    if (task.done) return false // 이미 완료 — 수동 체크를 auto로 덮어쓰지 않음
-    // 카운트 퀘스트(#7)는 감지 1회당 +1, 단일 퀘스트는 target=1이라 즉시 완료
-    this.incrementTask(characterId, taskId, 1, 'auto', timestamp)
-    return true
   }
 
   // ── 설정 ─────────────────────────────────────────────────
@@ -357,11 +310,9 @@ export class DashboardStore {
   private catalogTask(item: QuestCatalogItem): TaskState {
     return {
       done: false,
-      mode: 'manual',
       lastDoneAt: null,
       displayName: item.name,
       period: item.period,
-      threshold: null,
       catalogId: item.id,
       targetCount: Math.max(1, item.targetCount ?? 1),
       count: 0,
@@ -372,7 +323,7 @@ export class DashboardStore {
 
   // ── 리셋 (feature/reset-scheduler에서 사용) ───────────────
 
-  /** period에 해당하는 모든 퀘스트를 초기화. mode 구분 없이 전체 리셋 (명세서 §6) */
+  /** period에 해당하는 모든 퀘스트를 초기화 (명세서 §6) */
   resetTasks(period: TaskPeriod, now: number): StoreShape {
     const characters = this.store.get('characters')
     const next: Record<string, Character> = {}
@@ -402,7 +353,7 @@ export class DashboardStore {
 
   // ── Firestore 동기화 (#26) ────────────────────────────────
 
-  /** 클라우드에 올릴 부분집합. 기기별 설정(captureRegion 등)은 제외 */
+  /** 클라우드에 올릴 부분집합. 기기별 설정은 제외 */
   getCloudSyncPayload(): CloudPlayerData {
     const state = this.getState()
     return {

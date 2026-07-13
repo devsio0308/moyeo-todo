@@ -2,22 +2,15 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "homework-dashboard/shared/schema.json",
   "title": "숙제 대시보드 공용 스키마",
-  "description": "Electron ↔ Python 간 공유되는 데이터/메시지 스키마. 통신 스펙은 HOMEWORK_DASHBOARD_BRIEF.md §2 참고.",
+  "description": "electron-app ↔ web-overlay 간 공유되는 데이터 스키마.",
   "$defs": {
     "taskState": {
       "type": "object",
       "properties": {
         "done": { "type": "boolean" },
-        "mode": { "enum": ["auto", "manual"] },
         "lastDoneAt": { "type": ["integer", "null"], "description": "unix epoch (초)" },
         "displayName": { "type": "string" },
         "period": { "enum": ["daily", "weekly"] },
-        "threshold": {
-          "type": ["number", "null"],
-          "minimum": 0,
-          "maximum": 1,
-          "description": "매칭 threshold 개별 오버라이드. null이면 전역값 사용"
-        },
         "catalogId": {
           "type": ["string", "null"],
           "description": "Firebase 카탈로그 출처 퀘스트의 문서 id (#4). 수동 추가는 null/없음"
@@ -45,7 +38,7 @@
           "description": "이 캐릭터는 이 카탈로그 퀘스트를 하지 않음 (#25). true면 항상 완료 상태로 고정, 리셋 제외"
         }
       },
-      "required": ["done", "mode", "lastDoneAt", "displayName", "period"]
+      "required": ["done", "lastDoneAt", "displayName", "period"]
     },
     "character": {
       "type": "object",
@@ -58,25 +51,11 @@
       },
       "required": ["displayName", "tasks"]
     },
-    "captureRegion": {
-      "type": ["object", "null"],
-      "description": "숙제 완료 팝업이 뜨는 화면 영역 (물리 픽셀 좌표)",
-      "properties": {
-        "left": { "type": "integer" },
-        "top": { "type": "integer" },
-        "width": { "type": "integer", "minimum": 1 },
-        "height": { "type": "integer", "minimum": 1 }
-      },
-      "required": ["left", "top", "width", "height"]
-    },
     "settings": {
       "type": "object",
       "properties": {
-        "captureIntervalSec": { "type": "number", "minimum": 0.5 },
         "weeklyResetDay": { "type": "integer", "minimum": 0, "maximum": 6, "description": "0=일요일 ... 6=토요일" },
         "dailyResetHour": { "type": "integer", "minimum": 0, "maximum": 23 },
-        "matchThreshold": { "type": "number", "minimum": 0, "maximum": 1, "description": "전역 기본 threshold" },
-        "captureRegion": { "$ref": "#/$defs/captureRegion" },
         "firebaseProjectId": {
           "type": ["string", "null"],
           "description": "퀘스트 카탈로그를 가져올 Firebase 프로젝트 ID (#4)"
@@ -91,7 +70,7 @@
           "description": "게임계정 ID (#26) — Firestore players/{id} 문서와 동기화하는 키. 등록 시 캐릭터/퀘스트 진행 상황이 클라우드에 저장된다"
         }
       },
-      "required": ["captureIntervalSec", "weeklyResetDay", "dailyResetHour"]
+      "required": ["weeklyResetDay", "dailyResetHour"]
     },
     "storeShape": {
       "type": "object",
@@ -127,70 +106,6 @@
         "metaVersion": { "type": "integer", "description": "스토어 마이그레이션 버전 (내부용)" }
       },
       "required": ["characters", "characterOrder", "settings"]
-    },
-    "wsMessage": {
-      "description": "WebSocket 메시지 (ws://127.0.0.1:47231, Python=서버 / Electron=클라이언트)",
-      "oneOf": [
-        {
-          "type": "object",
-          "properties": {
-            "type": { "const": "task_detected" },
-            "character": { "type": "string" },
-            "task": { "type": "string" },
-            "confidence": { "type": "number" },
-            "timestamp": { "type": "integer" }
-          },
-          "required": ["type", "character", "task", "confidence", "timestamp"]
-        },
-        {
-          "type": "object",
-          "properties": {
-            "type": { "const": "heartbeat" },
-            "timestamp": { "type": "integer" }
-          },
-          "required": ["type", "timestamp"]
-        },
-        {
-          "type": "object",
-          "properties": {
-            "type": { "const": "active_character" },
-            "character": { "type": "string" }
-          },
-          "required": ["type", "character"]
-        },
-        {
-          "type": "object",
-          "properties": { "type": { "const": "reload_config" } },
-          "required": ["type"]
-        },
-        {
-          "type": "object",
-          "properties": {
-            "type": { "const": "set_paused" },
-            "paused": { "type": "boolean" }
-          },
-          "required": ["type", "paused"],
-          "description": "Electron → Python: 캡처 일시정지/재개 (트레이 메뉴 연동)"
-        },
-        {
-          "type": "object",
-          "properties": { "type": { "const": "capture_screenshot" } },
-          "required": ["type"],
-          "description": "Electron → Python: 전체 화면 스크린샷 요청 (리전 지정/템플릿 등록 UI용)"
-        },
-        {
-          "type": "object",
-          "properties": {
-            "type": { "const": "screenshot" },
-            "image": { "type": "string", "description": "base64 PNG (성공 시)" },
-            "width": { "type": "integer" },
-            "height": { "type": "integer" },
-            "error": { "type": "string", "description": "실패 사유 (실패 시)" }
-          },
-          "required": ["type"],
-          "description": "Python → Electron: capture_screenshot 응답 (요청자에게만). 좌표계는 mss 이미지 픽셀"
-        }
-      ]
     }
   }
 }

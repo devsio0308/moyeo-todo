@@ -6,7 +6,7 @@
 import { useSyncExternalStore } from 'react'
 import { applyPeriodReset } from './shared/period-reset'
 import { computeResets } from './shared/reset-logic'
-import type { CloudPlayerData, TaskMode } from './shared/types'
+import type { CloudPlayerData } from './shared/types'
 import {
   NotRegisteredError,
   getPlayerData,
@@ -168,7 +168,7 @@ class WebStore {
     this.set({ activeCharacterId: id })
   }
 
-  async setTaskDone(characterId: string, taskId: string, done: boolean, mode: TaskMode): Promise<void> {
+  async setTaskDone(characterId: string, taskId: string, done: boolean): Promise<void> {
     const { data, gameAccountId } = this.state
     if (!data || !gameAccountId || !this.projectId) return
     const task = data.characters[characterId]?.tasks[taskId]
@@ -177,7 +177,6 @@ class WebStore {
     const target = task.targetCount ?? 1
     const patch = {
       done,
-      mode: done ? mode : task.mode,
       lastDoneAt: done ? Math.floor(Date.now() / 1000) : null,
       count: done ? target : 0
     }
@@ -201,7 +200,6 @@ class WebStore {
     const patch = {
       count,
       done,
-      mode: done ? ('manual' as TaskMode) : task.mode,
       lastDoneAt: done ? Math.floor(Date.now() / 1000) : null
     }
     this.applyLocalTaskPatch(characterId, taskId, patch)
@@ -216,7 +214,7 @@ class WebStore {
   private applyLocalTaskPatch(
     characterId: string,
     taskId: string,
-    patch: Partial<{ done: boolean; mode: TaskMode; lastDoneAt: number | null; count: number }>
+    patch: Partial<{ done: boolean; lastDoneAt: number | null; count: number }>
   ): void {
     const { data } = this.state
     if (!data) return
