@@ -1,6 +1,6 @@
 # electron-builder 설정 (명세서 §7)
-appId: com.hrjin.homework-dashboard
-productName: HomeworkDashboard
+appId: com.hrjin.moyeo-todo
+productName: MoyeoTodo
 directories:
   output: dist
 
@@ -8,11 +8,11 @@ files:
   - out/**/*
   - package.json
 
-# PyInstaller로 빌드된 캡처 엔진을 설치 패키지에 동봉
-# (빌드 순서: npm run build:engine 이 resources/engine/ 에 복사해 둠)
-extraResources:
-  - from: resources/engine/
-    to: engine/
+# GitHub Releases를 업데이트 서버로 사용 (public 레포라 별도 인증 없이 설치본에서 확인 가능)
+publish:
+  provider: github
+  owner: devsio0308
+  repo: moyeo-todo
 
 win:
   # 아키텍처 명시 필수 — Apple Silicon에서 크로스 빌드 시 지정하지 않으면
@@ -25,7 +25,7 @@ nsis:
   oneClick: false
   allowToChangeInstallationDirectory: true
   createDesktopShortcut: always
-  shortcutName: 모여길드 도비
+  shortcutName: 뭐해야하더라
 
 mac:
   target:

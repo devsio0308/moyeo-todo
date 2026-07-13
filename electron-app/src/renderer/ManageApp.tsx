@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react'
-import { AUTO_DETECT_ENABLED, type EngineStatus } from '../shared/types'
 import CharactersView from './components/CharactersView'
 import CharacterTabs from './components/CharacterTabs'
 import DashboardView from './components/DashboardView'
@@ -24,21 +23,15 @@ const VIEW_TITLE: Record<View, string> = {
 export default function ManageApp(): React.JSX.Element {
   const init = useDashboardStore((s) => s.init)
   const applyState = useDashboardStore((s) => s.applyState)
-  const setCapturePaused = useDashboardStore((s) => s.setCapturePaused)
-  const [engineStatus, setEngineStatus] = useState<EngineStatus>('disconnected')
   const [view, setView] = useState<View>('dashboard')
 
   useEffect(() => {
     void init()
     const offChanged = window.api.store.onChanged(applyState)
-    const offPaused = window.api.capture.onPausedChanged(setCapturePaused)
-    const offStatus = window.api.engine.onStatus(setEngineStatus)
     return () => {
       offChanged()
-      offPaused()
-      offStatus()
     }
-  }, [init, applyState, setCapturePaused])
+  }, [init, applyState])
 
   const navItem = (v: View): React.JSX.Element => (
     <button
@@ -53,8 +46,8 @@ export default function ManageApp(): React.JSX.Element {
     <div className="admin-root">
       <aside className="side-nav">
         <div className="side-brand">
-          <span className="side-brand-icon">🧦</span>
-          <span className="side-brand-name">모여길드 도비</span>
+          <span className="side-brand-icon">📝</span>
+          <span className="side-brand-name">뭐해야하더라</span>
         </div>
         <nav className="side-nav-list">
           {navItem('dashboard')}
@@ -63,9 +56,6 @@ export default function ManageApp(): React.JSX.Element {
           {navItem('settings')}
         </nav>
         <div className="side-footer">
-          {AUTO_DETECT_ENABLED && engineStatus === 'failed' && (
-            <span className="badge badge-failed">엔진 오류</span>
-          )}
           <button
             className="overlay-launch-btn side-launch"
             title="게임 위에 체크리스트 오버레이 띄우기"
@@ -93,7 +83,7 @@ export default function ManageApp(): React.JSX.Element {
             </div>
           ) : view === 'characters' ? (
             <div className="settings-narrow">
-              <CharactersView />
+              <CharactersView onGoToSettings={() => setView('settings')} />
             </div>
           ) : (
             <div className="settings-narrow">

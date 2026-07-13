@@ -8,21 +8,17 @@ const chars: Record<string, Character> = {
     tasks: {
       task_daily: {
         done: true,
-        mode: 'manual',
         lastDoneAt: 100,
         displayName: '일일 던전',
         period: 'daily',
-        threshold: null,
         count: 1,
         targetCount: 1
       },
       task_weekly_excluded: {
         done: true,
-        mode: 'manual',
         lastDoneAt: 100,
         displayName: '심층던전 매우 어려움',
         period: 'weekly',
-        threshold: null,
         count: 1,
         targetCount: 1,
         excluded: true

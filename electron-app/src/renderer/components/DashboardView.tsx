@@ -100,7 +100,7 @@ export default function DashboardView(): React.JSX.Element {
   if (data.characterOrder.length === 0) {
     return (
       <p className="placeholder">
-        퀘스트 관리에서 캐릭터를 추가하면 주간 현황이 여기에 표시됩니다.
+        캐릭터 메뉴에서 캐릭터를 추가하면 주간 현황이 여기에 표시됩니다.
       </p>
     )
   }

@@ -9,11 +9,7 @@ interface Props {
   alarmRuleId?: string | null
 }
 
-/**
- * 퀘스트 한 줄 (체크 전용 — 삭제는 퀘스트 관리 화면에서, #5).
- * 자동 감지로 완료된 항목만 🤖 아이콘 표시 — 유저가 오탐 여부를 구분할 수 있어야 함 (명세서 §5).
- * 수동 체크는 아이콘 없음 (#9).
- */
+/** 퀘스트 한 줄 (체크 전용 — 삭제는 퀘스트 관리 화면에서, #5). */
 export default function TaskItem({
   characterId,
   taskId,
@@ -45,7 +41,7 @@ export default function TaskItem({
                 ? '체크: 전체 완료 / 해제: 0회로 초기화'
                 : undefined
           }
-          onChange={(e) => void setTaskDone(characterId, taskId, e.target.checked, 'manual')}
+          onChange={(e) => void setTaskDone(characterId, taskId, e.target.checked)}
         />
         <span className="task-name">{task.displayName}</span>
       </label>
@@ -79,11 +75,6 @@ export default function TaskItem({
       {task.category && (
         <span className={`cat-badge cat-${QUEST_CATEGORY_CLASS[task.category]}`}>
           {task.category}
-        </span>
-      )}
-      {task.done && task.mode === 'auto' && (
-        <span className="mode-icon" title="자동 감지됨">
-          🤖
         </span>
       )}
     </li>

@@ -24,7 +24,7 @@ export default function SyncIdGate({ notRegistered, errorMessage }: Props): Reac
   return (
     <div className="gate">
       <div className="gate-card">
-        <h1 className="gate-title">🧦 모여길드 도비</h1>
+        <h1 className="gate-title">📝 뭐해야하더라</h1>
         <p className="gate-desc">
           마비노기 모바일 <b>환경설정 → 계정 → 이용자 정보</b>에서 확인할 수 있는{' '}
           <b>회원코드</b>를 입력하세요.
@@ -45,7 +45,7 @@ export default function SyncIdGate({ notRegistered, errorMessage }: Props): Reac
 
         {notRegistered && (
           <p className="gate-error">
-            이 ID로 등록된 데이터가 없습니다. 먼저 데스크톱 앱(모여길드 도비)의 설정 →
+            이 ID로 등록된 데이터가 없습니다. 먼저 데스크톱 앱(뭐해야하더라)의 설정 →
             "동기화 ID 연동"에서 같은 회원코드로 연동해주세요.
           </p>
         )}
