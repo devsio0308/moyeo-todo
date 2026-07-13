@@ -9,6 +9,12 @@ import { autoUpdater } from 'electron-updater'
 export function checkForUpdates(): void {
   if (!app.isPackaged) return // 개발 모드는 app-update.yml이 없어 스킵
 
+  // autoUpdater는 EventEmitter라 'error' 리스너가 없으면 미처리 예외로 남는다
+  // (예: macOS는 아직 zip 자산이 없어 다운로드 단계에서 항상 실패 — 무해하게 무시)
+  autoUpdater.on('error', (e) => {
+    console.warn('[auto-update] 업데이트 확인/다운로드 실패:', e)
+  })
+
   autoUpdater.checkForUpdatesAndNotify().catch((e) => {
     console.warn('[auto-update] 업데이트 확인 실패:', e)
   })
