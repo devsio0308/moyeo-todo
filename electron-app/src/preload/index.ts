@@ -74,7 +74,10 @@ const api = {
   },
   catalog: {
     /** Firestore 퀘스트 카탈로그 수동 동기화 (#4) */
-    sync: (): Promise<CatalogSyncResult> => ipcRenderer.invoke('catalog:sync')
+    sync: (): Promise<CatalogSyncResult> => ipcRenderer.invoke('catalog:sync'),
+    /** .env 기본 프로젝트 ID (#14) — 설정 UI 입력창 표시용 */
+    getDefaultProjectId: (): Promise<string | null> =>
+      ipcRenderer.invoke('catalog:default-project-id')
   },
   cloud: {
     /** 게임계정 ID 등록/연동 (#26) — 원격 있으면 불러오기, 없으면 로컬 업로드 */

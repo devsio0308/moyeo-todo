@@ -104,6 +104,11 @@ export function getEffectiveProjectId(): string | null {
   return settings.firebaseProjectId?.trim() || DEFAULT_PROJECT_ID
 }
 
+/** .env 기본값만 반환 (설정 UI 입력값 제외) — 입력창에 기본값을 표시하는 용도 */
+export function getDefaultProjectId(): string | null {
+  return DEFAULT_PROJECT_ID
+}
+
 /** 설정된 프로젝트에서 카탈로그를 가져와 전체 캐릭터에 동기화.
  *  우선순위: 설정 UI 입력값 > .env 기본값 */
 export async function syncQuestCatalogOnce(): Promise<CatalogSyncResult> {
