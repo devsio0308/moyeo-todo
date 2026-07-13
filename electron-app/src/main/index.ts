@@ -127,6 +127,8 @@ if (!app.requestSingleInstanceLock()) {
 
 function registerWindowIpc(): void {
   ipcMain.on('overlay:show', () => showOverlayWindow())
-  ipcMain.on('overlay:hide', () => overlayWindow?.hide())
+  // 사용자 관점에선 '닫기'지만, 관리 프로그램이 떠 있는 동안은 숨김만 하고
+  // 다시 열 때 바로 재사용한다 — 프로그램 전체가 꺼지면 창도 자동으로 같이 사라짐
+  ipcMain.on('overlay:close', () => overlayWindow?.hide())
   ipcMain.on('app:quit', () => app.quit())
 }

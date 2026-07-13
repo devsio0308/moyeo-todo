@@ -1,6 +1,6 @@
 import { ipcMain } from 'electron'
 import { dashboardStore } from './store'
-import { syncQuestCatalogOnce } from './quest-catalog'
+import { getDefaultProjectId, syncQuestCatalogOnce } from './quest-catalog'
 import { pullCloudSyncIfRegistered, registerGameAccount } from './cloud-sync'
 import type { Settings, TaskPeriod, TaskState } from '../shared/types'
 
@@ -122,6 +122,9 @@ export function registerIpcHandlers(broadcastAll: (channel: string, payload: unk
     if (result.ok) broadcast()
     return result
   })
+
+  /** .env(MAIN_VITE_FIREBASE_PROJECT_ID) 기본값 — 설정 UI 입력창 표시용 (#14) */
+  ipcMain.handle('catalog:default-project-id', () => getDefaultProjectId())
 
   // ── 게임계정 ID 기반 Firestore 동기화 (#26) ─────────────
 

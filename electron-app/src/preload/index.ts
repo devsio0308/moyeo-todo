@@ -15,8 +15,9 @@ const api = {
   window: {
     /** 오버레이 표시 (#17 — 관리 창의 '오버레이 띄우기') */
     showOverlay: (): void => ipcRenderer.send('overlay:show'),
-    /** 오버레이 숨기기 (오버레이 타이틀바 버튼) */
-    hideOverlay: (): void => ipcRenderer.send('overlay:hide'),
+    /** 오버레이 닫기 (오버레이 타이틀바 버튼) — 관리 프로그램이 떠 있는 동안은 숨김,
+     *  프로그램 종료 시 함께 사라짐 */
+    closeOverlay: (): void => ipcRenderer.send('overlay:close'),
     quit: (): void => ipcRenderer.send('app:quit')
   },
   store: {
@@ -73,7 +74,10 @@ const api = {
   },
   catalog: {
     /** Firestore 퀘스트 카탈로그 수동 동기화 (#4) */
-    sync: (): Promise<CatalogSyncResult> => ipcRenderer.invoke('catalog:sync')
+    sync: (): Promise<CatalogSyncResult> => ipcRenderer.invoke('catalog:sync'),
+    /** .env 기본 프로젝트 ID (#14) — 설정 UI 입력창 표시용 */
+    getDefaultProjectId: (): Promise<string | null> =>
+      ipcRenderer.invoke('catalog:default-project-id')
   },
   cloud: {
     /** 게임계정 ID 등록/연동 (#26) — 원격 있으면 불러오기, 없으면 로컬 업로드 */
