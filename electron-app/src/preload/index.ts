@@ -16,9 +16,8 @@ const api = {
     /** 오버레이 표시 (#17 — 관리 창의 '오버레이 띄우기') */
     showOverlay: (): void => ipcRenderer.send('overlay:show'),
     /** 오버레이 닫기 (오버레이 타이틀바 버튼) — 관리 프로그램이 떠 있는 동안은 숨김,
-     *  프로그램 종료 시 함께 사라짐 */
-    closeOverlay: (): void => ipcRenderer.send('overlay:close'),
-    quit: (): void => ipcRenderer.send('app:quit')
+     *  관리 창을 닫으면(전체 종료) 함께 사라짐 */
+    closeOverlay: (): void => ipcRenderer.send('overlay:close')
   },
   store: {
     getState: (): Promise<StoreShape> => ipcRenderer.invoke('store:get-state'),
