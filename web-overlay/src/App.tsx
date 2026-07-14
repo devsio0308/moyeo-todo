@@ -1,9 +1,17 @@
 import { useEffect, useRef, useState } from 'react'
 import CharacterTabs from './components/CharacterTabs'
+import InstallGuide from './components/InstallGuide'
 import SyncIdGate from './components/SyncIdGate'
 import TaskChecklist from './components/TaskChecklist'
 import { useAlarms } from './hooks/useAlarms'
 import { useWebStore, webStore } from './store'
+
+/** 홈 화면 아이콘으로 실행됐는지 (PWA standalone). iOS Safari는 navigator.standalone 사용 */
+const IS_STANDALONE =
+  window.matchMedia('(display-mode: standalone)').matches ||
+  (navigator as Navigator & { standalone?: boolean }).standalone === true
+
+const BROWSER_MODE_KEY = 'dobi-browser-mode'
 
 export default function App(): React.JSX.Element {
   const status = useWebStore((s) => s.status)
@@ -14,6 +22,12 @@ export default function App(): React.JSX.Element {
   const [refreshError, setRefreshError] = useState<string | null>(null)
   const [refreshCooldown, setRefreshCooldown] = useState(false)
   const cooldownTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const [browserModeAccepted, setBrowserModeAccepted] = useState(
+    () => sessionStorage.getItem(BROWSER_MODE_KEY) === '1'
+  )
+
+  // 브라우저 탭으로 열면 홈 화면 추가 가이드부터 — '계속하기'는 세션 동안만 기억
+  const showInstallGuide = !IS_STANDALONE && !browserModeAccepted
 
   /** 연타 방지 (#30) — 성공/실패 무관하게 1분간 재요청 제한 */
   const armCooldown = (): void => {
@@ -23,9 +37,22 @@ export default function App(): React.JSX.Element {
   }
 
   useEffect(() => {
+    // 가이드가 떠 있는 동안은 데이터를 불러오지 않는다 (불필요한 요청 방지)
+    if (showInstallGuide) return
     // 최초 진입 시 자동 로드도 요청 1회이므로, 열자마자 연타하지 못하게 쿨다운을 같이 건다
     void webStore.init().then(armCooldown)
-  }, [])
+  }, [showInstallGuide])
+
+  if (showInstallGuide) {
+    return (
+      <InstallGuide
+        onContinueInBrowser={() => {
+          sessionStorage.setItem(BROWSER_MODE_KEY, '1')
+          setBrowserModeAccepted(true)
+        }}
+      />
+    )
+  }
 
   /** 수동 새로고침 (#29) — 자동 폴링 없음, 눌렀을 때만 클라우드 조회 */
   const handleRefresh = async (): Promise<void> => {
