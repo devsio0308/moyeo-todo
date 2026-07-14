@@ -1,6 +1,6 @@
 {
   "name": "moyeo-todo",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "게임 숙제 체크 오버레이 대시보드",
   "main": "./out/main/index.js",
   "author": "hrjin",
