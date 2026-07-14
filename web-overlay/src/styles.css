@@ -571,3 +571,63 @@ body {
   color: #9a9aa8;
   font-size: 14px;
 }
+
+/* ── 홈 화면 추가 가이드 (브라우저로 열었을 때) ── */
+.install-guide {
+  gap: 16px;
+}
+
+.guide-tabs {
+  display: flex;
+  gap: 6px;
+  padding: 4px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 10px;
+}
+
+.guide-tab {
+  flex: 1;
+  padding: 9px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: #9a9aa8;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.guide-tab-active {
+  background: #5e81ff;
+  color: #fff;
+}
+
+.guide-steps {
+  margin: 0;
+  padding-left: 20px;
+  color: #d0d0da;
+  font-size: 14px;
+  line-height: 1.7;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  text-align: left;
+}
+
+.guide-steps b {
+  color: #fff;
+}
+
+.guide-skip {
+  background: none;
+  border: none;
+  color: #9a9aa8;
+  font-size: 13px;
+  text-decoration: underline;
+  cursor: pointer;
+  padding: 8px;
+}
+
+.guide-skip:hover {
+  color: #d0d0da;
+}
