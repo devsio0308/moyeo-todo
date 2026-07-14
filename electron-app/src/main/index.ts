@@ -40,6 +40,8 @@ function showManageWindow(): void {
   resetScheduler?.attachWindow(manageWindow)
   manageWindow.on('closed', () => {
     manageWindow = null
+    // 관리 창이 메인 프로그램 — 닫히면 숨어있는 오버레이까지 포함해 전체 종료
+    app.quit()
   })
 }
 
@@ -117,18 +119,16 @@ if (!app.requestSingleInstanceLock()) {
     resetScheduler?.stop()
   })
 
-  // 두 창 모두 닫혀도 트레이 상주. 종료는 트레이 메뉴로만.
+  // 종료는 관리 창 닫기(위 'closed' 핸들러)로 처리 — 오버레이만 남은 상태는
+  // 오버레이가 hide로만 닫히므로 발생하지 않는다
   app.on('window-all-closed', () => {
-    if (process.platform !== 'darwin') {
-      // no-op: 트레이 상주
-    }
+    app.quit()
   })
 }
 
 function registerWindowIpc(): void {
   ipcMain.on('overlay:show', () => showOverlayWindow())
   // 사용자 관점에선 '닫기'지만, 관리 프로그램이 떠 있는 동안은 숨김만 하고
-  // 다시 열 때 바로 재사용한다 — 프로그램 전체가 꺼지면 창도 자동으로 같이 사라짐
+  // 다시 열 때 바로 재사용한다 — 관리 창을 닫으면(전체 종료) 함께 사라짐
   ipcMain.on('overlay:close', () => overlayWindow?.hide())
-  ipcMain.on('app:quit', () => app.quit())
 }

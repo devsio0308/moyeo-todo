@@ -23,8 +23,8 @@ win:
         - x64
 nsis:
   oneClick: false
-  # 사용자/전체 선택 화면 없이 항상 전체(모든 사용자, Program Files) 설치 — 관리자 권한 요구
-  perMachine: true
+  # 설치 모드 선택 화면 없이 항상 현재 사용자(per-user) 설치 — build/installer.nsh의
+  # customInstallMode 훅으로 고정. UAC 없이 자동 업데이트가 조용히 설치되도록 함.
   allowToChangeInstallationDirectory: true
   createDesktopShortcut: always
   shortcutName: 뭐해야하더라

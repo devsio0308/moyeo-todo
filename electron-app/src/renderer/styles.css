@@ -168,14 +168,6 @@ body {
   flex: 1;
 }
 
-.admin-quit-btn {
-  margin-left: auto;
-  width: 28px;
-  height: 28px;
-  font-size: 14px;
-  color: #7a7a88;
-}
-
 .admin-content {
   flex: 1;
   overflow-y: auto;
