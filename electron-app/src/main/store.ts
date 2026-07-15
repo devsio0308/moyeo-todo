@@ -381,6 +381,15 @@ export class DashboardStore {
     return this.getState()
   }
 
+  /** 마지막으로 클라우드와 일치했던 updatedAt — 시작 시 원격 변경 감지용 (기기 로컬 전용) */
+  getLastCloudSyncAt(): number | null {
+    return this.store.get('lastCloudSyncAt', null) ?? null
+  }
+
+  markCloudSync(updatedAt: number): void {
+    this.store.set('lastCloudSyncAt', updatedAt)
+  }
+
   // ── 내부 유틸 ────────────────────────────────────────────
 
   /** character_01, task_03 형태의 순차 id 생성 (템플릿 폴더명과 일치해야 하므로 사람이 읽기 쉬운 형태 유지) */

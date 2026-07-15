@@ -124,6 +124,9 @@ export interface StoreShape {
   questCatalog?: QuestCatalogItem[]
   /** 추천 퀘스트 목록 캐시 (#15) — 선택해서 커스텀 퀘스트로 추가 */
   recommendedQuests?: QuestCatalogItem[]
+  /** 마지막으로 클라우드와 일치했던 시점의 updatedAt (기기 로컬 전용 — 클라우드 미포함).
+   *  시작 시 원격 updatedAt과 비교해 다른 기기의 변경을 감지하는 데 쓴다 */
+  lastCloudSyncAt?: number | null
   /** 스토어 마이그레이션 버전 (내부용) */
   metaVersion?: number
 }
