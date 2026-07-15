@@ -45,6 +45,11 @@ export class ResetScheduler {
     this.detachers.push(detach)
   }
 
+  /** 외부에서 즉시 재판정이 필요할 때 (예: 시작 시 클라우드 pull 직후) */
+  checkNow(): void {
+    this.check()
+  }
+
   stop(): void {
     if (this.timer) clearInterval(this.timer)
     this.timer = null

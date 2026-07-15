@@ -1,3 +1,4 @@
+import './dev-userdata' // 반드시 최상단 — store 생성 전에 dev용 userData 경로로 전환
 import { app, BrowserWindow, ipcMain } from 'electron'
 import { electronApp, optimizer } from '@electron-toolkit/utils'
 import { createManageWindow, createOverlayWindow } from './window'
@@ -7,7 +8,7 @@ import { checkForUpdates } from './auto-update'
 import { dashboardStore } from './store'
 import { ResetScheduler } from './reset-scheduler'
 import { syncQuestCatalogOnce } from './quest-catalog'
-import { pushCloudSyncIfRegistered } from './cloud-sync'
+import { pushCloudSyncIfRegistered, reconcileCloudSyncOnStartup } from './cloud-sync'
 
 // 알람 차임(#11)을 사용자 제스처 없이 재생할 수 있게 autoplay 정책 해제
 app.commandLine.appendSwitch('autoplay-policy', 'no-user-gesture-required')
@@ -80,6 +81,11 @@ if (!app.requestSingleInstanceLock()) {
       optimizer.watchWindowShortcuts(window)
     })
 
+    // 클라우드 화해(pull-first) — 다른 기기가 그 사이 쓴 내용이 있으면 먼저 가져온다.
+    // 동기 호출로 푸시 게이트가 즉시 걸리므로, 이후의 리셋/카탈로그 푸시가
+    // 낡은 로컬 상태로 클라우드를 덮어쓰는 일이 없다.
+    const reconcile = reconcileCloudSyncOnStartup()
+
     // 리셋 스케줄러 — 시작/포커스/절전복귀 시 day-boundary 체크 (명세서 §6)
     resetScheduler = new ResetScheduler(() => {
       broadcastAll('store:changed', dashboardStore.getState())
@@ -102,13 +108,24 @@ if (!app.requestSingleInstanceLock()) {
     // 시작 시 업데이트 확인 — 새 버전 있으면 백그라운드 다운로드 후 알림
     checkForUpdates()
 
-    // 시작 시 퀘스트 카탈로그 자동 동기화 (#4) — 실패해도 앱 동작에는 영향 없음
-    void syncQuestCatalogOnce().then((result) => {
-      console.log(`[catalog] ${result.message}`)
-      if (result.ok) {
-        broadcastAll('store:changed', dashboardStore.getState())
-      }
-    })
+    void reconcile
+      .then((result) => {
+        if (result === 'pulled') {
+          // 원격 데이터를 받아왔으니 최신 시각 기준으로 리셋 재판정 + 화면 갱신
+          resetScheduler?.checkNow()
+          broadcastAll('store:changed', dashboardStore.getState())
+        }
+      })
+      .finally(() => {
+        // 카탈로그 동기화는 화해 이후에 — pull 전에 실행하면 카탈로그가 추가한
+        // 퀘스트가 pull에 덮여 사라질 수 있다 (#4)
+        void syncQuestCatalogOnce().then((result) => {
+          console.log(`[catalog] ${result.message}`)
+          if (result.ok) {
+            broadcastAll('store:changed', dashboardStore.getState())
+          }
+        })
+      })
 
     app.on('activate', () => {
       showManageWindow()
