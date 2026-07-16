@@ -501,6 +501,12 @@ export class DashboardStore {
     return this.getState()
   }
 
+  /** 실행취소(#undo) 스냅샷 복원 — characters만 통째로 교체 */
+  restoreCharacters(characters: Record<string, Character>): StoreShape {
+    this.store.set('characters', characters)
+    return this.getState()
+  }
+
   /** 마지막으로 클라우드와 일치했던 updatedAt — 시작 시 원격 변경 감지용 (기기 로컬 전용) */
   getLastCloudSyncAt(): number | null {
     return this.store.get('lastCloudSyncAt', null) ?? null

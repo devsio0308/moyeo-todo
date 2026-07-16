@@ -16,12 +16,33 @@ export default function OverlayApp(): React.JSX.Element {
   const [syncError, setSyncError] = useState<string | null>(null)
   const [syncCooldown, setSyncCooldown] = useState(false)
   const cooldownTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const [history, setHistory] = useState({ canUndo: false, canRedo: false })
 
   useEffect(() => {
     void init()
+    void window.api.history.getState().then(setHistory)
     const offChanged = window.api.store.onChanged(applyState)
+    const offHistory = window.api.history.onChanged(setHistory)
+
+    // 실행취소 단축키 폴백 (#undo) — 기본 경로는 main의 before-input-event이며,
+    // 그쪽에서 preventDefault되면 여기까지 오지 않으므로 이중 실행 없음
+    const onKey = (e: KeyboardEvent): void => {
+      if (!(e.ctrlKey || e.metaKey)) return
+      const k = e.key.toLowerCase()
+      if (k === 'z' && !e.shiftKey) {
+        e.preventDefault()
+        void window.api.history.undo()
+      } else if ((k === 'z' && e.shiftKey) || k === 'y') {
+        e.preventDefault()
+        void window.api.history.redo()
+      }
+    }
+    window.addEventListener('keydown', onKey)
+
     return () => {
       offChanged()
+      offHistory()
+      window.removeEventListener('keydown', onKey)
     }
   }, [init, applyState])
 
@@ -50,6 +71,22 @@ export default function OverlayApp(): React.JSX.Element {
       <header className="titlebar">
         <span className="titlebar-title">📝 뭐해야하더라</span>
         <div className="titlebar-buttons">
+          <button
+            className="titlebar-btn"
+            title="실행취소 (Ctrl+Z)"
+            onClick={() => void window.api.history.undo()}
+            disabled={!history.canUndo}
+          >
+            ↩
+          </button>
+          <button
+            className="titlebar-btn"
+            title="다시 실행 (Ctrl+Shift+Z)"
+            onClick={() => void window.api.history.redo()}
+            disabled={!history.canRedo}
+          >
+            ↪
+          </button>
           <button
             className="titlebar-btn"
             title={
