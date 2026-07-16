@@ -105,6 +105,11 @@ export interface CatalogNotice {
   removedNames: string[]
 }
 
+/** 백그라운드 다운로드가 끝난 새 버전 안내 (#auto-update-notice) — 관리 창 말풍선으로 표시 */
+export interface UpdateDownloadedNotice {
+  version: string
+}
+
 /** 게임계정 ID 등록 결과 (#26) */
 export interface CloudRegisterResult {
   ok: boolean
@@ -167,6 +172,9 @@ export interface StoreShape {
   /** 마지막으로 확인한 meta/catalog 문서의 updatedAt 값 (#catalog-watch, 기기 로컬 전용).
    *  이 값과 다를 때만 카탈로그 전체를 다시 읽어온다 */
   lastCatalogMetaAt?: string | number | null
+  /** 다운로드는 끝났지만 설치 대기 중인 버전 (#auto-update-notice, 기기 로컬 전용).
+   *  유저가 알림의 '업데이트' 버튼을 누르기 전까진 재시작해도 계속 남아 안내를 띄운다 */
+  pendingUpdateVersion?: string | null
   /** 스토어 마이그레이션 버전 (내부용) */
   metaVersion?: number
 }

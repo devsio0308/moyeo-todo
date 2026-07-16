@@ -6,13 +6,14 @@ import QuestManager from './components/QuestManager'
 import RecommendedPanel from './components/RecommendedPanel'
 import SettingsPanel from './components/SettingsPanel'
 import { useDashboardStore } from './store/useDashboardStore'
-import type { CatalogNotice } from '../shared/types'
+import type { CatalogNotice, UpdateDownloadedNotice } from '../shared/types'
 
 type View = 'dashboard' | 'quests' | 'characters' | 'settings'
 
-interface CatalogNoticeEntry extends CatalogNotice {
-  id: string
-}
+/** 관리 창 우측 하단 말풍선 알림 — 카탈로그 변경(#catalog-watch) / 업데이트 준비(#auto-update-notice) 공용 */
+type AppNotice =
+  | ({ kind: 'catalog'; id: string } & CatalogNotice)
+  | ({ kind: 'update'; id: string } & UpdateDownloadedNotice)
 
 const VIEW_TITLE: Record<View, string> = {
   dashboard: '대시보드',
@@ -29,26 +30,35 @@ export default function ManageApp(): React.JSX.Element {
   const init = useDashboardStore((s) => s.init)
   const applyState = useDashboardStore((s) => s.applyState)
   const [view, setView] = useState<View>('dashboard')
-  // 백그라운드 카탈로그 감시(#catalog-watch) 알림 — X로 닫거나 앱을 종료하기 전까지 유지.
+  // 우측 하단 말풍선 알림 — X로 닫거나 앱을 종료하기 전까지 유지.
   // 확인 안 한 알림이 남아있는 상태에서 새 알림이 오면 쌓아서 각각 따로 닫을 수 있게 한다
   // (세션 메모리 상태만 — 재시작하면 초기화됨)
-  const [catalogNotices, setCatalogNotices] = useState<CatalogNoticeEntry[]>([])
+  const [notices, setNotices] = useState<AppNotice[]>([])
 
   useEffect(() => {
     void init()
     const offChanged = window.api.store.onChanged(applyState)
     const offCatalog = window.api.catalog.onNotice((notice: CatalogNotice) => {
-      const entry: CatalogNoticeEntry = { ...notice, id: `${Date.now()}-${Math.random()}` }
-      setCatalogNotices((prev) => [...prev, entry])
+      setNotices((prev) => [...prev, { ...notice, kind: 'catalog', id: `${Date.now()}-${Math.random()}` }])
     })
+    // 설치 안 하고 종료했다가 재시작해도 계속 안내를 띄운다 (#auto-update-notice)
+    const addUpdateNotice = (notice: UpdateDownloadedNotice): void => {
+      const id = `update-${notice.version}`
+      setNotices((prev) => (prev.some((n) => n.id === id) ? prev : [...prev, { ...notice, kind: 'update', id }]))
+    }
+    void window.api.update.getPending().then((pending) => {
+      if (pending) addUpdateNotice(pending)
+    })
+    const offUpdate = window.api.update.onDownloaded(addUpdateNotice)
     return () => {
       offChanged()
       offCatalog()
+      offUpdate()
     }
   }, [init, applyState])
 
-  const dismissCatalogNotice = (id: string): void => {
-    setCatalogNotices((prev) => prev.filter((n) => n.id !== id))
+  const dismissNotice = (id: string): void => {
+    setNotices((prev) => prev.filter((n) => n.id !== id))
   }
 
   const navItem = (v: View): React.JSX.Element => (
@@ -111,27 +121,45 @@ export default function ManageApp(): React.JSX.Element {
         </main>
       </div>
 
-      {catalogNotices.length > 0 && (
-        <div className="catalog-notice-stack">
-          {catalogNotices.map((notice) => (
-            <div className="catalog-notice-bubble" key={notice.id}>
+      {notices.length > 0 && (
+        <div className="app-notice-stack">
+          {notices.map((notice) => (
+            <div className="app-notice-bubble" key={notice.id}>
               <button
-                className="catalog-notice-close"
+                className="app-notice-close"
                 title="닫기"
-                onClick={() => dismissCatalogNotice(notice.id)}
+                onClick={() => dismissNotice(notice.id)}
               >
                 ✕
               </button>
-              <strong className="catalog-notice-title">카탈로그 업데이트</strong>
-              {notice.addedNames.length > 0 && (
-                <p className="catalog-notice-line">
-                  새 퀘스트가 추가되었습니다: {notice.addedNames.join(', ')}
-                </p>
-              )}
-              {notice.removedNames.length > 0 && (
-                <p className="catalog-notice-line">
-                  퀘스트가 삭제되었습니다: {notice.removedNames.join(', ')}
-                </p>
+              {notice.kind === 'catalog' ? (
+                <>
+                  <strong className="app-notice-title">카탈로그 업데이트</strong>
+                  {notice.addedNames.length > 0 && (
+                    <p className="app-notice-line">
+                      새 퀘스트가 추가되었습니다: {notice.addedNames.join(', ')}
+                    </p>
+                  )}
+                  {notice.removedNames.length > 0 && (
+                    <p className="app-notice-line">
+                      퀘스트가 삭제되었습니다: {notice.removedNames.join(', ')}
+                    </p>
+                  )}
+                </>
+              ) : (
+                <>
+                  <strong className="app-notice-title">새 버전 준비됨 (v{notice.version})</strong>
+                  <p className="app-notice-line">
+                    버튼을 누르면 지금 설치하고 자동으로 재시작합니다. 누르지 않으면 종료해도
+                    설치되지 않고, 다음에 켤 때 이 안내가 다시 뜹니다.
+                  </p>
+                  <button
+                    className="app-notice-action"
+                    onClick={() => void window.api.update.install()}
+                  >
+                    지금 업데이트
+                  </button>
+                </>
               )}
             </div>
           ))}

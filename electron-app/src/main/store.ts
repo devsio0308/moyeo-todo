@@ -597,6 +597,20 @@ export class DashboardStore {
     this.store.set('lastCatalogMetaAt', value)
   }
 
+  /** 다운로드는 끝났지만 아직 설치 안 한 버전 (#auto-update-notice) — 유저가 버튼을
+   *  누르기 전까진 재시작해도 계속 안내를 띄우기 위해 재시작 사이에도 남겨둔다 */
+  getPendingUpdateVersion(): string | null {
+    return this.store.get('pendingUpdateVersion', null) ?? null
+  }
+
+  setPendingUpdateVersion(version: string): void {
+    this.store.set('pendingUpdateVersion', version)
+  }
+
+  clearPendingUpdateVersion(): void {
+    this.store.set('pendingUpdateVersion', null)
+  }
+
   // ── 내부 유틸 ────────────────────────────────────────────
 
   /** character_01, task_03 형태의 순차 id 생성 (템플릿 폴더명과 일치해야 하므로 사람이 읽기 쉬운 형태 유지) */

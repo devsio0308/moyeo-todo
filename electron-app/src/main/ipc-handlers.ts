@@ -1,9 +1,10 @@
-import { ipcMain } from 'electron'
+import { app, ipcMain } from 'electron'
 import { clearHistory, historyState, recordHistory, redoHistory, undoHistory } from './history'
 import { dashboardStore } from './store'
 import { getDefaultProjectId, syncQuestCatalogOnce } from './quest-catalog'
 import { pullCloudSyncIfRegistered, registerGameAccount } from './cloud-sync'
-import type { Settings, TaskPeriod, TaskState } from '../shared/types'
+import { installUpdateNow } from './auto-update'
+import type { Settings, TaskPeriod, TaskState, UpdateDownloadedNotice } from '../shared/types'
 
 /**
  * renderer ↔ main IPC.
@@ -183,4 +184,21 @@ export function registerIpcHandlers(broadcastAll: (channel: string, payload: unk
     broadcast()
     return dashboardStore.getState()
   })
+
+  // ── 자동 업데이트 (#auto-update-notice) — 설치는 유저가 버튼을 눌러야만 진행 ──
+
+  /** 관리 창 마운트 시 1회 조회 — 재시작해도 설치 대기 중인 버전이 있으면 안내를 다시 띄운다.
+   *  이미 그 버전으로 실행 중이면(=설치 완료) 대기 상태를 정리하고 null 반환 */
+  ipcMain.handle('update:get-pending', () => {
+    const pending = dashboardStore.getPendingUpdateVersion()
+    if (!pending) return null
+    if (pending === app.getVersion()) {
+      dashboardStore.clearPendingUpdateVersion()
+      return null
+    }
+    const notice: UpdateDownloadedNotice = { version: pending }
+    return notice
+  })
+
+  ipcMain.handle('update:install', () => installUpdateNow())
 }
