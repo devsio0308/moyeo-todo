@@ -10,7 +10,7 @@ import { dashboardStore } from './store'
 import { ResetScheduler } from './reset-scheduler'
 import { syncQuestCatalogIfChanged } from './quest-catalog'
 import { pushCloudSyncIfRegistered, reconcileCloudSyncOnStartup } from './cloud-sync'
-import type { CatalogNotice } from '../shared/types'
+import type { CatalogNotice, UpdateDownloadedNotice } from '../shared/types'
 
 // 알람 차임(#11)을 사용자 제스처 없이 재생할 수 있게 autoplay 정책 해제
 app.commandLine.appendSwitch('autoplay-policy', 'no-user-gesture-required')
@@ -150,8 +150,12 @@ if (!app.requestSingleInstanceLock()) {
     registerIpcHandlers(broadcastAll)
     setHistoryListener(() => broadcastAll('history:changed', historyState()))
 
-    // 시작 시 업데이트 확인 — 새 버전 있으면 백그라운드 다운로드 후 알림
-    checkForUpdates()
+    // 시작 시 업데이트 확인 — 새 버전 있으면 실행 중에 백그라운드로 다운로드하고,
+    // 완료되면 관리 창에 "종료→업데이트→재실행" 안내 (#auto-update-notice)
+    checkForUpdates((version) => {
+      const notice: UpdateDownloadedNotice = { version }
+      broadcastAll('update:downloaded', notice)
+    })
 
     void reconcile
       .then((result) => {

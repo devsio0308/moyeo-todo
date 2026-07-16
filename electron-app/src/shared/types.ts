@@ -105,6 +105,11 @@ export interface CatalogNotice {
   removedNames: string[]
 }
 
+/** 백그라운드 다운로드가 끝난 새 버전 안내 (#auto-update-notice) — 관리 창 말풍선으로 표시 */
+export interface UpdateDownloadedNotice {
+  version: string
+}
+
 /** 게임계정 ID 등록 결과 (#26) */
 export interface CloudRegisterResult {
   ok: boolean

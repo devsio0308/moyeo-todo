@@ -9,7 +9,8 @@ import type {
   Settings,
   StoreShape,
   TaskPeriod,
-  TaskState
+  TaskState,
+  UpdateDownloadedNotice
 } from '../shared/types'
 
 /** 렌더러에 노출하는 최소 API 표면 */
@@ -106,6 +107,15 @@ const api = {
       ipcRenderer.invoke('cloud:register', gameAccountId),
     /** 수동 동기화 (#28) — 클릭했을 때만 클라우드에서 최신 데이터를 가져옴 (자동 폴링 없음) */
     pull: (): Promise<CloudSyncResult> => ipcRenderer.invoke('cloud:pull')
+  },
+  update: {
+    /** 백그라운드 다운로드가 끝나면 알림 (#auto-update-notice) — 관리 창 말풍선용 */
+    onDownloaded: (cb: (notice: UpdateDownloadedNotice) => void): (() => void) => {
+      const listener = (_e: Electron.IpcRendererEvent, notice: UpdateDownloadedNotice): void =>
+        cb(notice)
+      ipcRenderer.on('update:downloaded', listener)
+      return () => ipcRenderer.removeListener('update:downloaded', listener)
+    }
   }
 }
 
