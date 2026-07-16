@@ -124,7 +124,7 @@ export async function patchTaskFields(
   gameAccountId: string,
   characterId: string,
   taskId: string,
-  patch: Partial<Pick<TaskState, 'done' | 'lastDoneAt' | 'count'>>
+  patch: Partial<Pick<TaskState, 'done' | 'lastDoneAt' | 'count' | 'dailyUsed'>>
 ): Promise<void> {
   const prefix = `characters.${characterId}.tasks.${taskId}`
   const maskParams = [...Object.keys(patch).map((key) => `${prefix}.${key}`), 'updatedAt']

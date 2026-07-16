@@ -5,7 +5,8 @@
 
 import { useSyncExternalStore } from 'react'
 import { applyPeriodReset } from './shared/period-reset'
-import { computeResets } from './shared/reset-logic'
+import { poolTodayMax } from './shared/pool-quest'
+import { computeResets, dailyPeriodStart } from './shared/reset-logic'
 import type { CloudPlayerData } from './shared/types'
 import {
   NotRegisteredError,
@@ -111,7 +112,16 @@ class WebStore {
       let changed = false
 
       if (decision.daily === 'reset') {
-        characters = applyPeriodReset(characters, 'daily')
+        // 마지막 리셋 이후 지난 일수 — 풀형 퀘스트를 그만큼 차감 (#pool)
+        const crossedDays = Math.max(
+          1,
+          Math.round(
+            (decision.dailyPeriodStart -
+              dailyPeriodStart(remote.lastDailyResetAt ?? now, settings.dailyResetHour)) /
+              86_400
+          )
+        )
+        characters = applyPeriodReset(characters, 'daily', crossedDays)
         lastDailyResetAt = now
         changed = true
       } else if (decision.daily === 'baseline') {
@@ -174,10 +184,20 @@ class WebStore {
     const task = data.characters[characterId]?.tasks[taskId]
     if (!task) return
 
+    if (task.dailyPool) {
+      // 풀형: 체크 = 오늘 가능분 전부, 해제 = 오늘 사용분 취소
+      const now = Math.floor(Date.now() / 1000)
+      const settings = { dailyResetHour: data.dailyResetHour, weeklyResetDay: data.weeklyResetDay }
+      const used = task.dailyUsed ?? 0
+      const todayMax = poolTodayMax(task, now, settings)
+      return this.incrementTask(characterId, taskId, done ? todayMax - used : -used)
+    }
+
     const target = task.targetCount ?? 1
+    const now = Math.floor(Date.now() / 1000)
     const patch = {
       done,
-      lastDoneAt: done ? Math.floor(Date.now() / 1000) : null,
+      lastDoneAt: done ? now : null,
       count: done ? target : 0
     }
     this.applyLocalTaskPatch(characterId, taskId, patch)
@@ -185,6 +205,9 @@ class WebStore {
       await patchTaskFields(this.projectId, gameAccountId, characterId, taskId, patch)
     } catch (e) {
       console.warn('[store] 체크 반영 실패:', e)
+    }
+    if (task.done !== done) {
+      await this.propagateLink(characterId, task, done ? 1 : -1, now)
     }
   }
 
@@ -195,12 +218,41 @@ class WebStore {
     if (!task) return
 
     const target = task.targetCount ?? 1
+    const now = Math.floor(Date.now() / 1000)
+
+    if (task.dailyPool) {
+      // 풀형: 증가는 오늘 가능치에서 클램프해 dailyUsed와 함께, 감소는 오늘분부터 되돌림
+      const settings = { dailyResetHour: data.dailyResetHour, weeklyResetDay: data.weeklyResetDay }
+      const used = task.dailyUsed ?? 0
+      const todayMax = poolTodayMax(task, now, settings)
+      let count = task.count ?? 0
+      let dailyUsed = used
+      if (delta > 0) {
+        const inc = Math.max(0, Math.min(delta, todayMax - used, target - count))
+        count += inc
+        dailyUsed += inc
+      } else if (delta < 0) {
+        const dec = Math.min(-delta, count)
+        count -= dec
+        dailyUsed = Math.max(0, used - dec)
+      }
+      const done = count >= target
+      const patch = { count, dailyUsed, done, lastDoneAt: done ? now : null }
+      this.applyLocalTaskPatch(characterId, taskId, patch)
+      try {
+        await patchTaskFields(this.projectId, gameAccountId, characterId, taskId, patch)
+      } catch (e) {
+        console.warn('[store] 카운트 반영 실패:', e)
+      }
+      return
+    }
+
     const count = Math.max(0, Math.min((task.count ?? 0) + delta, target))
     const done = count >= target
     const patch = {
       count,
       done,
-      lastDoneAt: done ? Math.floor(Date.now() / 1000) : null
+      lastDoneAt: done ? now : null
     }
     this.applyLocalTaskPatch(characterId, taskId, patch)
     try {
@@ -208,13 +260,49 @@ class WebStore {
     } catch (e) {
       console.warn('[store] 카운트 반영 실패:', e)
     }
+    if (task.done !== done) {
+      await this.propagateLink(characterId, task, done ? 1 : -1, now)
+    }
+  }
+
+  /**
+   * 연동 일일 퀘스트(#linked — 검은/심층 구멍)의 완료 전환을 주간 카운트에 ±1 반영.
+   * 주간 쪽 조작은 일일에 영향을 주지 않는 단방향 연동.
+   */
+  private async propagateLink(
+    characterId: string,
+    task: import('./shared/types').TaskState,
+    delta: 1 | -1,
+    at: number
+  ): Promise<void> {
+    const { data, gameAccountId } = this.state
+    if (!data || !gameAccountId || !this.projectId) return
+    if (!task.linkedCatalogId || task.period !== 'daily' || task.excluded) return
+    const character = data.characters[characterId]
+    if (!character) return
+    const entry = Object.entries(character.tasks).find(
+      ([, s]) => s.catalogId === task.linkedCatalogId
+    )
+    if (!entry) return
+    const [siblingId, sibling] = entry
+    if (sibling.excluded) return
+    const target = sibling.targetCount ?? 1
+    const count = Math.max(0, Math.min((sibling.count ?? 0) + delta, target))
+    const done = count >= target
+    const patch = { count, done, lastDoneAt: done ? at : null }
+    this.applyLocalTaskPatch(characterId, siblingId, patch)
+    try {
+      await patchTaskFields(this.projectId, gameAccountId, characterId, siblingId, patch)
+    } catch (e) {
+      console.warn('[store] 연동 반영 실패:', e)
+    }
   }
 
   /** 낙관적 업데이트 — 네트워크 응답 기다리지 않고 즉시 화면 반영 */
   private applyLocalTaskPatch(
     characterId: string,
     taskId: string,
-    patch: Partial<{ done: boolean; lastDoneAt: number | null; count: number }>
+    patch: Partial<{ done: boolean; lastDoneAt: number | null; count: number; dailyUsed: number }>
   ): void {
     const { data } = this.state
     if (!data) return

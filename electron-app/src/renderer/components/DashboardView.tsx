@@ -25,15 +25,20 @@ interface Incomplete {
   target?: number
 }
 
+/** keyword 매칭 — 같은 이름이 일일/주간에 둘 다 있으면(검은/심층 구멍 분할) 주간 우선.
+ *  대시보드는 '주간 현황' 보드라 주간 쪽 집계가 의미 있는 숫자다 */
+function findKeywordTask(tasks: Record<string, TaskState>, keyword: string): TaskState | undefined {
+  const matches = Object.values(tasks).filter((t) => t.displayName.includes(keyword))
+  return matches.find((t) => t.period === 'weekly') ?? matches[0]
+}
+
 /** keyword를 포함한 퀘스트가 미완료인 캐릭터 목록 (캐릭터 탭 순서) */
 function incompleteCharacters(data: StoreShape, keyword: string): Incomplete[] {
   const out: Incomplete[] = []
   for (const charId of data.characterOrder) {
     const character = data.characters[charId]
     if (!character) continue
-    const task = Object.values(character.tasks).find((t: TaskState) =>
-      t.displayName.includes(keyword)
-    )
+    const task = findKeywordTask(character.tasks, keyword)
     if (!task || task.done) continue
     const target = task.targetCount ?? 1
     out.push({
@@ -47,8 +52,8 @@ function incompleteCharacters(data: StoreShape, keyword: string): Incomplete[] {
 
 /** keyword 퀘스트를 보유한 캐릭터 수 (분모 표시용) */
 function holderCount(data: StoreShape, keyword: string): number {
-  return data.characterOrder.filter((id) =>
-    Object.values(data.characters[id]?.tasks ?? {}).some((t) => t.displayName.includes(keyword))
+  return data.characterOrder.filter(
+    (id) => findKeywordTask(data.characters[id]?.tasks ?? {}, keyword) !== undefined
   ).length
 }
 

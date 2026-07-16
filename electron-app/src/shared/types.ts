@@ -45,6 +45,15 @@ export interface TaskState {
   /** 이 캐릭터는 이 카탈로그 퀘스트를 하지 않음 (#25).
    *  true면 항상 완료 상태로 고정되고 리셋 대상에서 제외된다. 커스텀 퀘스트에는 의미 없음 */
   excluded?: boolean
+  /** 주간 풀형 퀘스트 (검은/심층 구멍) — 일일 섹션에 '오늘 가능 횟수'로 투영되고,
+   *  하루도 안 간 날은 일일 리셋 때 count가 1씩 소모된다. period='weekly' 전제 */
+  dailyPool?: boolean
+  /** 풀형 퀘스트의 오늘 사용량 — 일일 리셋 때 0으로, 미사용이면 차감 판정 근거 */
+  dailyUsed?: number
+  /** 연동 대상 카탈로그 id (검은/심층 구멍 일일↔주간) — 이 일일 퀘스트를 체크/해제하면
+   *  같은 캐릭터에서 해당 catalogId를 가진 주간 퀘스트 count가 ±1 된다.
+   *  일일 리셋 때 미완료면 주간에 +1 (그날치 소멸). 주간 쪽 조작은 일일에 영향 없음 */
+  linkedCatalogId?: string | null
 }
 
 /** Firestore quests 컬렉션에서 가져온 카탈로그 항목 (#4) */
@@ -58,6 +67,10 @@ export interface QuestCatalogItem {
   category?: QuestCategory | null
   /** 지역 태그 (#24) */
   location?: string | null
+  /** 주간 풀형 퀘스트 여부 (검은/심층 구멍) */
+  dailyPool?: boolean
+  /** 연동 대상 카탈로그 문서 id (일일 → 주간 반영) */
+  linkedCatalogId?: string | null
 }
 
 /** 카탈로그 동기화 결과 (#4) */

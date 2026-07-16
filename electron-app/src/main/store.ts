@@ -1,4 +1,5 @@
 import Store from 'electron-store'
+import { poolForfeitDays, poolTodayMax } from '../shared/pool-quest'
 import type {
   Character,
   CloudPlayerData,
@@ -181,10 +182,17 @@ export class DashboardStore {
   }
 
   /** 체크 상태 변경. done=true일 때만 lastDoneAt 갱신. at: unix epoch(초), 기본 현재 시각.
-   *  카운트 퀘스트(#7): 완료 체크 = count를 target으로, 해제 = 0으로 */
+   *  카운트 퀘스트(#7): 완료 체크 = count를 target으로, 해제 = 0으로.
+   *  풀형 퀘스트: 체크 = 오늘 가능분 전부 사용, 해제 = 오늘 사용분만 되돌림 */
   setTaskDone(characterId: string, taskId: string, done: boolean, at?: number): StoreShape {
     const task = this.store.get('characters')[characterId]?.tasks[taskId]
     if (task) {
+      if (task.dailyPool) {
+        const now = at ?? Math.floor(Date.now() / 1000)
+        const used = task.dailyUsed ?? 0
+        const todayMax = poolTodayMax(task, now, this.getState().settings)
+        return this.incrementTask(characterId, taskId, done ? todayMax - used : -used, at)
+      }
       const next: TaskState = {
         ...task,
         done,
@@ -192,8 +200,41 @@ export class DashboardStore {
         lastDoneAt: done ? (at ?? Math.floor(Date.now() / 1000)) : null
       }
       this.store.set(`characters.${characterId}.tasks.${taskId}`, next)
+      if (task.done !== done) {
+        this.propagateLink(characterId, task, done ? 1 : -1, at ?? Math.floor(Date.now() / 1000))
+      }
     }
     return this.getState()
+  }
+
+  /**
+   * 연동 일일 퀘스트(#linked — 검은/심층 구멍)의 완료 전환을 주간 카운트에 ±1 반영.
+   * 주간 쪽 조작은 일일에 영향을 주지 않는 단방향 연동.
+   */
+  private propagateLink(
+    characterId: string,
+    task: TaskState,
+    delta: 1 | -1,
+    at: number
+  ): void {
+    if (!task.linkedCatalogId || task.period !== 'daily' || task.excluded) return
+    const character = this.store.get('characters')[characterId]
+    if (!character) return
+    const entry = Object.entries(character.tasks).find(
+      ([, s]) => s.catalogId === task.linkedCatalogId
+    )
+    if (!entry) return
+    const [siblingId, sibling] = entry
+    if (sibling.excluded) return
+    const target = sibling.targetCount ?? 1
+    const count = Math.max(0, Math.min((sibling.count ?? 0) + delta, target))
+    const done = count >= target
+    this.store.set(`characters.${characterId}.tasks.${siblingId}`, {
+      ...sibling,
+      count,
+      done,
+      lastDoneAt: done ? at : null
+    })
   }
 
   /**
@@ -216,20 +257,53 @@ export class DashboardStore {
     return this.getState()
   }
 
-  /** 카운트 퀘스트 진행 증감 (#7). target 도달 시 완료, 0 미만/target 초과는 클램프 */
+  /** 카운트 퀘스트 진행 증감 (#7). target 도달 시 완료, 0 미만/target 초과는 클램프.
+   *  풀형 퀘스트: 증가는 '오늘 사용'으로 기록되고 오늘 가능치에서 클램프,
+   *  감소는 오늘 사용분부터 되돌리고 넘어가는 만큼은 과거 기록 보정으로 처리 */
   incrementTask(characterId: string, taskId: string, delta: number, at?: number): StoreShape {
     const task = this.store.get('characters')[characterId]?.tasks[taskId]
     if (task) {
       const target = task.targetCount ?? 1
+      const now = at ?? Math.floor(Date.now() / 1000)
+
+      if (task.dailyPool) {
+        const used = task.dailyUsed ?? 0
+        const todayMax = poolTodayMax(task, now, this.getState().settings)
+        let count = task.count ?? 0
+        let dailyUsed = used
+        if (delta > 0) {
+          const inc = Math.max(0, Math.min(delta, todayMax - used, target - count))
+          count += inc
+          dailyUsed += inc
+        } else if (delta < 0) {
+          const dec = Math.min(-delta, count)
+          count -= dec
+          dailyUsed = Math.max(0, used - dec)
+        }
+        const done = count >= target
+        const next: TaskState = {
+          ...task,
+          count,
+          dailyUsed,
+          done,
+          lastDoneAt: done ? now : null
+        }
+        this.store.set(`characters.${characterId}.tasks.${taskId}`, next)
+        return this.getState()
+      }
+
       const count = Math.max(0, Math.min((task.count ?? 0) + delta, target))
       const done = count >= target
       const next: TaskState = {
         ...task,
         count,
         done,
-        lastDoneAt: done ? (at ?? Math.floor(Date.now() / 1000)) : null
+        lastDoneAt: done ? now : null
       }
       this.store.set(`characters.${characterId}.tasks.${taskId}`, next)
+      if (task.done !== done) {
+        this.propagateLink(characterId, task, done ? 1 : -1, now)
+      }
     }
     return this.getState()
   }
@@ -276,12 +350,16 @@ export class DashboardStore {
           const itemTarget = Math.max(1, item.targetCount ?? 1)
           const itemCategory = item.category ?? null
           const itemLocation = item.location ?? null
+          const itemDailyPool = item.dailyPool === true
+          const itemLinked = item.linkedCatalogId ?? null
           if (
             t.displayName !== item.name ||
             t.period !== item.period ||
             (t.targetCount ?? 1) !== itemTarget ||
             (t.category ?? null) !== itemCategory ||
-            (t.location ?? null) !== itemLocation
+            (t.location ?? null) !== itemLocation ||
+            (t.dailyPool ?? false) !== itemDailyPool ||
+            (t.linkedCatalogId ?? null) !== itemLinked
           ) {
             tasks[existingTaskId] = {
               ...t,
@@ -289,7 +367,10 @@ export class DashboardStore {
               period: item.period,
               targetCount: itemTarget,
               category: itemCategory,
-              location: itemLocation
+              location: itemLocation,
+              dailyPool: itemDailyPool,
+              dailyUsed: itemDailyPool ? (t.dailyUsed ?? 0) : undefined,
+              linkedCatalogId: itemLinked
             }
             updated++
           }
@@ -317,26 +398,65 @@ export class DashboardStore {
       targetCount: Math.max(1, item.targetCount ?? 1),
       count: 0,
       category: item.category ?? null,
-      location: item.location ?? null
+      location: item.location ?? null,
+      ...(item.dailyPool ? { dailyPool: true, dailyUsed: 0 } : {}),
+      ...(item.linkedCatalogId ? { linkedCatalogId: item.linkedCatalogId } : {})
     }
   }
 
   // ── 리셋 (feature/reset-scheduler에서 사용) ───────────────
 
-  /** period에 해당하는 모든 퀘스트를 초기화 (명세서 §6) */
-  resetTasks(period: TaskPeriod, now: number): StoreShape {
+  /**
+   * period에 해당하는 모든 퀘스트를 초기화 (명세서 §6).
+   * @param crossedDays 일일 리셋일 때 마지막 리셋 이후 지난 일수 (풀형 차감 계산용, 기본 1)
+   */
+  resetTasks(period: TaskPeriod, now: number, crossedDays = 1): StoreShape {
     const characters = this.store.get('characters')
     const next: Record<string, Character> = {}
     for (const [charId, character] of Object.entries(characters)) {
+      // 연동 일일 퀘스트(#linked): 안 간 날만큼 연동 주간 퀘스트에 +1 (그날치 소멸)
+      const linkForfeit = new Map<string, number>()
+      if (period === 'daily') {
+        for (const task of Object.values(character.tasks)) {
+          if (task.period !== 'daily' || !task.linkedCatalogId || task.excluded) continue
+          const missed = poolForfeitDays(task.done ? 1 : 0, crossedDays)
+          if (missed <= 0) continue
+          const entry = Object.entries(character.tasks).find(
+            ([, s]) => s.catalogId === task.linkedCatalogId && !s.excluded
+          )
+          if (entry) linkForfeit.set(entry[0], (linkForfeit.get(entry[0]) ?? 0) + missed)
+        }
+      }
+
       const tasks: Record<string, TaskState> = {}
       for (const [taskId, task] of Object.entries(character.tasks)) {
-        if (task.period !== period) {
+        if (period === 'daily' && task.dailyPool && task.period === 'weekly' && !task.excluded) {
+          // 풀형 퀘스트(주간)의 일일 처리: 안 간 날만큼 차감하고 오늘 사용량 초기화
+          const target = task.targetCount ?? 1
+          const forfeit = poolForfeitDays(task.dailyUsed ?? 0, crossedDays)
+          const count = Math.min(target, (task.count ?? 0) + forfeit)
+          tasks[taskId] = { ...task, count, done: count >= target, dailyUsed: 0 }
+        } else if (task.period !== period) {
           tasks[taskId] = task
         } else if (task.excluded) {
           // 제외된 퀘스트는 리셋해도 완료 상태 유지 (#25)
           tasks[taskId] = { ...task, done: true, count: task.targetCount ?? 1 }
         } else {
-          tasks[taskId] = { ...task, done: false, lastDoneAt: null, count: 0 }
+          tasks[taskId] = {
+            ...task,
+            done: false,
+            lastDoneAt: null,
+            count: 0,
+            ...(task.dailyPool ? { dailyUsed: 0 } : {})
+          }
+        }
+
+        const add = linkForfeit.get(taskId)
+        if (add) {
+          const base = tasks[taskId]
+          const target = base.targetCount ?? 1
+          const count = Math.min(target, (base.count ?? 0) + add)
+          tasks[taskId] = { ...base, count, done: count >= target }
         }
       }
       next[charId] = { ...character, tasks }

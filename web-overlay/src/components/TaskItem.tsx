@@ -18,6 +18,8 @@ export default function TaskItem({
   const target = task.targetCount ?? 1
   const count = task.count ?? (task.done ? target : 0)
   const isCounted = target > 1
+  // 풀형 퀘스트: 주간 원본 행은 집계 표시 전용 — 체크는 일일 투영 행에서 (electron과 동일)
+  const isPoolWeeklyRow = task.dailyPool === true && task.period === 'weekly'
 
   return (
     <li
@@ -26,12 +28,14 @@ export default function TaskItem({
       } ${alarmRuleId ? `task-alarm task-alarm-${alarmRuleId}` : ''}`}
     >
       <label className="task-label">
-        <input
-          type="checkbox"
-          checked={task.done}
-          disabled={task.excluded}
-          onChange={(e) => void webStore.setTaskDone(characterId, taskId, e.target.checked)}
-        />
+        {!isPoolWeeklyRow && (
+          <input
+            type="checkbox"
+            checked={task.done}
+            disabled={task.excluded}
+            onChange={(e) => void webStore.setTaskDone(characterId, taskId, e.target.checked)}
+          />
+        )}
         <span className="task-name">{task.displayName}</span>
       </label>
       {task.excluded && <span className="excluded-badge">🚫 제외</span>}

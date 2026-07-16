@@ -1,6 +1,6 @@
 import { BrowserWindow, powerMonitor } from 'electron'
 import { dashboardStore } from './store'
-import { computeResets } from './reset-logic'
+import { computeResets, dailyPeriodStart } from '../shared/reset-logic'
 
 const COMPLEMENT_CHECK_INTERVAL_MS = 60_000
 
@@ -72,8 +72,17 @@ export class ResetScheduler {
     let changed = false
 
     if (decision.daily === 'reset') {
-      dashboardStore.resetTasks('daily', now)
-      console.log('[reset] 일일 퀘스트 리셋 실행')
+      // 마지막 리셋 이후 지난 일수 — 며칠 못 열었으면 풀형 퀘스트를 그만큼 차감 (#pool)
+      const crossedDays = Math.max(
+        1,
+        Math.round(
+          (decision.dailyPeriodStart -
+            dailyPeriodStart(state.lastDailyResetAt ?? now, state.settings.dailyResetHour)) /
+            86_400
+        )
+      )
+      dashboardStore.resetTasks('daily', now, crossedDays)
+      console.log(`[reset] 일일 퀘스트 리셋 실행 (경과 ${crossedDays}일)`)
       changed = true
     } else if (decision.daily === 'baseline') {
       dashboardStore.markResetBaseline('daily', now)

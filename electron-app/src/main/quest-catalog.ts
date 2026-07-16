@@ -29,7 +29,10 @@ export function parseQuestDocuments(body: unknown): QuestCatalogItem[] {
   for (const doc of documents) {
     const d = doc as {
       name?: string
-      fields?: Record<string, { stringValue?: string; integerValue?: string; doubleValue?: number }>
+      fields?: Record<
+        string,
+        { stringValue?: string; integerValue?: string; doubleValue?: number; booleanValue?: boolean }
+      >
     }
     if (!d.name || !d.fields) continue
 
@@ -57,18 +60,26 @@ export function parseQuestDocuments(body: unknown): QuestCatalogItem[] {
     // 지역 태그 (#24) — 자유 문자열
     const location = d.fields.location?.stringValue?.trim() || null
 
-    items.push({ id, name, period, targetCount, category, location, order })
+    // 주간 풀형 퀘스트 (검은/심층 구멍)
+    const dailyPool = d.fields.dailyPool?.booleanValue === true
+
+    // 연동 퀘스트 — 이 일일 퀘스트의 체크가 linkedTo(주간 문서 id) 카운트에 ±1 반영
+    const linkedCatalogId = d.fields.linkedTo?.stringValue?.trim() || null
+
+    items.push({ id, name, period, targetCount, category, location, dailyPool, linkedCatalogId, order })
   }
 
   // order → 이름 순 정렬 후 order 필드 제거
   items.sort((a, b) => a.order - b.order || a.name.localeCompare(b.name, 'ko'))
-  return items.map(({ id, name, period, targetCount, category, location }) => ({
+  return items.map(({ id, name, period, targetCount, category, location, dailyPool, linkedCatalogId }) => ({
     id,
     name,
     period,
     targetCount,
     category,
-    location
+    location,
+    dailyPool,
+    linkedCatalogId
   }))
 }
 
