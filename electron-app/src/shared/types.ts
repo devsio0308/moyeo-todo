@@ -81,12 +81,17 @@ export interface CatalogSyncResult {
   updated?: number
   /** 카탈로그에서 삭제되어 로컬에서도 함께 제거된 개수 (#catalog-watch) */
   removed?: number
+  /** 이번 동기화로 새로 추가된 퀘스트 이름 (중복 제거, #catalog-watch) */
+  addedNames?: string[]
+  /** 이번 동기화로 삭제된 퀘스트 이름 (중복 제거, #catalog-watch) */
+  removedNames?: string[]
 }
 
-/** 백그라운드 카탈로그 감시가 변경을 반영했을 때 오버레이에 띄우는 알림 (#catalog-watch) */
+/** 백그라운드 카탈로그 감시가 변경을 반영했을 때 알리는 정보 (#catalog-watch).
+ *  오버레이는 간단한 토스트로, 관리 창은 이름 목록이 담긴 말풍선으로 띄운다 */
 export interface CatalogNotice {
-  added: number
-  removed: number
+  addedNames: string[]
+  removedNames: string[]
 }
 
 /** 게임계정 ID 등록 결과 (#26) */

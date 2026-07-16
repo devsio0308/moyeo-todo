@@ -329,6 +329,8 @@ export class DashboardStore {
     added: number
     updated: number
     removed: number
+    addedNames: string[]
+    removedNames: string[]
   } {
     const previousIds = new Set(this.store.get('questCatalog', []).map((item) => item.id))
     const catalogIds = new Set(catalog.map((item) => item.id))
@@ -339,6 +341,9 @@ export class DashboardStore {
     let added = 0
     let updated = 0
     let removed = 0
+    // 여러 캐릭터에 같은 카탈로그 항목이 추가/삭제되어도 알림엔 이름을 한 번만 노출 (#catalog-watch)
+    const addedNames = new Set<string>()
+    const removedNames = new Set<string>()
     const characters = this.store.get('characters')
     const next: Record<string, Character> = {}
 
@@ -356,6 +361,7 @@ export class DashboardStore {
           const id = this.nextId('task', Object.keys(tasks))
           tasks[id] = this.catalogTask(item)
           added++
+          addedNames.add(item.name)
         } else {
           const t = tasks[existingTaskId]
           const itemTarget = Math.max(1, item.targetCount ?? 1)
@@ -391,6 +397,7 @@ export class DashboardStore {
       for (const removedId of removedIds) {
         const taskId = byCatalogId.get(removedId)
         if (taskId) {
+          removedNames.add(tasks[taskId].displayName)
           delete tasks[taskId]
           removed++
         }
@@ -400,7 +407,7 @@ export class DashboardStore {
     }
 
     this.store.set('characters', next)
-    return { added, updated, removed }
+    return { added, updated, removed, addedNames: [...addedNames], removedNames: [...removedNames] }
   }
 
   /** 추천 퀘스트 목록 캐시 (#15) — 동기화 시 갱신, UI 피커에서 사용 */

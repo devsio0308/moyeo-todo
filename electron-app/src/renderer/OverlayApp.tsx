@@ -28,8 +28,8 @@ export default function OverlayApp(): React.JSX.Element {
     // 백그라운드 카탈로그 감시(#catalog-watch) 결과 알림 — 추가/삭제가 있었을 때만
     const offCatalog = window.api.catalog.onNotice((notice) => {
       const parts: string[] = []
-      if (notice.added > 0) parts.push(`새 퀘스트 ${notice.added}개 추가됨`)
-      if (notice.removed > 0) parts.push(`${notice.removed}개 삭제됨`)
+      if (notice.addedNames.length > 0) parts.push('새 퀘스트가 추가되었습니다')
+      if (notice.removedNames.length > 0) parts.push('퀘스트가 삭제되었습니다')
       if (parts.length === 0) return
       setCatalogToast(parts.join(' · '))
       if (catalogToastTimer.current) clearTimeout(catalogToastTimer.current)

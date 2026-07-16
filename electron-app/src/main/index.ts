@@ -36,10 +36,10 @@ function runCatalogWatch(): void {
     clearHistory() // 카탈로그 추가/삭제로 캐릭터 태스크가 바뀌므로 (#undo)
     broadcastAll('store:changed', dashboardStore.getState())
 
-    const added = result.added ?? 0
-    const removed = result.removed ?? 0
-    if (added > 0 || removed > 0) {
-      const notice: CatalogNotice = { added, removed }
+    const addedNames = result.addedNames ?? []
+    const removedNames = result.removedNames ?? []
+    if (addedNames.length > 0 || removedNames.length > 0) {
+      const notice: CatalogNotice = { addedNames, removedNames }
       broadcastAll('catalog:notice', notice)
     }
   })
