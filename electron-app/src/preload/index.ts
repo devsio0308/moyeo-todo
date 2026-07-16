@@ -1,6 +1,7 @@
 import { contextBridge, ipcRenderer } from 'electron'
 import type { HistoryState } from '../main/history'
 import type {
+  CatalogNotice,
   CatalogSyncResult,
   CloudRegisterResult,
   CloudSyncResult,
@@ -77,7 +78,13 @@ const api = {
     sync: (): Promise<CatalogSyncResult> => ipcRenderer.invoke('catalog:sync'),
     /** .env 기본 프로젝트 ID (#14) — 설정 UI 입력창 표시용 */
     getDefaultProjectId: (): Promise<string | null> =>
-      ipcRenderer.invoke('catalog:default-project-id')
+      ipcRenderer.invoke('catalog:default-project-id'),
+    /** 백그라운드 카탈로그 감시(#catalog-watch)가 추가/삭제를 반영했을 때 알림 */
+    onNotice: (cb: (notice: CatalogNotice) => void): (() => void) => {
+      const listener = (_e: Electron.IpcRendererEvent, notice: CatalogNotice): void => cb(notice)
+      ipcRenderer.on('catalog:notice', listener)
+      return () => ipcRenderer.removeListener('catalog:notice', listener)
+    }
   },
   history: {
     /** 실행취소/다시실행 (#undo) — 오버레이 체크/카운트 조작 대상 */

@@ -79,6 +79,19 @@ export interface CatalogSyncResult {
   message: string
   added?: number
   updated?: number
+  /** 카탈로그에서 삭제되어 로컬에서도 함께 제거된 개수 (#catalog-watch) */
+  removed?: number
+  /** 이번 동기화로 새로 추가된 퀘스트 이름 (중복 제거, #catalog-watch) */
+  addedNames?: string[]
+  /** 이번 동기화로 삭제된 퀘스트 이름 (중복 제거, #catalog-watch) */
+  removedNames?: string[]
+}
+
+/** 백그라운드 카탈로그 감시가 변경을 반영했을 때 알리는 정보 (#catalog-watch).
+ *  오버레이는 간단한 토스트로, 관리 창은 이름 목록이 담긴 말풍선으로 띄운다 */
+export interface CatalogNotice {
+  addedNames: string[]
+  removedNames: string[]
 }
 
 /** 게임계정 ID 등록 결과 (#26) */
@@ -140,6 +153,9 @@ export interface StoreShape {
   /** 마지막으로 클라우드와 일치했던 시점의 updatedAt (기기 로컬 전용 — 클라우드 미포함).
    *  시작 시 원격 updatedAt과 비교해 다른 기기의 변경을 감지하는 데 쓴다 */
   lastCloudSyncAt?: number | null
+  /** 마지막으로 확인한 meta/catalog 문서의 updatedAt 값 (#catalog-watch, 기기 로컬 전용).
+   *  이 값과 다를 때만 카탈로그 전체를 다시 읽어온다 */
+  lastCatalogMetaAt?: string | number | null
   /** 스토어 마이그레이션 버전 (내부용) */
   metaVersion?: number
 }

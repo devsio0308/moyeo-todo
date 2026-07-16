@@ -8,8 +8,9 @@ import { clearHistory, historyState, redoHistory, setHistoryListener, undoHistor
 import { checkForUpdates } from './auto-update'
 import { dashboardStore } from './store'
 import { ResetScheduler } from './reset-scheduler'
-import { syncQuestCatalogOnce } from './quest-catalog'
+import { syncQuestCatalogIfChanged } from './quest-catalog'
 import { pushCloudSyncIfRegistered, reconcileCloudSyncOnStartup } from './cloud-sync'
+import type { CatalogNotice } from '../shared/types'
 
 // 알람 차임(#11)을 사용자 제스처 없이 재생할 수 있게 autoplay 정책 해제
 app.commandLine.appendSwitch('autoplay-policy', 'no-user-gesture-required')
@@ -17,6 +18,32 @@ app.commandLine.appendSwitch('autoplay-policy', 'no-user-gesture-required')
 let manageWindow: BrowserWindow | null = null
 let overlayWindow: BrowserWindow | null = null
 let resetScheduler: ResetScheduler | null = null
+let catalogWatchTimer: NodeJS.Timeout | null = null
+
+/** 카탈로그 백그라운드 감시 주기 (#catalog-watch) — 변경이 한 달에 1~2회뿐이라 여유 있게 */
+const CATALOG_WATCH_INTERVAL_MS = 3 * 60 * 60 * 1000
+
+/**
+ * meta/catalog 문서만 가볍게 확인해 변경이 있을 때만 전체 동기화 (#catalog-watch).
+ * 앱 시작 시 1회 + 이후 CATALOG_WATCH_INTERVAL_MS 주기로 호출된다.
+ */
+function runCatalogWatch(): void {
+  void syncQuestCatalogIfChanged().then((result) => {
+    if (!result) return // meta 문서 기준 변경 없음 — 조용히 스킵
+    console.log(`[catalog] ${result.message}`)
+    if (!result.ok) return
+
+    clearHistory() // 카탈로그 추가/삭제로 캐릭터 태스크가 바뀌므로 (#undo)
+    broadcastAll('store:changed', dashboardStore.getState())
+
+    const addedNames = result.addedNames ?? []
+    const removedNames = result.removedNames ?? []
+    if (addedNames.length > 0 || removedNames.length > 0) {
+      const notice: CatalogNotice = { addedNames, removedNames }
+      broadcastAll('catalog:notice', notice)
+    }
+  })
+}
 
 /**
  * 열려 있는 모든 창에 브로드캐스트 (#17 — 두 창이 같은 상태를 공유).
@@ -138,12 +165,8 @@ if (!app.requestSingleInstanceLock()) {
       .finally(() => {
         // 카탈로그 동기화는 화해 이후에 — pull 전에 실행하면 카탈로그가 추가한
         // 퀘스트가 pull에 덮여 사라질 수 있다 (#4)
-        void syncQuestCatalogOnce().then((result) => {
-          console.log(`[catalog] ${result.message}`)
-          if (result.ok) {
-            broadcastAll('store:changed', dashboardStore.getState())
-          }
-        })
+        runCatalogWatch()
+        catalogWatchTimer = setInterval(runCatalogWatch, CATALOG_WATCH_INTERVAL_MS)
       })
 
     app.on('activate', () => {
@@ -153,6 +176,7 @@ if (!app.requestSingleInstanceLock()) {
 
   app.on('before-quit', () => {
     resetScheduler?.stop()
+    if (catalogWatchTimer) clearInterval(catalogWatchTimer)
   })
 
   // 종료는 관리 창 닫기(위 'closed' 핸들러)로 처리 — 오버레이만 남은 상태는

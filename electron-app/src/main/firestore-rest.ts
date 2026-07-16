@@ -13,6 +13,7 @@ type FirestoreValue =
   | { integerValue: string }
   | { doubleValue: number }
   | { stringValue: string }
+  | { timestampValue: string }
   | { mapValue: { fields: Record<string, FirestoreValue> } }
   | { arrayValue: { values: FirestoreValue[] } }
 
@@ -42,6 +43,8 @@ export function fromFirestoreValue(v: FirestoreValue): unknown {
   if ('integerValue' in v) return Number(v.integerValue)
   if ('doubleValue' in v) return v.doubleValue
   if ('stringValue' in v) return v.stringValue
+  // 콘솔에서 timestamp 타입으로 넣어도(#catalog-watch meta 문서) ISO 문자열로 그대로 비교 가능
+  if ('timestampValue' in v) return v.timestampValue
   if ('arrayValue' in v) return (v.arrayValue.values ?? []).map(fromFirestoreValue)
   if ('mapValue' in v) {
     const out: Record<string, unknown> = {}

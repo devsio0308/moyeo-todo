@@ -321,13 +321,29 @@ export class DashboardStore {
    * Firestore에서 받아온 카탈로그를 캐시하고 전체 캐릭터에 반영.
    * - 캐릭터에 catalogId가 없는 항목 → 추가
    * - 이름/주기가 바뀐 항목 → 갱신 (체크 상태는 유지)
-   * - 카탈로그에서 사라진 항목은 삭제하지 않음 (개별 커스텀 퀘스트 보존)
+   * - 이전 캐시엔 있었는데 이번 목록엔 없는 catalogId → 관리자가 삭제한 것으로 보고
+   *   캐릭터의 해당 태스크도 함께 삭제한다 (#catalog-watch). 커스텀(catalogId 없는)
+   *   퀘스트는 이 비교 대상이 아니라 영향받지 않는다.
    */
-  syncQuestCatalog(catalog: QuestCatalogItem[]): { added: number; updated: number } {
+  syncQuestCatalog(catalog: QuestCatalogItem[]): {
+    added: number
+    updated: number
+    removed: number
+    addedNames: string[]
+    removedNames: string[]
+  } {
+    const previousIds = new Set(this.store.get('questCatalog', []).map((item) => item.id))
+    const catalogIds = new Set(catalog.map((item) => item.id))
+    const removedIds = [...previousIds].filter((id) => !catalogIds.has(id))
+
     this.store.set('questCatalog', catalog)
 
     let added = 0
     let updated = 0
+    let removed = 0
+    // 여러 캐릭터에 같은 카탈로그 항목이 추가/삭제되어도 알림엔 이름을 한 번만 노출 (#catalog-watch)
+    const addedNames = new Set<string>()
+    const removedNames = new Set<string>()
     const characters = this.store.get('characters')
     const next: Record<string, Character> = {}
 
@@ -345,6 +361,7 @@ export class DashboardStore {
           const id = this.nextId('task', Object.keys(tasks))
           tasks[id] = this.catalogTask(item)
           added++
+          addedNames.add(item.name)
         } else {
           const t = tasks[existingTaskId]
           const itemTarget = Math.max(1, item.targetCount ?? 1)
@@ -376,11 +393,21 @@ export class DashboardStore {
           }
         }
       }
+
+      for (const removedId of removedIds) {
+        const taskId = byCatalogId.get(removedId)
+        if (taskId) {
+          removedNames.add(tasks[taskId].displayName)
+          delete tasks[taskId]
+          removed++
+        }
+      }
+
       next[charId] = { ...character, tasks }
     }
 
     this.store.set('characters', next)
-    return { added, updated }
+    return { added, updated, removed, addedNames: [...addedNames], removedNames: [...removedNames] }
   }
 
   /** 추천 퀘스트 목록 캐시 (#15) — 동기화 시 갱신, UI 피커에서 사용 */
@@ -514,6 +541,15 @@ export class DashboardStore {
 
   markCloudSync(updatedAt: number): void {
     this.store.set('lastCloudSyncAt', updatedAt)
+  }
+
+  /** 마지막으로 확인한 meta/catalog 문서의 updatedAt — 카탈로그 변경 감지용 (#catalog-watch) */
+  getLastCatalogMetaAt(): string | number | null {
+    return this.store.get('lastCatalogMetaAt', null) ?? null
+  }
+
+  markCatalogMetaAt(value: string | number): void {
+    this.store.set('lastCatalogMetaAt', value)
   }
 
   // ── 내부 유틸 ────────────────────────────────────────────

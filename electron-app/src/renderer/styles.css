@@ -465,6 +465,76 @@ body {
   cursor: default;
 }
 
+/* 백그라운드 카탈로그 감시(#catalog-watch) 알림 토스트 */
+.catalog-toast {
+  margin: 0 10px;
+  padding: 6px 10px;
+  border-radius: 6px;
+  background: rgba(90, 160, 255, 0.16);
+  color: #cfe0ff;
+  font-size: 12px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+/* 관리 창 — 카탈로그 변경 알림 (#catalog-watch). X로 닫거나 앱 종료 전까지 유지.
+   새 알림은 기존(확인 안 한) 알림 위쪽에 쌓인다 — column-reverse라 먼저 온 알림이
+   구석(하단)에 고정되고, 나중 알림이 그 위로 쌓인다 */
+.catalog-notice-stack {
+  position: fixed;
+  right: 20px;
+  bottom: 20px;
+  display: flex;
+  flex-direction: column-reverse;
+  gap: 10px;
+  max-height: calc(100vh - 40px);
+  z-index: 50;
+}
+
+.catalog-notice-bubble {
+  position: relative;
+  width: 320px;
+  padding: 14px 16px;
+  border-radius: 10px;
+  border: 1px solid rgba(94, 129, 255, 0.35);
+  background: #1c1c26;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+}
+
+.catalog-notice-close {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 20px;
+  height: 20px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: #8a8a98;
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.catalog-notice-close:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+}
+
+.catalog-notice-title {
+  display: block;
+  margin-bottom: 6px;
+  padding-right: 20px;
+  font-size: 13px;
+  color: #cfe0ff;
+}
+
+.catalog-notice-line {
+  margin: 4px 0 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: #d6d6e0;
+}
+
 .badge {
   padding: 2px 8px;
   border-radius: 999px;
