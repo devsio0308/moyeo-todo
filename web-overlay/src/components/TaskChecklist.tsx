@@ -1,9 +1,11 @@
 import { useState } from 'react'
+import { poolTodayMax } from '../shared/pool-quest'
 import {
   QUEST_CATEGORIES,
   QUEST_CATEGORY_CLASS,
   type QuestCategory,
-  type TaskPeriod
+  type TaskPeriod,
+  type TaskState
 } from '../shared/types'
 import { useWebStore } from '../store'
 import type { ActiveAlarm } from '../hooks/useAlarms'
@@ -38,6 +40,20 @@ export default function TaskChecklist({ activeAlarms = [] }: Props): React.JSX.E
   const character = data.characters[activeId]
   const entries = Object.entries(character.tasks)
 
+  // 풀형 퀘스트(검은/심층 구멍)를 일일 섹션에 '오늘 가능 횟수'로 투영 (electron과 동일)
+  const nowSec = Math.floor(Date.now() / 1000)
+  const poolSettings = { dailyResetHour: data.dailyResetHour, weeklyResetDay: data.weeklyResetDay }
+  const poolProjections: Array<[string, TaskState]> = entries
+    .filter(([, t]) => t.dailyPool && t.period === 'weekly' && !t.excluded)
+    .map(([taskId, t]) => {
+      const todayMax = poolTodayMax(t, nowSec, poolSettings)
+      const used = t.dailyUsed ?? 0
+      return [
+        taskId,
+        { ...t, period: 'daily', count: used, targetCount: todayMax, done: used >= todayMax }
+      ]
+    })
+
   const toggleCollapse = (key: string): void => {
     setCollapse((prev) => {
       const next = { ...prev, [key]: !prev[key] }
@@ -47,7 +63,10 @@ export default function TaskChecklist({ activeAlarms = [] }: Props): React.JSX.E
   }
 
   const renderSection = (p: TaskPeriod, label: string): React.JSX.Element | null => {
-    const sectionTasks = entries.filter(([, t]) => t.period === p)
+    const sectionTasks =
+      p === 'daily'
+        ? [...entries.filter(([, t]) => t.period === p), ...poolProjections]
+        : entries.filter(([, t]) => t.period === p)
     if (sectionTasks.length === 0) return null
     const doneCount = sectionTasks.filter(([, t]) => t.done).length
 

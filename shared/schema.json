@@ -7,12 +7,30 @@
     "taskState": {
       "type": "object",
       "properties": {
-        "done": { "type": "boolean" },
-        "lastDoneAt": { "type": ["integer", "null"], "description": "unix epoch (초)" },
-        "displayName": { "type": "string" },
-        "period": { "enum": ["daily", "weekly"] },
+        "done": {
+          "type": "boolean"
+        },
+        "lastDoneAt": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "description": "unix epoch (초)"
+        },
+        "displayName": {
+          "type": "string"
+        },
+        "period": {
+          "enum": [
+            "daily",
+            "weekly"
+          ]
+        },
         "catalogId": {
-          "type": ["string", "null"],
+          "type": [
+            "string",
+            "null"
+          ],
           "description": "Firebase 카탈로그 출처 퀘스트의 문서 id (#4). 수동 추가는 null/없음"
         },
         "targetCount": {
@@ -26,86 +44,209 @@
           "description": "현재 진행 횟수 (#7). 없으면 0"
         },
         "category": {
-          "enum": ["전투", "물물교환", "알바", "구매", null],
+          "enum": [
+            "전투",
+            "물물교환",
+            "알바",
+            "구매",
+            null
+          ],
           "description": "카테고리 태그 (#13). 없으면 배지 미표시. 배열 순서가 섹션 내 정렬 순서"
         },
         "location": {
-          "type": ["string", "null"],
+          "type": [
+            "string",
+            "null"
+          ],
           "description": "지역 태그 (#24, 자유 문자열 — 예: 두갈드아일, 던바튼)"
         },
         "excluded": {
           "type": "boolean",
           "description": "이 캐릭터는 이 카탈로그 퀘스트를 하지 않음 (#25). true면 항상 완료 상태로 고정, 리셋 제외"
+        },
+        "dailyPool": {
+          "type": "boolean",
+          "description": "주간 풀형 퀘스트 (검은/심층 구멍) — 일일 섹션에 '오늘 가능 횟수'로 투영되고, 안 간 날은 일일 리셋 때 count가 1씩 소모된다. period='weekly' 전제"
+        },
+        "dailyUsed": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "풀형 퀘스트의 오늘 사용량 — 일일 리셋 때 0으로, 미사용이면 차감 판정 근거"
+        },
+        "linkedCatalogId": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "연동 대상 카탈로그 id (검은/심층 구멍 일일↔주간) — 이 일일 퀘스트 체크/해제가 해당 catalogId의 주간 퀘스트 count에 ±1 반영. 일일 리셋 때 미완료면 주간 +1"
         }
       },
-      "required": ["done", "lastDoneAt", "displayName", "period"]
+      "required": [
+        "done",
+        "lastDoneAt",
+        "displayName",
+        "period"
+      ]
     },
     "character": {
       "type": "object",
       "properties": {
-        "displayName": { "type": "string" },
+        "displayName": {
+          "type": "string"
+        },
         "tasks": {
           "type": "object",
-          "additionalProperties": { "$ref": "#/$defs/taskState" }
+          "additionalProperties": {
+            "$ref": "#/$defs/taskState"
+          }
         }
       },
-      "required": ["displayName", "tasks"]
+      "required": [
+        "displayName",
+        "tasks"
+      ]
     },
     "settings": {
       "type": "object",
       "properties": {
-        "weeklyResetDay": { "type": "integer", "minimum": 0, "maximum": 6, "description": "0=일요일 ... 6=토요일" },
-        "dailyResetHour": { "type": "integer", "minimum": 0, "maximum": 23 },
+        "weeklyResetDay": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 6,
+          "description": "0=일요일 ... 6=토요일"
+        },
+        "dailyResetHour": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 23
+        },
         "firebaseProjectId": {
-          "type": ["string", "null"],
+          "type": [
+            "string",
+            "null"
+          ],
           "description": "퀘스트 카탈로그를 가져올 Firebase 프로젝트 ID (#4)"
         },
         "alarmModes": {
           "type": "object",
           "description": "알람 규칙별 모드 (#11). 키: 규칙 id (ominous-rift, field-boss)",
-          "additionalProperties": { "enum": ["sound", "ui", "off"] }
+          "additionalProperties": {
+            "enum": [
+              "sound",
+              "ui",
+              "off"
+            ]
+          }
         },
         "gameAccountId": {
-          "type": ["string", "null"],
+          "type": [
+            "string",
+            "null"
+          ],
           "description": "게임계정 ID (#26) — Firestore players/{id} 문서와 동기화하는 키. 등록 시 캐릭터/퀘스트 진행 상황이 클라우드에 저장된다"
         }
       },
-      "required": ["weeklyResetDay", "dailyResetHour"]
+      "required": [
+        "weeklyResetDay",
+        "dailyResetHour"
+      ]
     },
     "storeShape": {
       "type": "object",
       "properties": {
         "characters": {
           "type": "object",
-          "additionalProperties": { "$ref": "#/$defs/character" }
+          "additionalProperties": {
+            "$ref": "#/$defs/character"
+          }
         },
         "characterOrder": {
           "type": "array",
-          "items": { "type": "string" },
+          "items": {
+            "type": "string"
+          },
           "description": "탭 표시 순서 (characters의 키 목록)"
         },
-        "settings": { "$ref": "#/$defs/settings" },
-        "lastDailyResetAt": { "type": ["integer", "null"] },
-        "lastWeeklyResetAt": { "type": ["integer", "null"] },
+        "settings": {
+          "$ref": "#/$defs/settings"
+        },
+        "lastDailyResetAt": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "lastWeeklyResetAt": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
         "questCatalog": {
           "type": "array",
           "description": "마지막으로 동기화된 Firestore 퀘스트 카탈로그 캐시 (#4)",
           "items": {
             "type": "object",
             "properties": {
-              "id": { "type": "string" },
-              "name": { "type": "string" },
-              "period": { "enum": ["daily", "weekly"] },
-              "targetCount": { "type": "integer", "minimum": 1 },
-              "category": { "enum": ["전투", "물물교환", "알바", "구매", null] },
-              "location": { "type": ["string", "null"] }
+              "id": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "period": {
+                "enum": [
+                  "daily",
+                  "weekly"
+                ]
+              },
+              "targetCount": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "category": {
+                "enum": [
+                  "전투",
+                  "물물교환",
+                  "알바",
+                  "구매",
+                  null
+                ]
+              },
+              "location": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "dailyPool": {
+                "type": "boolean"
+              },
+              "linkedCatalogId": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "카탈로그 필드명은 linkedTo (주간 문서 id)"
+              }
             },
-            "required": ["id", "name", "period"]
+            "required": [
+              "id",
+              "name",
+              "period"
+            ]
           }
         },
-        "metaVersion": { "type": "integer", "description": "스토어 마이그레이션 버전 (내부용)" }
+        "metaVersion": {
+          "type": "integer",
+          "description": "스토어 마이그레이션 버전 (내부용)"
+        }
       },
-      "required": ["characters", "characterOrder", "settings"]
+      "required": [
+        "characters",
+        "characterOrder",
+        "settings"
+      ]
     }
   }
 }

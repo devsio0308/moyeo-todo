@@ -31,6 +31,12 @@ export interface TaskState {
   category?: QuestCategory | null
   location?: string | null
   excluded?: boolean
+  /** 주간 풀형 퀘스트 (검은/심층 구멍) — 일일 섹션에 '오늘 가능 횟수'로 투영 */
+  dailyPool?: boolean
+  /** 풀형 퀘스트의 오늘 사용량 */
+  dailyUsed?: number
+  /** 연동 대상 카탈로그 id — 이 일일 퀘스트 체크/해제가 주간 퀘스트 count에 ±1 반영 */
+  linkedCatalogId?: string | null
 }
 
 export interface Character {
