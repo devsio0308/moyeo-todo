@@ -42,8 +42,11 @@ export function checkForUpdates(onDownloaded: (version: string) => void): void {
 }
 
 /** 알림의 '업데이트' 버튼 — 지금 바로 설치하고 재시작 (#auto-update-notice).
+ *  isSilent=true — false로 두면 NSIS 마법사 창이 뜨면서 기존 설치를 덮어쓰지 못하고
+ *  별도 경로에 새로 설치해버리는 문제가 있었다(v1.1.1에서 확인). 예전엔
+ *  autoInstallOnAppQuit 기본 동작이 조용히 설치해 문제가 없었던 것과 동일하게 맞춘다.
  *  isForceRunAfter=true로 플랫폼 무관하게 설치 후 자동 재실행을 보장한다 */
 export function installUpdateNow(): void {
   if (!app.isPackaged) return // 개발 모드는 실제로 받은 업데이트가 없어 스킵
-  autoUpdater.quitAndInstall(false, true)
+  autoUpdater.quitAndInstall(true, true)
 }
