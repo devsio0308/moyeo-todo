@@ -31,6 +31,9 @@ const api = {
       ipcRenderer.invoke('store:rename-character', characterId, displayName),
     reorderCharacters: (order: string[]): Promise<StoreShape> =>
       ipcRenderer.invoke('store:reorder-characters', order),
+    /** 같은 (period, category) 그룹 내 커스텀 퀘스트 드래그 순서 변경 (#quest-order) */
+    reorderTasks: (characterId: string, orderedTaskIds: string[]): Promise<StoreShape> =>
+      ipcRenderer.invoke('store:reorder-tasks', characterId, orderedTaskIds),
     addTask: (
       characterId: string,
       displayName: string,

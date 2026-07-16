@@ -34,7 +34,8 @@ describe('parseQuestDocuments', () => {
         category: null,
         location: null,
         dailyPool: false,
-        linkedCatalogId: null
+        linkedCatalogId: null,
+        order: 1
       },
       {
         id: 'raid',
@@ -44,7 +45,8 @@ describe('parseQuestDocuments', () => {
         category: null,
         location: null,
         dailyPool: false,
-        linkedCatalogId: null
+        linkedCatalogId: null,
+        order: 2
       }
     ])
   })

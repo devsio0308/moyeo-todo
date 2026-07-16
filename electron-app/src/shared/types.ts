@@ -54,6 +54,15 @@ export interface TaskState {
    *  같은 캐릭터에서 해당 catalogId를 가진 주간 퀘스트 count가 ±1 된다.
    *  일일 리셋 때 미완료면 주간에 +1 (그날치 소멸). 주간 쪽 조작은 일일에 영향 없음 */
   linkedCatalogId?: string | null
+  /** 같은 (period, category) 그룹 내 표시 순서 — 낮을수록 먼저. 카탈로그 퀘스트는
+   *  Firestore quests 문서의 order 필드로 매 동기화마다 갱신되어 고정되고, 커스텀
+   *  퀘스트는 관리 화면에서 드래그로 직접 조정한다 (#quest-order). 없으면 맨 뒤 취급 */
+  order?: number
+}
+
+/** order 미지정 항목은 맨 뒤로 — 같은 (period, category) 그룹 내 정렬용 (#quest-order) */
+export function taskOrderCompare(a: TaskState, b: TaskState): number {
+  return (a.order ?? Number.MAX_SAFE_INTEGER) - (b.order ?? Number.MAX_SAFE_INTEGER)
 }
 
 /** Firestore quests 컬렉션에서 가져온 카탈로그 항목 (#4) */
@@ -71,6 +80,8 @@ export interface QuestCatalogItem {
   dailyPool?: boolean
   /** 연동 대상 카탈로그 문서 id (일일 → 주간 반영) */
   linkedCatalogId?: string | null
+  /** 관리 화면/오버레이 표시 순서 — Firestore 문서의 order 필드 (#quest-order). 없으면 맨 뒤 */
+  order?: number
 }
 
 /** 카탈로그 동기화 결과 (#4) */

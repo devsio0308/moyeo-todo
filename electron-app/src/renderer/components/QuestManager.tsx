@@ -2,11 +2,14 @@ import { useState } from 'react'
 import {
   QUEST_CATEGORIES,
   QUEST_CATEGORY_CLASS,
-  questCategoryOrder,
+  taskOrderCompare,
   type QuestCategory,
   type TaskPeriod
 } from '../../shared/types'
 import { useDashboardStore } from '../store/useDashboardStore'
+
+/** 카테고리 그룹 목록 — 체크리스트(#13)와 동일한 정렬 순서, 미지정('기타')은 맨 뒤 */
+const GROUP_KEYS: Array<QuestCategory | null> = [...QUEST_CATEGORIES, null]
 
 /**
  * 퀘스트 관리 화면 (#5) — 추가/삭제는 여기서만.
@@ -19,6 +22,7 @@ export default function QuestManager(): React.JSX.Element {
   const removeTask = useDashboardStore((s) => s.removeTask)
   const updateTask = useDashboardStore((s) => s.updateTask)
   const setTaskExcluded = useDashboardStore((s) => s.setTaskExcluded)
+  const reorderTasks = useDashboardStore((s) => s.reorderTasks)
 
   const [name, setName] = useState('')
   const [period, setPeriod] = useState<TaskPeriod>('daily')
@@ -26,6 +30,8 @@ export default function QuestManager(): React.JSX.Element {
   const [category, setCategory] = useState<QuestCategory | ''>('')
   const [location, setLocation] = useState('')
   const [confirmId, setConfirmId] = useState<string | null>(null)
+  /** 드래그로 순서 변경 중인 커스텀 퀘스트 (#quest-order) — 카탈로그 퀘스트는 대상 아님 */
+  const [dragTaskId, setDragTaskId] = useState<string | null>(null)
   /** 인라인 수정 중인 커스텀 퀘스트 (#21) */
   const [editing, setEditing] = useState<{
     taskId: string
@@ -66,17 +72,54 @@ export default function QuestManager(): React.JSX.Element {
     setEditing(null)
   }
 
+  /** 드래그로 놓은 위치에 맞춰 그룹(같은 period+category) 내 순서 재부여 (#quest-order).
+   *  카탈로그 퀘스트도 같은 그룹에 섞여 있으면 그 사이로 끼워 넣을 수 있다 — 단, 카탈로그
+   *  쪽 순서는 다음 동기화 때 Firestore order로 다시 덮인다 */
+  const handleDrop = (groupTaskIds: string[], targetTaskId: string): void => {
+    if (!dragTaskId || dragTaskId === targetTaskId) return
+    const ids = [...groupTaskIds]
+    const from = ids.indexOf(dragTaskId)
+    const to = ids.indexOf(targetTaskId)
+    setDragTaskId(null)
+    if (from === -1 || to === -1) return
+    ids.splice(from, 1)
+    ids.splice(to, 0, dragTaskId)
+    void reorderTasks(activeId, ids)
+  }
+
   const renderSection = (p: TaskPeriod, label: string): React.JSX.Element | null => {
-    // 체크리스트와 동일한 카테고리 순 정렬 (#13)
-    const sectionTasks = entries
-      .filter(([, t]) => t.period === p)
-      .sort(([, a], [, b]) => questCategoryOrder(a.category) - questCategoryOrder(b.category))
+    const sectionTasks = entries.filter(([, t]) => t.period === p)
     if (sectionTasks.length === 0) return null
     return (
       <section className="task-section">
         <h3 className="section-title">{label}</h3>
+        {GROUP_KEYS.map((cat) => renderGroup(p, cat, sectionTasks))}
+      </section>
+    )
+  }
+
+  const renderGroup = (
+    p: TaskPeriod,
+    cat: QuestCategory | null,
+    sectionTasks: Array<[string, (typeof entries)[number][1]]>
+  ): React.JSX.Element | null => {
+    const groupTasks = sectionTasks
+      .filter(([, t]) => (t.category ?? null) === cat)
+      .sort(([, a], [, b]) => taskOrderCompare(a, b))
+    if (groupTasks.length === 0) return null
+    const groupTaskIds = groupTasks.map(([taskId]) => taskId)
+
+    return (
+      <div className="manage-group" key={`${p}:${cat ?? '기타'}`}>
+        <div className="manage-group-title">
+          {cat ? (
+            <span className={`cat-badge cat-${QUEST_CATEGORY_CLASS[cat]}`}>{cat}</span>
+          ) : (
+            <span className="cat-badge cat-none">기타</span>
+          )}
+        </div>
         <ul className="task-list">
-          {sectionTasks.map(([taskId, task]) => {
+          {groupTasks.map(([taskId, task]) => {
             // 인라인 수정 폼 (#21) — 커스텀 퀘스트만
             if (editing?.taskId === taskId) {
               return (
@@ -147,7 +190,39 @@ export default function QuestManager(): React.JSX.Element {
             }
 
             return (
-              <li className={`task-item ${task.excluded ? 'task-excluded-row' : ''}`} key={taskId}>
+              <li
+                className={`task-item ${task.excluded ? 'task-excluded-row' : ''} ${
+                  dragTaskId === taskId ? 'task-item-dragging' : ''
+                }`}
+                key={taskId}
+                onDragOver={(e) => {
+                  if (dragTaskId) e.preventDefault()
+                }}
+                onDrop={() => handleDrop(groupTaskIds, taskId)}
+              >
+                {task.catalogId ? (
+                  <span
+                    className="drag-handle drag-handle-disabled"
+                    title="카탈로그 퀘스트는 순서가 고정됩니다 (Firestore order로 관리)"
+                  >
+                    ☰
+                  </span>
+                ) : (
+                  <span
+                    className="drag-handle"
+                    title="드래그해서 순서 변경"
+                    draggable
+                    onDragStart={(e) => {
+                      setDragTaskId(taskId)
+                      e.dataTransfer.effectAllowed = 'move'
+                      const row = e.currentTarget.closest('li')
+                      if (row) e.dataTransfer.setDragImage(row, 0, 0)
+                    }}
+                    onDragEnd={() => setDragTaskId(null)}
+                  >
+                    ☰
+                  </span>
+                )}
                 <span className="task-name manage-task-name">
                   {task.displayName}
                   {(task.targetCount ?? 1) > 1 && (
@@ -219,7 +294,7 @@ export default function QuestManager(): React.JSX.Element {
             )
           })}
         </ul>
-      </section>
+      </div>
     )
   }
 

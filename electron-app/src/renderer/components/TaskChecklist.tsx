@@ -3,6 +3,7 @@ import { poolTodayMax } from '../../shared/pool-quest'
 import {
   QUEST_CATEGORIES,
   QUEST_CATEGORY_CLASS,
+  taskOrderCompare,
   type QuestCategory,
   type TaskPeriod,
   type TaskState
@@ -98,7 +99,9 @@ export default function TaskChecklist({ activeAlarms = [] }: Props): React.JSX.E
         </div>
 
         {GROUP_KEYS.map((cat) => {
-          const groupAll = sectionTasks.filter(([, t]) => (t.category ?? null) === cat)
+          const groupAll = sectionTasks
+            .filter(([, t]) => (t.category ?? null) === cat)
+            .sort(([, a], [, b]) => taskOrderCompare(a, b))
           // 완료 항목은 맨 아래 완료 섹션에서만 표시
           const groupTasks = groupAll.filter(([, t]) => !t.done)
           if (groupTasks.length === 0) return null
@@ -147,9 +150,9 @@ export default function TaskChecklist({ activeAlarms = [] }: Props): React.JSX.E
 
   /** 완료 섹션 — 모든 퀘스트 맨 아래, 기본 접힘 */
   const renderDoneSection = (): React.JSX.Element | null => {
-    const doneTasks = [...sectionTasksOf('daily'), ...sectionTasksOf('weekly')].filter(
-      ([, t]) => t.done
-    )
+    const doneTasks = [...sectionTasksOf('daily'), ...sectionTasksOf('weekly')]
+      .filter(([, t]) => t.done)
+      .sort(([, a], [, b]) => taskOrderCompare(a, b))
     if (doneTasks.length === 0) return null
 
     return (

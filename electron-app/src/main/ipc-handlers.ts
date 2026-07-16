@@ -45,6 +45,15 @@ export function registerIpcHandlers(broadcastAll: (channel: string, payload: unk
   })
 
   ipcMain.handle(
+    'store:reorder-tasks',
+    (_e, characterId: string, orderedTaskIds: string[]) => {
+      const state = dashboardStore.reorderTasks(characterId, orderedTaskIds)
+      broadcast()
+      return state
+    }
+  )
+
+  ipcMain.handle(
     'store:add-task',
     (
       _e,
