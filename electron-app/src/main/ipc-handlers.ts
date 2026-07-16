@@ -1,4 +1,5 @@
 import { ipcMain } from 'electron'
+import { clearHistory, historyState, recordHistory, redoHistory, undoHistory } from './history'
 import { dashboardStore } from './store'
 import { getDefaultProjectId, syncQuestCatalogOnce } from './quest-catalog'
 import { pullCloudSyncIfRegistered, registerGameAccount } from './cloud-sync'
@@ -17,18 +18,21 @@ export function registerIpcHandlers(broadcastAll: (channel: string, payload: unk
   ipcMain.handle('store:get-state', () => dashboardStore.getState())
 
   ipcMain.handle('store:add-character', (_e, displayName: string) => {
+    clearHistory()
     const state = dashboardStore.addCharacter(displayName)
     broadcast()
     return state
   })
 
   ipcMain.handle('store:remove-character', (_e, characterId: string) => {
+    clearHistory()
     const state = dashboardStore.removeCharacter(characterId)
     broadcast()
     return state
   })
 
   ipcMain.handle('store:rename-character', (_e, characterId: string, displayName: string) => {
+    clearHistory()
     const state = dashboardStore.renameCharacter(characterId, displayName)
     broadcast()
     return state
@@ -51,6 +55,7 @@ export function registerIpcHandlers(broadcastAll: (channel: string, payload: unk
       category?: import('../shared/types').QuestCategory | null,
       location?: string | null
     ) => {
+      clearHistory()
       const state = dashboardStore.addTask(
         characterId,
         displayName,
@@ -68,6 +73,7 @@ export function registerIpcHandlers(broadcastAll: (channel: string, payload: unk
   ipcMain.handle(
     'store:increment-task',
     (_e, characterId: string, taskId: string, delta: number) => {
+      recordHistory() // 실행취소 지점 (#undo)
       const state = dashboardStore.incrementTask(characterId, taskId, delta)
       broadcast()
       return state
@@ -77,6 +83,7 @@ export function registerIpcHandlers(broadcastAll: (channel: string, payload: unk
   ipcMain.handle(
     'store:set-task-excluded',
     (_e, characterId: string, taskId: string, excluded: boolean) => {
+      clearHistory()
       const state = dashboardStore.setTaskExcluded(characterId, taskId, excluded)
       broadcast()
       return state
@@ -84,6 +91,7 @@ export function registerIpcHandlers(broadcastAll: (channel: string, payload: unk
   )
 
   ipcMain.handle('store:remove-task', (_e, characterId: string, taskId: string) => {
+    clearHistory()
     const state = dashboardStore.removeTask(characterId, taskId)
     broadcast()
     return state
@@ -97,6 +105,7 @@ export function registerIpcHandlers(broadcastAll: (channel: string, payload: unk
       taskId: string,
       patch: Partial<Pick<TaskState, 'displayName' | 'period' | 'category' | 'targetCount' | 'location'>>
     ) => {
+      clearHistory()
       const state = dashboardStore.updateTask(characterId, taskId, patch)
       broadcast()
       return state
@@ -104,6 +113,7 @@ export function registerIpcHandlers(broadcastAll: (channel: string, payload: unk
   )
 
   ipcMain.handle('store:set-task-done', (_e, characterId: string, taskId: string, done: boolean) => {
+    recordHistory() // 실행취소 지점 (#undo)
     const state = dashboardStore.setTaskDone(characterId, taskId, done)
     broadcast()
     return state
@@ -119,7 +129,10 @@ export function registerIpcHandlers(broadcastAll: (channel: string, payload: unk
 
   ipcMain.handle('catalog:sync', async () => {
     const result = await syncQuestCatalogOnce()
-    if (result.ok) broadcast()
+    if (result.ok) {
+      clearHistory()
+      broadcast()
+    }
     return result
   })
 
@@ -130,13 +143,35 @@ export function registerIpcHandlers(broadcastAll: (channel: string, payload: unk
 
   ipcMain.handle('cloud:register', async (_e, gameAccountId: string) => {
     const result = await registerGameAccount(gameAccountId)
-    if (result.ok) broadcast()
+    if (result.ok) {
+      clearHistory()
+      broadcast()
+    }
     return result
   })
 
   ipcMain.handle('cloud:pull', async () => {
     const result = await pullCloudSyncIfRegistered()
-    if (result.ok) broadcast()
+    if (result.ok) {
+      clearHistory()
+      broadcast()
+    }
     return result
+  })
+
+  // ── 실행취소/다시실행 (#undo) — 오버레이 체크/카운트 조작 대상 ──
+
+  ipcMain.handle('history:state', () => historyState())
+
+  ipcMain.handle('history:undo', () => {
+    if (!undoHistory()) return null
+    broadcast()
+    return dashboardStore.getState()
+  })
+
+  ipcMain.handle('history:redo', () => {
+    if (!redoHistory()) return null
+    broadcast()
+    return dashboardStore.getState()
   })
 }

@@ -4,6 +4,7 @@ import { electronApp, optimizer } from '@electron-toolkit/utils'
 import { createManageWindow, createOverlayWindow } from './window'
 import { createTray } from './tray'
 import { registerIpcHandlers } from './ipc-handlers'
+import { clearHistory, historyState, redoHistory, setHistoryListener, undoHistory } from './history'
 import { checkForUpdates } from './auto-update'
 import { dashboardStore } from './store'
 import { ResetScheduler } from './reset-scheduler'
@@ -56,6 +57,21 @@ function showOverlayWindow(): void {
   overlayWindow.on('closed', () => {
     overlayWindow = null
   })
+  // 실행취소 단축키 (#undo) — 오버레이 창이 포커스일 때만. before-input-event는
+  // 애플리케이션 메뉴 액셀러레이터보다 먼저 실행되어 mac의 Cmd+Z 가로채기도 안전
+  overlayWindow.webContents.on('before-input-event', (event, input) => {
+    if (input.type !== 'keyDown') return
+    const mod = input.control || input.meta
+    if (!mod) return
+    const key = input.key.toLowerCase()
+    if (key === 'z' && !input.shift) {
+      event.preventDefault()
+      if (undoHistory()) broadcastAll('store:changed', dashboardStore.getState())
+    } else if ((key === 'z' && input.shift) || key === 'y') {
+      event.preventDefault()
+      if (redoHistory()) broadcastAll('store:changed', dashboardStore.getState())
+    }
+  })
 }
 
 function toggleOverlay(): void {
@@ -88,6 +104,7 @@ if (!app.requestSingleInstanceLock()) {
 
     // 리셋 스케줄러 — 시작/포커스/절전복귀 시 day-boundary 체크 (명세서 §6)
     resetScheduler = new ResetScheduler(() => {
+      clearHistory() // 리셋 전 상태를 실행취소로 부활시키지 않도록 (#undo)
       broadcastAll('store:changed', dashboardStore.getState())
     })
     resetScheduler.start()
@@ -104,6 +121,7 @@ if (!app.requestSingleInstanceLock()) {
 
     registerWindowIpc()
     registerIpcHandlers(broadcastAll)
+    setHistoryListener(() => broadcastAll('history:changed', historyState()))
 
     // 시작 시 업데이트 확인 — 새 버전 있으면 백그라운드 다운로드 후 알림
     checkForUpdates()
@@ -112,6 +130,7 @@ if (!app.requestSingleInstanceLock()) {
       .then((result) => {
         if (result === 'pulled') {
           // 원격 데이터를 받아왔으니 최신 시각 기준으로 리셋 재판정 + 화면 갱신
+          clearHistory()
           resetScheduler?.checkNow()
           broadcastAll('store:changed', dashboardStore.getState())
         }

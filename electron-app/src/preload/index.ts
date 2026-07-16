@@ -1,4 +1,5 @@
 import { contextBridge, ipcRenderer } from 'electron'
+import type { HistoryState } from '../main/history'
 import type {
   CatalogSyncResult,
   CloudRegisterResult,
@@ -77,6 +78,17 @@ const api = {
     /** .env 기본 프로젝트 ID (#14) — 설정 UI 입력창 표시용 */
     getDefaultProjectId: (): Promise<string | null> =>
       ipcRenderer.invoke('catalog:default-project-id')
+  },
+  history: {
+    /** 실행취소/다시실행 (#undo) — 오버레이 체크/카운트 조작 대상 */
+    undo: (): Promise<StoreShape | null> => ipcRenderer.invoke('history:undo'),
+    redo: (): Promise<StoreShape | null> => ipcRenderer.invoke('history:redo'),
+    getState: (): Promise<HistoryState> => ipcRenderer.invoke('history:state'),
+    onChanged: (cb: (state: HistoryState) => void): (() => void) => {
+      const listener = (_e: Electron.IpcRendererEvent, state: HistoryState): void => cb(state)
+      ipcRenderer.on('history:changed', listener)
+      return () => ipcRenderer.removeListener('history:changed', listener)
+    }
   },
   cloud: {
     /** 게임계정 ID 등록/연동 (#26) — 원격 있으면 불러오기, 없으면 로컬 업로드 */
