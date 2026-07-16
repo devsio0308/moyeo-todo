@@ -138,7 +138,8 @@ export class DashboardStore {
         targetCount: Math.max(1, Math.floor(targetCount)),
         count: 0,
         category,
-        location
+        location,
+        order: this.nextOrderInGroup(character.tasks, period, category)
       }
       this.store.set(`characters.${characterId}.tasks.${id}`, task)
     }
@@ -160,8 +161,9 @@ export class DashboardStore {
     taskId: string,
     patch: Partial<Pick<TaskState, 'displayName' | 'period' | 'category' | 'targetCount' | 'location'>>
   ): StoreShape {
-    const task = this.store.get('characters')[characterId]?.tasks[taskId]
-    if (task) {
+    const character = this.store.get('characters')[characterId]
+    const task = character?.tasks[taskId]
+    if (task && character) {
       const next: TaskState = { ...task, ...patch }
       // 횟수 변경(#21): count 클램프 + 완료 상태 재계산
       if (patch.targetCount !== undefined) {
@@ -175,6 +177,13 @@ export class DashboardStore {
             ? task.lastDoneAt
             : Math.floor(Date.now() / 1000)
           : null
+      }
+      // 그룹(period/category)이 바뀌면 옛 순서 값은 무의미하므로 새 그룹 끝으로 재배치 (#quest-order)
+      if (patch.period !== undefined || patch.category !== undefined) {
+        const otherTasks = Object.fromEntries(
+          Object.entries(character.tasks).filter(([id]) => id !== taskId)
+        )
+        next.order = this.nextOrderInGroup(otherTasks, next.period, next.category ?? null)
       }
       this.store.set(`characters.${characterId}.tasks.${taskId}`, next)
     }
@@ -376,7 +385,8 @@ export class DashboardStore {
             (t.category ?? null) !== itemCategory ||
             (t.location ?? null) !== itemLocation ||
             (t.dailyPool ?? false) !== itemDailyPool ||
-            (t.linkedCatalogId ?? null) !== itemLinked
+            (t.linkedCatalogId ?? null) !== itemLinked ||
+            (t.order ?? null) !== (item.order ?? null)
           ) {
             tasks[existingTaskId] = {
               ...t,
@@ -387,7 +397,8 @@ export class DashboardStore {
               location: itemLocation,
               dailyPool: itemDailyPool,
               dailyUsed: itemDailyPool ? (t.dailyUsed ?? 0) : undefined,
-              linkedCatalogId: itemLinked
+              linkedCatalogId: itemLinked,
+              order: item.order
             }
             updated++
           }
@@ -426,9 +437,43 @@ export class DashboardStore {
       count: 0,
       category: item.category ?? null,
       location: item.location ?? null,
+      order: item.order,
       ...(item.dailyPool ? { dailyPool: true, dailyUsed: 0 } : {}),
       ...(item.linkedCatalogId ? { linkedCatalogId: item.linkedCatalogId } : {})
     }
+  }
+
+  /** 같은 (period, category) 그룹의 다음 순서 — 그룹 끝에 추가 (#quest-order) */
+  private nextOrderInGroup(
+    tasks: Record<string, TaskState>,
+    period: TaskPeriod,
+    category: QuestCategory | null
+  ): number {
+    let max = -1
+    for (const t of Object.values(tasks)) {
+      if (t.period === period && (t.category ?? null) === category && typeof t.order === 'number') {
+        max = Math.max(max, t.order)
+      }
+    }
+    return max + 1
+  }
+
+  /**
+   * 같은 (period, category) 그룹 내 커스텀 퀘스트 순서 변경 — 관리 화면 드래그(#quest-order).
+   * orderedTaskIds에 있는 태스크만 순서대로 0..n-1 재부여. 카탈로그 퀘스트도 같은 그룹에
+   * 섞여 있을 수 있어 함께 전달받지만, 다음 카탈로그 동기화 때 Firestore order로 다시 덮인다.
+   */
+  reorderTasks(characterId: string, orderedTaskIds: string[]): StoreShape {
+    const character = this.store.get('characters')[characterId]
+    if (character) {
+      const tasks = { ...character.tasks }
+      orderedTaskIds.forEach((taskId, index) => {
+        const task = tasks[taskId]
+        if (task) tasks[taskId] = { ...task, order: index }
+      })
+      this.store.set(`characters.${characterId}.tasks`, tasks)
+    }
+    return this.getState()
   }
 
   // ── 리셋 (feature/reset-scheduler에서 사용) ───────────────

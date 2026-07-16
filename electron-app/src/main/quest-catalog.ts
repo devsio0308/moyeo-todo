@@ -70,18 +70,21 @@ export function parseQuestDocuments(body: unknown): QuestCatalogItem[] {
     items.push({ id, name, period, targetCount, category, location, dailyPool, linkedCatalogId, order })
   }
 
-  // order → 이름 순 정렬 후 order 필드 제거
+  // order → 이름 순 정렬 (order는 그대로 캐릭터 태스크에 저장돼 관리 화면/오버레이 정렬에 쓰인다 #quest-order)
   items.sort((a, b) => a.order - b.order || a.name.localeCompare(b.name, 'ko'))
-  return items.map(({ id, name, period, targetCount, category, location, dailyPool, linkedCatalogId }) => ({
-    id,
-    name,
-    period,
-    targetCount,
-    category,
-    location,
-    dailyPool,
-    linkedCatalogId
-  }))
+  return items.map(
+    ({ id, name, period, targetCount, category, location, dailyPool, linkedCatalogId, order }) => ({
+      id,
+      name,
+      period,
+      targetCount,
+      category,
+      location,
+      dailyPool,
+      linkedCatalogId,
+      order
+    })
+  )
 }
 
 /** 추천 퀘스트 컬렉션 이름 (#15) — quests와 동일한 문서 형식 */

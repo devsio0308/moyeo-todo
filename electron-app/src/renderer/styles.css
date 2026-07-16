@@ -723,6 +723,34 @@ body {
   background: rgba(255, 255, 255, 0.07);
 }
 
+/* 퀘스트 관리 화면 — 카테고리별 그룹 (#quest-order). 체크리스트와 달리 접기는 없음 */
+.manage-group {
+  margin-bottom: 12px;
+}
+
+.manage-group-title {
+  display: flex;
+  align-items: center;
+  padding: 4px 6px;
+  margin-bottom: 4px;
+}
+
+/* 드래그 핸들 — 커스텀 퀘스트만 활성. 카탈로그 퀘스트는 순서 고정(#quest-order) */
+.drag-handle {
+  flex-shrink: 0;
+  color: #7a7a88;
+  font-size: 13px;
+  cursor: grab;
+}
+
+.drag-handle:active {
+  cursor: grabbing;
+}
+
+.task-item-dragging {
+  opacity: 0.4;
+}
+
 .task-label {
   display: flex;
   align-items: center;
