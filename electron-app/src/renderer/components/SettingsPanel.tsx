@@ -20,9 +20,11 @@ export default function SettingsPanel(): React.JSX.Element {
   const [syncMessage, setSyncMessage] = useState<string | null>(null)
   const [accountIdDraft, setAccountIdDraft] = useState<string | null>(null)
   const [cloudMessage, setCloudMessage] = useState<string | null>(null)
+  const [appVersion, setAppVersion] = useState<string | null>(null)
 
   useEffect(() => {
     void window.api.catalog.getDefaultProjectId().then(setDefaultProjectId)
+    void window.api.app.getVersion().then(setAppVersion)
   }, [])
 
   if (!data) return <></>
@@ -198,6 +200,14 @@ export default function SettingsPanel(): React.JSX.Element {
             ? `'${settings.gameAccountId}'로 동기화 중 — 캐릭터/퀘스트 변경이 자동으로 클라우드에 저장됩니다.`
             : '등록하면 캐릭터/퀘스트 진행 상황이 이 ID로 클라우드에 저장돼, 같은 ID로 다른 기기에서도 이어서 볼 수 있습니다. 이미 등록된 ID를 입력하면 그 데이터를 불러옵니다.'}
         </p>
+      </section>
+
+      <section className="settings-section">
+        <h3 className="section-title">정보</h3>
+        <div className="settings-row">
+          <span className="settings-label">버전</span>
+          <span className="settings-hint">{appVersion ? `v${appVersion}` : '확인 중…'}</span>
+        </div>
       </section>
     </div>
   )

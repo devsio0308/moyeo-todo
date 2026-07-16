@@ -201,4 +201,9 @@ export function registerIpcHandlers(broadcastAll: (channel: string, payload: unk
   })
 
   ipcMain.handle('update:install', () => installUpdateNow())
+
+  // ── 앱 정보 ──────────────────────────────────────────────
+
+  /** 설정 화면에 표시할 현재 실행 중인 버전 */
+  ipcMain.handle('app:get-version', () => app.getVersion())
 }

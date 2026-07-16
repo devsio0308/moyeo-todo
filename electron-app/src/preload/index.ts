@@ -121,6 +121,10 @@ const api = {
       ipcRenderer.invoke('update:get-pending'),
     /** 알림의 '업데이트' 버튼 — 지금 설치하고 재시작 (#auto-update-notice) */
     install: (): Promise<void> => ipcRenderer.invoke('update:install')
+  },
+  app: {
+    /** 설정 화면에 표시할 현재 실행 중인 버전 */
+    getVersion: (): Promise<string> => ipcRenderer.invoke('app:get-version')
   }
 }
 
