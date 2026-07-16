@@ -19,10 +19,12 @@ export default function OverlayApp(): React.JSX.Element {
   const [history, setHistory] = useState({ canUndo: false, canRedo: false })
   const [catalogToast, setCatalogToast] = useState<string | null>(null)
   const catalogToastTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const [appVersion, setAppVersion] = useState<string | null>(null)
 
   useEffect(() => {
     void init()
     void window.api.history.getState().then(setHistory)
+    void window.api.app.getVersion().then(setAppVersion)
     const offChanged = window.api.store.onChanged(applyState)
     const offHistory = window.api.history.onChanged(setHistory)
     // 백그라운드 카탈로그 감시(#catalog-watch) 결과 알림 — 추가/삭제가 있었을 때만
@@ -83,7 +85,10 @@ export default function OverlayApp(): React.JSX.Element {
   return (
     <div className="overlay-root">
       <header className="titlebar">
-        <span className="titlebar-title">📝 뭐해야하더라</span>
+        <span className="titlebar-title">
+          📝 뭐해야하더라
+          {appVersion && <span className="titlebar-version">v{appVersion}</span>}
+        </span>
         <div className="titlebar-buttons">
           <button
             className="titlebar-btn"
