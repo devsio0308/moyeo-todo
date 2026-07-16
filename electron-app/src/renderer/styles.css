@@ -88,6 +88,12 @@ body {
   font-size: 20px;
 }
 
+.side-brand-version {
+  font-size: 11px;
+  font-weight: 400;
+  color: #7a7a88;
+}
+
 .side-nav-list {
   display: flex;
   flex-direction: column;
@@ -434,6 +440,13 @@ body {
 .titlebar-title {
   font-weight: 600;
   font-size: 13px;
+}
+
+.titlebar-version {
+  margin-left: 6px;
+  font-size: 10px;
+  font-weight: 400;
+  color: #7a7a88;
 }
 
 .titlebar-buttons {

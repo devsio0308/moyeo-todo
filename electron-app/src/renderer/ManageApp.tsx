@@ -34,9 +34,11 @@ export default function ManageApp(): React.JSX.Element {
   // 확인 안 한 알림이 남아있는 상태에서 새 알림이 오면 쌓아서 각각 따로 닫을 수 있게 한다
   // (세션 메모리 상태만 — 재시작하면 초기화됨)
   const [notices, setNotices] = useState<AppNotice[]>([])
+  const [appVersion, setAppVersion] = useState<string | null>(null)
 
   useEffect(() => {
     void init()
+    void window.api.app.getVersion().then(setAppVersion)
     const offChanged = window.api.store.onChanged(applyState)
     const offCatalog = window.api.catalog.onNotice((notice: CatalogNotice) => {
       setNotices((prev) => [...prev, { ...notice, kind: 'catalog', id: `${Date.now()}-${Math.random()}` }])
@@ -76,6 +78,7 @@ export default function ManageApp(): React.JSX.Element {
         <div className="side-brand">
           <span className="side-brand-icon">📝</span>
           <span className="side-brand-name">뭐해야하더라</span>
+          {appVersion && <span className="side-brand-version">v{appVersion}</span>}
         </div>
         <nav className="side-nav-list">
           {navItem('dashboard')}
