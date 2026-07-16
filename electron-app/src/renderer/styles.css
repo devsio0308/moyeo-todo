@@ -465,6 +465,18 @@ body {
   cursor: default;
 }
 
+/* 백그라운드 카탈로그 감시(#catalog-watch) 알림 토스트 */
+.catalog-toast {
+  margin: 0 10px;
+  padding: 6px 10px;
+  border-radius: 6px;
+  background: rgba(90, 160, 255, 0.16);
+  color: #cfe0ff;
+  font-size: 12px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
 .badge {
   padding: 2px 8px;
   border-radius: 999px;
