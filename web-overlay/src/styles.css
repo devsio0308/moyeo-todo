@@ -267,6 +267,21 @@ body {
   text-align: right;
 }
 
+/* 완료 섹션 — 모든 퀘스트 맨 아래, 기본 접힘 */
+.done-section {
+  margin-top: 4px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.done-title {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #7a7a88;
+}
+
 .task-section {
   margin-bottom: 18px;
 }
