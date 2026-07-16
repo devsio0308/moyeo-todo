@@ -747,13 +747,6 @@ body {
   cursor: grabbing;
 }
 
-.drag-handle-disabled {
-  flex-shrink: 0;
-  color: #45454f;
-  font-size: 13px;
-  cursor: default;
-}
-
 .task-item-dragging {
   opacity: 0.4;
 }

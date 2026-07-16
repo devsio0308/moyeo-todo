@@ -200,14 +200,8 @@ export default function QuestManager(): React.JSX.Element {
                 }}
                 onDrop={() => handleDrop(groupTaskIds, taskId)}
               >
-                {task.catalogId ? (
-                  <span
-                    className="drag-handle drag-handle-disabled"
-                    title="카탈로그 퀘스트는 순서가 고정됩니다 (Firestore order로 관리)"
-                  >
-                    ☰
-                  </span>
-                ) : (
+                {/* 카탈로그 퀘스트는 순서가 Firestore order로 고정 — 핸들 자체를 안 보여줌 (#quest-order) */}
+                {!task.catalogId && (
                   <span
                     className="drag-handle"
                     title="드래그해서 순서 변경"
