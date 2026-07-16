@@ -536,6 +536,24 @@ body {
   color: #d6d6e0;
 }
 
+.app-notice-action {
+  display: block;
+  margin-top: 10px;
+  margin-left: auto;
+  padding: 7px 12px;
+  border: none;
+  border-radius: 8px;
+  background: #5e81ff;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.app-notice-action:hover {
+  background: #7093ff;
+}
+
 .badge {
   padding: 2px 8px;
   border-radius: 999px;

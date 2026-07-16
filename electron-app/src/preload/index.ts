@@ -115,7 +115,12 @@ const api = {
         cb(notice)
       ipcRenderer.on('update:downloaded', listener)
       return () => ipcRenderer.removeListener('update:downloaded', listener)
-    }
+    },
+    /** 관리 창 마운트 시 조회 — 재시작해도 설치 안 한 버전이 있으면 안내를 다시 띄운다 */
+    getPending: (): Promise<UpdateDownloadedNotice | null> =>
+      ipcRenderer.invoke('update:get-pending'),
+    /** 알림의 '업데이트' 버튼 — 지금 설치하고 재시작 (#auto-update-notice) */
+    install: (): Promise<void> => ipcRenderer.invoke('update:install')
   }
 }
 

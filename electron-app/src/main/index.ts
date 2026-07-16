@@ -19,9 +19,24 @@ let manageWindow: BrowserWindow | null = null
 let overlayWindow: BrowserWindow | null = null
 let resetScheduler: ResetScheduler | null = null
 let catalogWatchTimer: NodeJS.Timeout | null = null
+let updateCheckTimer: NodeJS.Timeout | null = null
 
 /** 카탈로그 백그라운드 감시 주기 (#catalog-watch) — 변경이 한 달에 1~2회뿐이라 여유 있게 */
 const CATALOG_WATCH_INTERVAL_MS = 3 * 60 * 60 * 1000
+
+/** 업데이트 주기적 재확인 간격 (#auto-update-notice) — 앱을 오래 띄워둬도 재시작 없이 감지 */
+const UPDATE_CHECK_INTERVAL_MS = 3 * 60 * 60 * 1000
+
+/** 새 버전 확인 → 다운로드 완료 시 관리 창에 알림 (#auto-update-notice).
+ *  앱 시작 시 1회 + 이후 UPDATE_CHECK_INTERVAL_MS 주기로 호출된다. */
+function runUpdateCheck(): void {
+  checkForUpdates((version) => {
+    // 재시작해도 안내가 유지되도록 저장 — 유저가 버튼을 눌러 설치하기 전까진 계속 남는다
+    dashboardStore.setPendingUpdateVersion(version)
+    const notice: UpdateDownloadedNotice = { version }
+    broadcastAll('update:downloaded', notice)
+  })
+}
 
 /**
  * meta/catalog 문서만 가볍게 확인해 변경이 있을 때만 전체 동기화 (#catalog-watch).
@@ -150,12 +165,11 @@ if (!app.requestSingleInstanceLock()) {
     registerIpcHandlers(broadcastAll)
     setHistoryListener(() => broadcastAll('history:changed', historyState()))
 
-    // 시작 시 업데이트 확인 — 새 버전 있으면 실행 중에 백그라운드로 다운로드하고,
-    // 완료되면 관리 창에 "종료→업데이트→재실행" 안내 (#auto-update-notice)
-    checkForUpdates((version) => {
-      const notice: UpdateDownloadedNotice = { version }
-      broadcastAll('update:downloaded', notice)
-    })
+    // 시작 시 1회 + 이후 주기적으로 업데이트 확인 — 새 버전 있으면 실행 중에 백그라운드로
+    // 다운로드하고, 완료되면 관리 창에 안내를 띄운다. 설치는 유저가 버튼을 눌러야만
+    // 진행된다 (#auto-update-notice)
+    runUpdateCheck()
+    updateCheckTimer = setInterval(runUpdateCheck, UPDATE_CHECK_INTERVAL_MS)
 
     void reconcile
       .then((result) => {
@@ -181,6 +195,7 @@ if (!app.requestSingleInstanceLock()) {
   app.on('before-quit', () => {
     resetScheduler?.stop()
     if (catalogWatchTimer) clearInterval(catalogWatchTimer)
+    if (updateCheckTimer) clearInterval(updateCheckTimer)
   })
 
   // 종료는 관리 창 닫기(위 'closed' 핸들러)로 처리 — 오버레이만 남은 상태는

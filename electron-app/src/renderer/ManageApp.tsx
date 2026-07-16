@@ -41,9 +41,15 @@ export default function ManageApp(): React.JSX.Element {
     const offCatalog = window.api.catalog.onNotice((notice: CatalogNotice) => {
       setNotices((prev) => [...prev, { ...notice, kind: 'catalog', id: `${Date.now()}-${Math.random()}` }])
     })
-    const offUpdate = window.api.update.onDownloaded((notice: UpdateDownloadedNotice) => {
-      setNotices((prev) => [...prev, { ...notice, kind: 'update', id: `${Date.now()}-${Math.random()}` }])
+    // 설치 안 하고 종료했다가 재시작해도 계속 안내를 띄운다 (#auto-update-notice)
+    const addUpdateNotice = (notice: UpdateDownloadedNotice): void => {
+      const id = `update-${notice.version}`
+      setNotices((prev) => (prev.some((n) => n.id === id) ? prev : [...prev, { ...notice, kind: 'update', id }]))
+    }
+    void window.api.update.getPending().then((pending) => {
+      if (pending) addUpdateNotice(pending)
     })
+    const offUpdate = window.api.update.onDownloaded(addUpdateNotice)
     return () => {
       offChanged()
       offCatalog()
@@ -144,9 +150,15 @@ export default function ManageApp(): React.JSX.Element {
                 <>
                   <strong className="app-notice-title">새 버전 준비됨 (v{notice.version})</strong>
                   <p className="app-notice-line">
-                    종료 → 업데이트 → 재실행: 앱을 종료하면 자동으로 설치되고, 다시 실행하면
-                    새 버전으로 시작됩니다.
+                    버튼을 누르면 지금 설치하고 자동으로 재시작합니다. 누르지 않으면 종료해도
+                    설치되지 않고, 다음에 켤 때 이 안내가 다시 뜹니다.
                   </p>
+                  <button
+                    className="app-notice-action"
+                    onClick={() => void window.api.update.install()}
+                  >
+                    지금 업데이트
+                  </button>
                 </>
               )}
             </div>
