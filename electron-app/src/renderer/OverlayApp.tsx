@@ -16,12 +16,47 @@ export default function OverlayApp(): React.JSX.Element {
   const [syncError, setSyncError] = useState<string | null>(null)
   const [syncCooldown, setSyncCooldown] = useState(false)
   const cooldownTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const [history, setHistory] = useState({ canUndo: false, canRedo: false })
+  const [catalogToast, setCatalogToast] = useState<string | null>(null)
+  const catalogToastTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   useEffect(() => {
     void init()
+    void window.api.history.getState().then(setHistory)
     const offChanged = window.api.store.onChanged(applyState)
+    const offHistory = window.api.history.onChanged(setHistory)
+    // 백그라운드 카탈로그 감시(#catalog-watch) 결과 알림 — 추가/삭제가 있었을 때만
+    const offCatalog = window.api.catalog.onNotice((notice) => {
+      const parts: string[] = []
+      if (notice.addedNames.length > 0) parts.push('새 퀘스트가 추가되었습니다')
+      if (notice.removedNames.length > 0) parts.push('퀘스트가 삭제되었습니다')
+      if (parts.length === 0) return
+      setCatalogToast(parts.join(' · '))
+      if (catalogToastTimer.current) clearTimeout(catalogToastTimer.current)
+      catalogToastTimer.current = setTimeout(() => setCatalogToast(null), 5000)
+    })
+
+    // 실행취소 단축키 폴백 (#undo) — 기본 경로는 main의 before-input-event이며,
+    // 그쪽에서 preventDefault되면 여기까지 오지 않으므로 이중 실행 없음
+    const onKey = (e: KeyboardEvent): void => {
+      if (!(e.ctrlKey || e.metaKey)) return
+      const k = e.key.toLowerCase()
+      if (k === 'z' && !e.shiftKey) {
+        e.preventDefault()
+        void window.api.history.undo()
+      } else if ((k === 'z' && e.shiftKey) || k === 'y') {
+        e.preventDefault()
+        void window.api.history.redo()
+      }
+    }
+    window.addEventListener('keydown', onKey)
+
     return () => {
       offChanged()
+      offHistory()
+      offCatalog()
+      if (catalogToastTimer.current) clearTimeout(catalogToastTimer.current)
+      window.removeEventListener('keydown', onKey)
     }
   }, [init, applyState])
 
@@ -52,6 +87,22 @@ export default function OverlayApp(): React.JSX.Element {
         <div className="titlebar-buttons">
           <button
             className="titlebar-btn"
+            title="실행취소 (Ctrl+Z)"
+            onClick={() => void window.api.history.undo()}
+            disabled={!history.canUndo}
+          >
+            ↩
+          </button>
+          <button
+            className="titlebar-btn"
+            title="다시 실행 (Ctrl+Shift+Z)"
+            onClick={() => void window.api.history.redo()}
+            disabled={!history.canRedo}
+          >
+            ↪
+          </button>
+          <button
+            className="titlebar-btn"
             title={
               syncError ??
               (syncCooldown
@@ -72,6 +123,7 @@ export default function OverlayApp(): React.JSX.Element {
           </button>
         </div>
       </header>
+      {catalogToast && <div className="catalog-toast">{catalogToast}</div>}
       <CharacterTabs />
       <main className="content">
         <TaskChecklist activeAlarms={activeAlarms} />

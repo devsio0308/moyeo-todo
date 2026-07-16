@@ -1,4 +1,5 @@
 import Store from 'electron-store'
+import { poolForfeitDays, poolTodayMax } from '../shared/pool-quest'
 import type {
   Character,
   CloudPlayerData,
@@ -137,7 +138,8 @@ export class DashboardStore {
         targetCount: Math.max(1, Math.floor(targetCount)),
         count: 0,
         category,
-        location
+        location,
+        order: this.nextOrderInGroup(character.tasks, period, category)
       }
       this.store.set(`characters.${characterId}.tasks.${id}`, task)
     }
@@ -159,8 +161,9 @@ export class DashboardStore {
     taskId: string,
     patch: Partial<Pick<TaskState, 'displayName' | 'period' | 'category' | 'targetCount' | 'location'>>
   ): StoreShape {
-    const task = this.store.get('characters')[characterId]?.tasks[taskId]
-    if (task) {
+    const character = this.store.get('characters')[characterId]
+    const task = character?.tasks[taskId]
+    if (task && character) {
       const next: TaskState = { ...task, ...patch }
       // 횟수 변경(#21): count 클램프 + 완료 상태 재계산
       if (patch.targetCount !== undefined) {
@@ -175,16 +178,30 @@ export class DashboardStore {
             : Math.floor(Date.now() / 1000)
           : null
       }
+      // 그룹(period/category)이 바뀌면 옛 순서 값은 무의미하므로 새 그룹 끝으로 재배치 (#quest-order)
+      if (patch.period !== undefined || patch.category !== undefined) {
+        const otherTasks = Object.fromEntries(
+          Object.entries(character.tasks).filter(([id]) => id !== taskId)
+        )
+        next.order = this.nextOrderInGroup(otherTasks, next.period, next.category ?? null)
+      }
       this.store.set(`characters.${characterId}.tasks.${taskId}`, next)
     }
     return this.getState()
   }
 
   /** 체크 상태 변경. done=true일 때만 lastDoneAt 갱신. at: unix epoch(초), 기본 현재 시각.
-   *  카운트 퀘스트(#7): 완료 체크 = count를 target으로, 해제 = 0으로 */
+   *  카운트 퀘스트(#7): 완료 체크 = count를 target으로, 해제 = 0으로.
+   *  풀형 퀘스트: 체크 = 오늘 가능분 전부 사용, 해제 = 오늘 사용분만 되돌림 */
   setTaskDone(characterId: string, taskId: string, done: boolean, at?: number): StoreShape {
     const task = this.store.get('characters')[characterId]?.tasks[taskId]
     if (task) {
+      if (task.dailyPool) {
+        const now = at ?? Math.floor(Date.now() / 1000)
+        const used = task.dailyUsed ?? 0
+        const todayMax = poolTodayMax(task, now, this.getState().settings)
+        return this.incrementTask(characterId, taskId, done ? todayMax - used : -used, at)
+      }
       const next: TaskState = {
         ...task,
         done,
@@ -192,8 +209,41 @@ export class DashboardStore {
         lastDoneAt: done ? (at ?? Math.floor(Date.now() / 1000)) : null
       }
       this.store.set(`characters.${characterId}.tasks.${taskId}`, next)
+      if (task.done !== done) {
+        this.propagateLink(characterId, task, done ? 1 : -1, at ?? Math.floor(Date.now() / 1000))
+      }
     }
     return this.getState()
+  }
+
+  /**
+   * 연동 일일 퀘스트(#linked — 검은/심층 구멍)의 완료 전환을 주간 카운트에 ±1 반영.
+   * 주간 쪽 조작은 일일에 영향을 주지 않는 단방향 연동.
+   */
+  private propagateLink(
+    characterId: string,
+    task: TaskState,
+    delta: 1 | -1,
+    at: number
+  ): void {
+    if (!task.linkedCatalogId || task.period !== 'daily' || task.excluded) return
+    const character = this.store.get('characters')[characterId]
+    if (!character) return
+    const entry = Object.entries(character.tasks).find(
+      ([, s]) => s.catalogId === task.linkedCatalogId
+    )
+    if (!entry) return
+    const [siblingId, sibling] = entry
+    if (sibling.excluded) return
+    const target = sibling.targetCount ?? 1
+    const count = Math.max(0, Math.min((sibling.count ?? 0) + delta, target))
+    const done = count >= target
+    this.store.set(`characters.${characterId}.tasks.${siblingId}`, {
+      ...sibling,
+      count,
+      done,
+      lastDoneAt: done ? at : null
+    })
   }
 
   /**
@@ -216,20 +266,53 @@ export class DashboardStore {
     return this.getState()
   }
 
-  /** 카운트 퀘스트 진행 증감 (#7). target 도달 시 완료, 0 미만/target 초과는 클램프 */
+  /** 카운트 퀘스트 진행 증감 (#7). target 도달 시 완료, 0 미만/target 초과는 클램프.
+   *  풀형 퀘스트: 증가는 '오늘 사용'으로 기록되고 오늘 가능치에서 클램프,
+   *  감소는 오늘 사용분부터 되돌리고 넘어가는 만큼은 과거 기록 보정으로 처리 */
   incrementTask(characterId: string, taskId: string, delta: number, at?: number): StoreShape {
     const task = this.store.get('characters')[characterId]?.tasks[taskId]
     if (task) {
       const target = task.targetCount ?? 1
+      const now = at ?? Math.floor(Date.now() / 1000)
+
+      if (task.dailyPool) {
+        const used = task.dailyUsed ?? 0
+        const todayMax = poolTodayMax(task, now, this.getState().settings)
+        let count = task.count ?? 0
+        let dailyUsed = used
+        if (delta > 0) {
+          const inc = Math.max(0, Math.min(delta, todayMax - used, target - count))
+          count += inc
+          dailyUsed += inc
+        } else if (delta < 0) {
+          const dec = Math.min(-delta, count)
+          count -= dec
+          dailyUsed = Math.max(0, used - dec)
+        }
+        const done = count >= target
+        const next: TaskState = {
+          ...task,
+          count,
+          dailyUsed,
+          done,
+          lastDoneAt: done ? now : null
+        }
+        this.store.set(`characters.${characterId}.tasks.${taskId}`, next)
+        return this.getState()
+      }
+
       const count = Math.max(0, Math.min((task.count ?? 0) + delta, target))
       const done = count >= target
       const next: TaskState = {
         ...task,
         count,
         done,
-        lastDoneAt: done ? (at ?? Math.floor(Date.now() / 1000)) : null
+        lastDoneAt: done ? now : null
       }
       this.store.set(`characters.${characterId}.tasks.${taskId}`, next)
+      if (task.done !== done) {
+        this.propagateLink(characterId, task, done ? 1 : -1, now)
+      }
     }
     return this.getState()
   }
@@ -247,13 +330,29 @@ export class DashboardStore {
    * Firestore에서 받아온 카탈로그를 캐시하고 전체 캐릭터에 반영.
    * - 캐릭터에 catalogId가 없는 항목 → 추가
    * - 이름/주기가 바뀐 항목 → 갱신 (체크 상태는 유지)
-   * - 카탈로그에서 사라진 항목은 삭제하지 않음 (개별 커스텀 퀘스트 보존)
+   * - 이전 캐시엔 있었는데 이번 목록엔 없는 catalogId → 관리자가 삭제한 것으로 보고
+   *   캐릭터의 해당 태스크도 함께 삭제한다 (#catalog-watch). 커스텀(catalogId 없는)
+   *   퀘스트는 이 비교 대상이 아니라 영향받지 않는다.
    */
-  syncQuestCatalog(catalog: QuestCatalogItem[]): { added: number; updated: number } {
+  syncQuestCatalog(catalog: QuestCatalogItem[]): {
+    added: number
+    updated: number
+    removed: number
+    addedNames: string[]
+    removedNames: string[]
+  } {
+    const previousIds = new Set(this.store.get('questCatalog', []).map((item) => item.id))
+    const catalogIds = new Set(catalog.map((item) => item.id))
+    const removedIds = [...previousIds].filter((id) => !catalogIds.has(id))
+
     this.store.set('questCatalog', catalog)
 
     let added = 0
     let updated = 0
+    let removed = 0
+    // 여러 캐릭터에 같은 카탈로그 항목이 추가/삭제되어도 알림엔 이름을 한 번만 노출 (#catalog-watch)
+    const addedNames = new Set<string>()
+    const removedNames = new Set<string>()
     const characters = this.store.get('characters')
     const next: Record<string, Character> = {}
 
@@ -271,17 +370,23 @@ export class DashboardStore {
           const id = this.nextId('task', Object.keys(tasks))
           tasks[id] = this.catalogTask(item)
           added++
+          addedNames.add(item.name)
         } else {
           const t = tasks[existingTaskId]
           const itemTarget = Math.max(1, item.targetCount ?? 1)
           const itemCategory = item.category ?? null
           const itemLocation = item.location ?? null
+          const itemDailyPool = item.dailyPool === true
+          const itemLinked = item.linkedCatalogId ?? null
           if (
             t.displayName !== item.name ||
             t.period !== item.period ||
             (t.targetCount ?? 1) !== itemTarget ||
             (t.category ?? null) !== itemCategory ||
-            (t.location ?? null) !== itemLocation
+            (t.location ?? null) !== itemLocation ||
+            (t.dailyPool ?? false) !== itemDailyPool ||
+            (t.linkedCatalogId ?? null) !== itemLinked ||
+            (t.order ?? null) !== (item.order ?? null)
           ) {
             tasks[existingTaskId] = {
               ...t,
@@ -289,17 +394,31 @@ export class DashboardStore {
               period: item.period,
               targetCount: itemTarget,
               category: itemCategory,
-              location: itemLocation
+              location: itemLocation,
+              dailyPool: itemDailyPool,
+              dailyUsed: itemDailyPool ? (t.dailyUsed ?? 0) : undefined,
+              linkedCatalogId: itemLinked,
+              order: item.order
             }
             updated++
           }
         }
       }
+
+      for (const removedId of removedIds) {
+        const taskId = byCatalogId.get(removedId)
+        if (taskId) {
+          removedNames.add(tasks[taskId].displayName)
+          delete tasks[taskId]
+          removed++
+        }
+      }
+
       next[charId] = { ...character, tasks }
     }
 
     this.store.set('characters', next)
-    return { added, updated }
+    return { added, updated, removed, addedNames: [...addedNames], removedNames: [...removedNames] }
   }
 
   /** 추천 퀘스트 목록 캐시 (#15) — 동기화 시 갱신, UI 피커에서 사용 */
@@ -317,26 +436,99 @@ export class DashboardStore {
       targetCount: Math.max(1, item.targetCount ?? 1),
       count: 0,
       category: item.category ?? null,
-      location: item.location ?? null
+      location: item.location ?? null,
+      order: item.order,
+      ...(item.dailyPool ? { dailyPool: true, dailyUsed: 0 } : {}),
+      ...(item.linkedCatalogId ? { linkedCatalogId: item.linkedCatalogId } : {})
     }
+  }
+
+  /** 같은 (period, category) 그룹의 다음 순서 — 그룹 끝에 추가 (#quest-order) */
+  private nextOrderInGroup(
+    tasks: Record<string, TaskState>,
+    period: TaskPeriod,
+    category: QuestCategory | null
+  ): number {
+    let max = -1
+    for (const t of Object.values(tasks)) {
+      if (t.period === period && (t.category ?? null) === category && typeof t.order === 'number') {
+        max = Math.max(max, t.order)
+      }
+    }
+    return max + 1
+  }
+
+  /**
+   * 같은 (period, category) 그룹 내 커스텀 퀘스트 순서 변경 — 관리 화면 드래그(#quest-order).
+   * orderedTaskIds에 있는 태스크만 순서대로 0..n-1 재부여. 카탈로그 퀘스트도 같은 그룹에
+   * 섞여 있을 수 있어 함께 전달받지만, 다음 카탈로그 동기화 때 Firestore order로 다시 덮인다.
+   */
+  reorderTasks(characterId: string, orderedTaskIds: string[]): StoreShape {
+    const character = this.store.get('characters')[characterId]
+    if (character) {
+      const tasks = { ...character.tasks }
+      orderedTaskIds.forEach((taskId, index) => {
+        const task = tasks[taskId]
+        if (task) tasks[taskId] = { ...task, order: index }
+      })
+      this.store.set(`characters.${characterId}.tasks`, tasks)
+    }
+    return this.getState()
   }
 
   // ── 리셋 (feature/reset-scheduler에서 사용) ───────────────
 
-  /** period에 해당하는 모든 퀘스트를 초기화 (명세서 §6) */
-  resetTasks(period: TaskPeriod, now: number): StoreShape {
+  /**
+   * period에 해당하는 모든 퀘스트를 초기화 (명세서 §6).
+   * @param crossedDays 일일 리셋일 때 마지막 리셋 이후 지난 일수 (풀형 차감 계산용, 기본 1)
+   */
+  resetTasks(period: TaskPeriod, now: number, crossedDays = 1): StoreShape {
     const characters = this.store.get('characters')
     const next: Record<string, Character> = {}
     for (const [charId, character] of Object.entries(characters)) {
+      // 연동 일일 퀘스트(#linked): 안 간 날만큼 연동 주간 퀘스트에 +1 (그날치 소멸)
+      const linkForfeit = new Map<string, number>()
+      if (period === 'daily') {
+        for (const task of Object.values(character.tasks)) {
+          if (task.period !== 'daily' || !task.linkedCatalogId || task.excluded) continue
+          const missed = poolForfeitDays(task.done ? 1 : 0, crossedDays)
+          if (missed <= 0) continue
+          const entry = Object.entries(character.tasks).find(
+            ([, s]) => s.catalogId === task.linkedCatalogId && !s.excluded
+          )
+          if (entry) linkForfeit.set(entry[0], (linkForfeit.get(entry[0]) ?? 0) + missed)
+        }
+      }
+
       const tasks: Record<string, TaskState> = {}
       for (const [taskId, task] of Object.entries(character.tasks)) {
-        if (task.period !== period) {
+        if (period === 'daily' && task.dailyPool && task.period === 'weekly' && !task.excluded) {
+          // 풀형 퀘스트(주간)의 일일 처리: 안 간 날만큼 차감하고 오늘 사용량 초기화
+          const target = task.targetCount ?? 1
+          const forfeit = poolForfeitDays(task.dailyUsed ?? 0, crossedDays)
+          const count = Math.min(target, (task.count ?? 0) + forfeit)
+          tasks[taskId] = { ...task, count, done: count >= target, dailyUsed: 0 }
+        } else if (task.period !== period) {
           tasks[taskId] = task
         } else if (task.excluded) {
           // 제외된 퀘스트는 리셋해도 완료 상태 유지 (#25)
           tasks[taskId] = { ...task, done: true, count: task.targetCount ?? 1 }
         } else {
-          tasks[taskId] = { ...task, done: false, lastDoneAt: null, count: 0 }
+          tasks[taskId] = {
+            ...task,
+            done: false,
+            lastDoneAt: null,
+            count: 0,
+            ...(task.dailyPool ? { dailyUsed: 0 } : {})
+          }
+        }
+
+        const add = linkForfeit.get(taskId)
+        if (add) {
+          const base = tasks[taskId]
+          const target = base.targetCount ?? 1
+          const count = Math.min(target, (base.count ?? 0) + add)
+          tasks[taskId] = { ...base, count, done: count >= target }
         }
       }
       next[charId] = { ...character, tasks }
@@ -379,6 +571,44 @@ export class DashboardStore {
       weeklyResetDay: data.weeklyResetDay
     })
     return this.getState()
+  }
+
+  /** 실행취소(#undo) 스냅샷 복원 — characters만 통째로 교체 */
+  restoreCharacters(characters: Record<string, Character>): StoreShape {
+    this.store.set('characters', characters)
+    return this.getState()
+  }
+
+  /** 마지막으로 클라우드와 일치했던 updatedAt — 시작 시 원격 변경 감지용 (기기 로컬 전용) */
+  getLastCloudSyncAt(): number | null {
+    return this.store.get('lastCloudSyncAt', null) ?? null
+  }
+
+  markCloudSync(updatedAt: number): void {
+    this.store.set('lastCloudSyncAt', updatedAt)
+  }
+
+  /** 마지막으로 확인한 meta/catalog 문서의 updatedAt — 카탈로그 변경 감지용 (#catalog-watch) */
+  getLastCatalogMetaAt(): string | number | null {
+    return this.store.get('lastCatalogMetaAt', null) ?? null
+  }
+
+  markCatalogMetaAt(value: string | number): void {
+    this.store.set('lastCatalogMetaAt', value)
+  }
+
+  /** 다운로드는 끝났지만 아직 설치 안 한 버전 (#auto-update-notice) — 유저가 버튼을
+   *  누르기 전까진 재시작해도 계속 안내를 띄우기 위해 재시작 사이에도 남겨둔다 */
+  getPendingUpdateVersion(): string | null {
+    return this.store.get('pendingUpdateVersion', null) ?? null
+  }
+
+  setPendingUpdateVersion(version: string): void {
+    this.store.set('pendingUpdateVersion', version)
+  }
+
+  clearPendingUpdateVersion(): void {
+    this.store.set('pendingUpdateVersion', null)
   }
 
   // ── 내부 유틸 ────────────────────────────────────────────

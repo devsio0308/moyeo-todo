@@ -22,6 +22,10 @@ export default function TaskItem({
   const target = task.targetCount ?? 1
   const count = task.count ?? (task.done ? target : 0)
   const isCounted = target > 1 // 카운트형 퀘스트 (#7)
+  // 풀형 퀘스트: 주간 원본 행은 집계 표시 전용이라 체크박스를 숨긴다 —
+  // 체크/증감은 일일 섹션의 투영 행에서 (증감 버튼은 양쪽 다 동작)
+  const isPoolWeeklyRow = task.dailyPool === true && task.period === 'weekly'
+  const isPoolDailyRow = task.dailyPool === true && task.period === 'daily'
 
   return (
     <li
@@ -30,19 +34,25 @@ export default function TaskItem({
       } ${alarmRuleId ? `task-alarm task-alarm-${alarmRuleId}` : ''}`}
     >
       <label className="task-label">
-        <input
-          type="checkbox"
-          checked={task.done}
-          disabled={task.excluded}
-          title={
-            task.excluded
-              ? '제외된 퀘스트 — 퀘스트 관리에서 해제할 수 있습니다'
-              : isCounted
-                ? '체크: 전체 완료 / 해제: 0회로 초기화'
-                : undefined
-          }
-          onChange={(e) => void setTaskDone(characterId, taskId, e.target.checked)}
-        />
+        {!isPoolWeeklyRow && (
+          <input
+            type="checkbox"
+            checked={task.done}
+            disabled={task.excluded}
+            title={
+              task.excluded
+                ? '제외된 퀘스트 — 퀘스트 관리에서 해제할 수 있습니다'
+                : isPoolDailyRow
+                  ? target === 0
+                    ? '오늘은 갈 수 없습니다 (남은 요일 예약분)'
+                    : '체크: 오늘 가능분 전부 완료 / 해제: 오늘 사용분 취소'
+                  : isCounted
+                    ? '체크: 전체 완료 / 해제: 0회로 초기화'
+                    : undefined
+            }
+            onChange={(e) => void setTaskDone(characterId, taskId, e.target.checked)}
+          />
+        )}
         <span className="task-name">{task.displayName}</span>
       </label>
       {task.excluded && (

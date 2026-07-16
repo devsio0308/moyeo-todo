@@ -32,7 +32,10 @@ describe('parseQuestDocuments', () => {
         period: 'daily',
         targetCount: 1,
         category: null,
-        location: null
+        location: null,
+        dailyPool: false,
+        linkedCatalogId: null,
+        order: 1
       },
       {
         id: 'raid',
@@ -40,9 +43,42 @@ describe('parseQuestDocuments', () => {
         period: 'weekly',
         targetCount: 1,
         category: null,
-        location: null
+        location: null,
+        dailyPool: false,
+        linkedCatalogId: null,
+        order: 2
       }
     ])
+  })
+
+  it('linkedTo 필드를 linkedCatalogId로 파싱한다 (연동 일일 퀘스트)', () => {
+    const body = {
+      documents: [
+        doc('hole-daily', {
+          name: { stringValue: '검은/심층 구멍' },
+          period: { stringValue: 'daily' },
+          linkedTo: { stringValue: 'hole-weekly' }
+        })
+      ]
+    }
+    const [item] = parseQuestDocuments(body)
+    expect(item.linkedCatalogId).toBe('hole-weekly')
+  })
+
+  it('dailyPool 불리언 필드를 파싱한다 (검은/심층 구멍)', () => {
+    const body = {
+      documents: [
+        doc('hole', {
+          name: { stringValue: '검은/심층 구멍' },
+          period: { stringValue: 'weekly' },
+          targetCount: { integerValue: '14' },
+          dailyPool: { booleanValue: true }
+        })
+      ]
+    }
+    const [item] = parseQuestDocuments(body)
+    expect(item.dailyPool).toBe(true)
+    expect(item.targetCount).toBe(14)
   })
 
   it('category 필드를 파싱하고 허용 외 값은 무시한다 (#13)', () => {

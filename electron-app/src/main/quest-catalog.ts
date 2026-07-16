@@ -1,4 +1,5 @@
 import { dashboardStore } from './store'
+import { getFirestoreDocument } from './firestore-rest'
 import {
   isQuestCategory,
   type CatalogSyncResult,
@@ -29,7 +30,10 @@ export function parseQuestDocuments(body: unknown): QuestCatalogItem[] {
   for (const doc of documents) {
     const d = doc as {
       name?: string
-      fields?: Record<string, { stringValue?: string; integerValue?: string; doubleValue?: number }>
+      fields?: Record<
+        string,
+        { stringValue?: string; integerValue?: string; doubleValue?: number; booleanValue?: boolean }
+      >
     }
     if (!d.name || !d.fields) continue
 
@@ -57,19 +61,30 @@ export function parseQuestDocuments(body: unknown): QuestCatalogItem[] {
     // 지역 태그 (#24) — 자유 문자열
     const location = d.fields.location?.stringValue?.trim() || null
 
-    items.push({ id, name, period, targetCount, category, location, order })
+    // 주간 풀형 퀘스트 (검은/심층 구멍)
+    const dailyPool = d.fields.dailyPool?.booleanValue === true
+
+    // 연동 퀘스트 — 이 일일 퀘스트의 체크가 linkedTo(주간 문서 id) 카운트에 ±1 반영
+    const linkedCatalogId = d.fields.linkedTo?.stringValue?.trim() || null
+
+    items.push({ id, name, period, targetCount, category, location, dailyPool, linkedCatalogId, order })
   }
 
-  // order → 이름 순 정렬 후 order 필드 제거
+  // order → 이름 순 정렬 (order는 그대로 캐릭터 태스크에 저장돼 관리 화면/오버레이 정렬에 쓰인다 #quest-order)
   items.sort((a, b) => a.order - b.order || a.name.localeCompare(b.name, 'ko'))
-  return items.map(({ id, name, period, targetCount, category, location }) => ({
-    id,
-    name,
-    period,
-    targetCount,
-    category,
-    location
-  }))
+  return items.map(
+    ({ id, name, period, targetCount, category, location, dailyPool, linkedCatalogId, order }) => ({
+      id,
+      name,
+      period,
+      targetCount,
+      category,
+      location,
+      dailyPool,
+      linkedCatalogId,
+      order
+    })
+  )
 }
 
 /** 추천 퀘스트 컬렉션 이름 (#15) — quests와 동일한 문서 형식 */
@@ -122,7 +137,8 @@ export async function syncQuestCatalogOnce(): Promise<CatalogSyncResult> {
     if (catalog.length === 0) {
       return { ok: false, message: 'quests 컬렉션이 비어 있거나 읽을 수 없습니다' }
     }
-    const { added, updated } = dashboardStore.syncQuestCatalog(catalog)
+    const { added, updated, removed, addedNames, removedNames } =
+      dashboardStore.syncQuestCatalog(catalog)
 
     // 추천 퀘스트 목록(#15)도 함께 갱신 — 실패해도 본 동기화 결과에는 영향 없음
     let recommendedNote = ''
@@ -136,13 +152,63 @@ export async function syncQuestCatalogOnce(): Promise<CatalogSyncResult> {
 
     return {
       ok: true,
-      message: `카탈로그 ${catalog.length}개 동기화 완료 (추가 ${added} · 갱신 ${updated})${recommendedNote}`,
+      message: `카탈로그 ${catalog.length}개 동기화 완료 (추가 ${added} · 갱신 ${updated} · 삭제 ${removed})${recommendedNote}`,
       added,
-      updated
+      updated,
+      removed,
+      addedNames,
+      removedNames
     }
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e)
     console.warn('[catalog] 동기화 실패:', msg)
     return { ok: false, message: `동기화 실패: ${msg}` }
   }
+}
+
+/** 카탈로그 변경 감지용 메타 문서 (#catalog-watch) — quests/recommended_quests와 동일한
+ *  공개 읽기 규칙이 `meta/{document=**}` 경로에도 필요하다. 관리자가 quests 컬렉션을
+ *  고칠 때마다 이 문서의 CATALOG_META_FIELD 필드(문자열/숫자/timestamp 아무 타입이나)도
+ *  반드시 함께 갱신해야 변경이 감지된다 — 값 자체의 의미는 없고 "달라졌는지"만 비교한다.
+ *  필드 이름은 고정이어야 한다(예전엔 아무 이름이나 된다고 안내했으나 실수 — 이름이
+ *  바뀌면 값을 못 읽어서 항상 폴백(전체 동기화)로 빠진다). */
+const CATALOG_META_PATH = 'meta/catalog'
+const CATALOG_META_FIELD = 'questsUpdatedAt'
+
+async function fetchCatalogMetaUpdatedAt(projectId: string): Promise<string | number | null> {
+  const doc = await getFirestoreDocument(projectId, CATALOG_META_PATH)
+  const value = doc?.[CATALOG_META_FIELD]
+  return typeof value === 'string' || typeof value === 'number' ? value : null
+}
+
+/**
+ * meta/catalog 문서의 updatedAt만 먼저 읽어(read 1회) 이전에 본 값과 다를 때만
+ * quests 전체를 다시 동기화한다 (#catalog-watch). 앱 시작 시 + 주기적 백그라운드
+ * 체크에서 사용 — 수동 동기화 버튼(catalog:sync)은 항상 전체를 동기화하므로 이 함수를
+ * 거치지 않는다.
+ * 메타 문서가 없거나(관리자가 아직 안 만든 경우) 필드가 비어 있으면 안전하게
+ * 매번 전체 동기화로 폴백한다.
+ * @returns 변경이 없어 스킵했으면 null, 동기화를 시도했으면 그 결과
+ */
+export async function syncQuestCatalogIfChanged(): Promise<CatalogSyncResult | null> {
+  const projectId = getEffectiveProjectId()
+  if (!projectId) return null
+
+  let metaUpdatedAt: string | number | null = null
+  try {
+    metaUpdatedAt = await fetchCatalogMetaUpdatedAt(projectId)
+  } catch (e) {
+    console.warn('[catalog] 변경 확인용 메타 문서 읽기 실패 (전체 동기화로 폴백):', e)
+  }
+
+  const lastKnown = dashboardStore.getLastCatalogMetaAt()
+  if (metaUpdatedAt !== null && lastKnown !== null && metaUpdatedAt === lastKnown) {
+    return null // 변경 없음 확인됨 — 전체 재조회 생략
+  }
+
+  const result = await syncQuestCatalogOnce()
+  if (result.ok && metaUpdatedAt !== null) {
+    dashboardStore.markCatalogMetaAt(metaUpdatedAt)
+  }
+  return result
 }

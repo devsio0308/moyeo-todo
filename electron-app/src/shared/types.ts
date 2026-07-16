@@ -45,6 +45,24 @@ export interface TaskState {
   /** 이 캐릭터는 이 카탈로그 퀘스트를 하지 않음 (#25).
    *  true면 항상 완료 상태로 고정되고 리셋 대상에서 제외된다. 커스텀 퀘스트에는 의미 없음 */
   excluded?: boolean
+  /** 주간 풀형 퀘스트 (검은/심층 구멍) — 일일 섹션에 '오늘 가능 횟수'로 투영되고,
+   *  하루도 안 간 날은 일일 리셋 때 count가 1씩 소모된다. period='weekly' 전제 */
+  dailyPool?: boolean
+  /** 풀형 퀘스트의 오늘 사용량 — 일일 리셋 때 0으로, 미사용이면 차감 판정 근거 */
+  dailyUsed?: number
+  /** 연동 대상 카탈로그 id (검은/심층 구멍 일일↔주간) — 이 일일 퀘스트를 체크/해제하면
+   *  같은 캐릭터에서 해당 catalogId를 가진 주간 퀘스트 count가 ±1 된다.
+   *  일일 리셋 때 미완료면 주간에 +1 (그날치 소멸). 주간 쪽 조작은 일일에 영향 없음 */
+  linkedCatalogId?: string | null
+  /** 같은 (period, category) 그룹 내 표시 순서 — 낮을수록 먼저. 카탈로그 퀘스트는
+   *  Firestore quests 문서의 order 필드로 매 동기화마다 갱신되어 고정되고, 커스텀
+   *  퀘스트는 관리 화면에서 드래그로 직접 조정한다 (#quest-order). 없으면 맨 뒤 취급 */
+  order?: number
+}
+
+/** order 미지정 항목은 맨 뒤로 — 같은 (period, category) 그룹 내 정렬용 (#quest-order) */
+export function taskOrderCompare(a: TaskState, b: TaskState): number {
+  return (a.order ?? Number.MAX_SAFE_INTEGER) - (b.order ?? Number.MAX_SAFE_INTEGER)
 }
 
 /** Firestore quests 컬렉션에서 가져온 카탈로그 항목 (#4) */
@@ -58,6 +76,12 @@ export interface QuestCatalogItem {
   category?: QuestCategory | null
   /** 지역 태그 (#24) */
   location?: string | null
+  /** 주간 풀형 퀘스트 여부 (검은/심층 구멍) */
+  dailyPool?: boolean
+  /** 연동 대상 카탈로그 문서 id (일일 → 주간 반영) */
+  linkedCatalogId?: string | null
+  /** 관리 화면/오버레이 표시 순서 — Firestore 문서의 order 필드 (#quest-order). 없으면 맨 뒤 */
+  order?: number
 }
 
 /** 카탈로그 동기화 결과 (#4) */
@@ -66,6 +90,24 @@ export interface CatalogSyncResult {
   message: string
   added?: number
   updated?: number
+  /** 카탈로그에서 삭제되어 로컬에서도 함께 제거된 개수 (#catalog-watch) */
+  removed?: number
+  /** 이번 동기화로 새로 추가된 퀘스트 이름 (중복 제거, #catalog-watch) */
+  addedNames?: string[]
+  /** 이번 동기화로 삭제된 퀘스트 이름 (중복 제거, #catalog-watch) */
+  removedNames?: string[]
+}
+
+/** 백그라운드 카탈로그 감시가 변경을 반영했을 때 알리는 정보 (#catalog-watch).
+ *  오버레이는 간단한 토스트로, 관리 창은 이름 목록이 담긴 말풍선으로 띄운다 */
+export interface CatalogNotice {
+  addedNames: string[]
+  removedNames: string[]
+}
+
+/** 백그라운드 다운로드가 끝난 새 버전 안내 (#auto-update-notice) — 관리 창 말풍선으로 표시 */
+export interface UpdateDownloadedNotice {
+  version: string
 }
 
 /** 게임계정 ID 등록 결과 (#26) */
@@ -124,6 +166,15 @@ export interface StoreShape {
   questCatalog?: QuestCatalogItem[]
   /** 추천 퀘스트 목록 캐시 (#15) — 선택해서 커스텀 퀘스트로 추가 */
   recommendedQuests?: QuestCatalogItem[]
+  /** 마지막으로 클라우드와 일치했던 시점의 updatedAt (기기 로컬 전용 — 클라우드 미포함).
+   *  시작 시 원격 updatedAt과 비교해 다른 기기의 변경을 감지하는 데 쓴다 */
+  lastCloudSyncAt?: number | null
+  /** 마지막으로 확인한 meta/catalog 문서의 updatedAt 값 (#catalog-watch, 기기 로컬 전용).
+   *  이 값과 다를 때만 카탈로그 전체를 다시 읽어온다 */
+  lastCatalogMetaAt?: string | number | null
+  /** 다운로드는 끝났지만 설치 대기 중인 버전 (#auto-update-notice, 기기 로컬 전용).
+   *  유저가 알림의 '업데이트' 버튼을 누르기 전까진 재시작해도 계속 남아 안내를 띄운다 */
+  pendingUpdateVersion?: string | null
   /** 스토어 마이그레이션 버전 (내부용) */
   metaVersion?: number
 }

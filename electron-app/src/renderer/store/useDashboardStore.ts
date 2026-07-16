@@ -13,6 +13,7 @@ interface DashboardState {
   removeCharacter: (id: string) => Promise<void>
   renameCharacter: (id: string, displayName: string) => Promise<void>
   reorderCharacters: (order: string[]) => Promise<void>
+  reorderTasks: (characterId: string, orderedTaskIds: string[]) => Promise<void>
   addTask: (
     characterId: string,
     displayName: string,
@@ -62,6 +63,8 @@ export const useDashboardStore = create<DashboardState>((set, get) => {
     removeCharacter: async (id) => apply(await window.api.store.removeCharacter(id)),
     renameCharacter: async (id, name) => apply(await window.api.store.renameCharacter(id, name)),
     reorderCharacters: async (order) => apply(await window.api.store.reorderCharacters(order)),
+    reorderTasks: async (characterId, orderedTaskIds) =>
+      apply(await window.api.store.reorderTasks(characterId, orderedTaskIds)),
     addTask: async (characterId, displayName, period, targetCount, category, location) =>
       apply(
         await window.api.store.addTask(

@@ -23,6 +23,12 @@ describe('toFirestoreValue / fromFirestoreValue', () => {
     expect(fromFirestoreValue(toFirestoreValue(0))).toBe(0)
   })
 
+  it('timestampValue는 ISO 문자열로 그대로 읽힌다 (#catalog-watch meta 문서)', () => {
+    expect(fromFirestoreValue({ timestampValue: '2026-07-13T00:00:00Z' })).toBe(
+      '2026-07-13T00:00:00Z'
+    )
+  })
+
   it('배열을 왕복한다', () => {
     const arr = ['character_01', 'character_02']
     expect(fromFirestoreValue(toFirestoreValue(arr))).toEqual(arr)

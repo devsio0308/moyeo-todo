@@ -465,6 +465,95 @@ body {
   cursor: default;
 }
 
+/* 백그라운드 카탈로그 감시(#catalog-watch) 알림 토스트 */
+.catalog-toast {
+  margin: 0 10px;
+  padding: 6px 10px;
+  border-radius: 6px;
+  background: rgba(90, 160, 255, 0.16);
+  color: #cfe0ff;
+  font-size: 12px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+/* 관리 창 — 우측 하단 말풍선 알림. 카탈로그 변경(#catalog-watch)과 업데이트 준비
+   (#auto-update-notice) 공용. X로 닫거나 앱 종료 전까지 유지.
+   새 알림은 기존(확인 안 한) 알림 위쪽에 쌓인다 — column-reverse라 먼저 온 알림이
+   구석(하단)에 고정되고, 나중 알림이 그 위로 쌓인다 */
+.app-notice-stack {
+  position: fixed;
+  right: 20px;
+  bottom: 20px;
+  display: flex;
+  flex-direction: column-reverse;
+  gap: 10px;
+  max-height: calc(100vh - 40px);
+  z-index: 50;
+}
+
+.app-notice-bubble {
+  position: relative;
+  width: 320px;
+  padding: 14px 16px;
+  border-radius: 10px;
+  border: 1px solid rgba(94, 129, 255, 0.35);
+  background: #1c1c26;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+}
+
+.app-notice-close {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 20px;
+  height: 20px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: #8a8a98;
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.app-notice-close:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+}
+
+.app-notice-title {
+  display: block;
+  margin-bottom: 6px;
+  padding-right: 20px;
+  font-size: 13px;
+  color: #cfe0ff;
+}
+
+.app-notice-line {
+  margin: 4px 0 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: #d6d6e0;
+}
+
+.app-notice-action {
+  display: block;
+  margin-top: 10px;
+  margin-left: auto;
+  padding: 7px 12px;
+  border: none;
+  border-radius: 8px;
+  background: #5e81ff;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.app-notice-action:hover {
+  background: #7093ff;
+}
+
 .badge {
   padding: 2px 8px;
   border-radius: 999px;
@@ -609,6 +698,21 @@ body {
   margin-bottom: 14px;
 }
 
+/* 완료 섹션 — 모든 퀘스트 맨 아래, 기본 접힘 */
+.done-section {
+  margin-top: 4px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.done-title {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #7a7a88;
+}
+
 .section-title {
   font-size: 11px;
   font-weight: 700;
@@ -636,6 +740,34 @@ body {
 
 .task-item:hover {
   background: rgba(255, 255, 255, 0.07);
+}
+
+/* 퀘스트 관리 화면 — 카테고리별 그룹 (#quest-order). 체크리스트와 달리 접기는 없음 */
+.manage-group {
+  margin-bottom: 12px;
+}
+
+.manage-group-title {
+  display: flex;
+  align-items: center;
+  padding: 4px 6px;
+  margin-bottom: 4px;
+}
+
+/* 드래그 핸들 — 커스텀 퀘스트만 활성. 카탈로그 퀘스트는 순서 고정(#quest-order) */
+.drag-handle {
+  flex-shrink: 0;
+  color: #7a7a88;
+  font-size: 13px;
+  cursor: grab;
+}
+
+.drag-handle:active {
+  cursor: grabbing;
+}
+
+.task-item-dragging {
+  opacity: 0.4;
 }
 
 .task-label {

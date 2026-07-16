@@ -6,6 +6,8 @@
 - **Firebase 퀘스트 카탈로그** — Firestore에서 퀘스트 목록을 받아 전체 캐릭터에 자동 반영
 - 게임 프로세스에는 일절 손대지 않음 — 화면/입력에 관여하지 않는 순수 UI 오버레이.
 
+📖 **사용 가이드**: https://devsio0308.github.io/moyeo-todo/
+
 상세 명세: [HOMEWORK_DASHBOARD_BRIEF.md](./HOMEWORK_DASHBOARD_BRIEF.md)
 
 ## 구조

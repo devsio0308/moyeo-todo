@@ -4,7 +4,7 @@ import {
   dailyPeriodStart,
   decideReset,
   weeklyPeriodStart
-} from '../src/main/reset-logic'
+} from '../src/shared/reset-logic'
 
 /** 로컬 타임존 기준 epoch 초 */
 const at = (

@@ -116,21 +116,24 @@ export async function putFullDocument(
  * 특정 캐릭터의 특정 퀘스트 필드만 부분 업데이트 (updateMask).
  * 문서 전체를 다시 보내지 않고, patch에 담긴 필드만 정확히 교체한다 — 그 사이 다른
  * 기기가 다른 퀘스트를 바꿔도 서로 덮어쓰지 않는다.
+ * updatedAt도 함께 갱신한다 — 데스크톱이 시작 시 이 값으로 원격 변경을 감지하므로,
+ * 폰에서 한 체크가 여기 반영되지 않으면 시작 화해(pull-first)가 폰 변경을 놓친다.
  */
 export async function patchTaskFields(
   projectId: string,
   gameAccountId: string,
   characterId: string,
   taskId: string,
-  patch: Partial<Pick<TaskState, 'done' | 'lastDoneAt' | 'count'>>
+  patch: Partial<Pick<TaskState, 'done' | 'lastDoneAt' | 'count' | 'dailyUsed'>>
 ): Promise<void> {
   const prefix = `characters.${characterId}.tasks.${taskId}`
-  const maskParams = Object.keys(patch)
-    .map((key) => `updateMask.fieldPaths=${encodeURIComponent(`${prefix}.${key}`)}`)
+  const maskParams = [...Object.keys(patch).map((key) => `${prefix}.${key}`), 'updatedAt']
+    .map((path) => `updateMask.fieldPaths=${encodeURIComponent(path)}`)
     .join('&')
 
   const body = {
     fields: {
+      ...toFirestoreFields({ updatedAt: Math.floor(Date.now() / 1000) }),
       characters: {
         mapValue: {
           fields: {
