@@ -124,7 +124,8 @@ export class DashboardStore {
     catalogId: string | null = null,
     targetCount = 1,
     category: QuestCategory | null = null,
-    location: string | null = null
+    location: string | null = null,
+    isRaid = false
   ): StoreShape {
     const character = this.store.get('characters')[characterId]
     if (character) {
@@ -139,7 +140,8 @@ export class DashboardStore {
         count: 0,
         category,
         location,
-        order: this.nextOrderInGroup(character.tasks, period, category)
+        order: this.nextOrderInGroup(character.tasks, period, category),
+        ...(isRaid ? { isRaid: true } : {})
       }
       this.store.set(`characters.${characterId}.tasks.${id}`, task)
     }
@@ -159,7 +161,9 @@ export class DashboardStore {
   updateTask(
     characterId: string,
     taskId: string,
-    patch: Partial<Pick<TaskState, 'displayName' | 'period' | 'category' | 'targetCount' | 'location'>>
+    patch: Partial<
+      Pick<TaskState, 'displayName' | 'period' | 'category' | 'targetCount' | 'location' | 'isRaid'>
+    >
   ): StoreShape {
     const character = this.store.get('characters')[characterId]
     const task = character?.tasks[taskId]
@@ -378,6 +382,7 @@ export class DashboardStore {
           const itemLocation = item.location ?? null
           const itemDailyPool = item.dailyPool === true
           const itemLinked = item.linkedCatalogId ?? null
+          const itemIsRaid = item.isRaid === true
           if (
             t.displayName !== item.name ||
             t.period !== item.period ||
@@ -386,7 +391,8 @@ export class DashboardStore {
             (t.location ?? null) !== itemLocation ||
             (t.dailyPool ?? false) !== itemDailyPool ||
             (t.linkedCatalogId ?? null) !== itemLinked ||
-            (t.order ?? null) !== (item.order ?? null)
+            (t.order ?? null) !== (item.order ?? null) ||
+            (t.isRaid ?? false) !== itemIsRaid
           ) {
             tasks[existingTaskId] = {
               ...t,
@@ -398,7 +404,8 @@ export class DashboardStore {
               dailyPool: itemDailyPool,
               dailyUsed: itemDailyPool ? (t.dailyUsed ?? 0) : undefined,
               linkedCatalogId: itemLinked,
-              order: item.order
+              order: item.order,
+              isRaid: itemIsRaid
             }
             updated++
           }
@@ -439,7 +446,8 @@ export class DashboardStore {
       location: item.location ?? null,
       order: item.order,
       ...(item.dailyPool ? { dailyPool: true, dailyUsed: 0 } : {}),
-      ...(item.linkedCatalogId ? { linkedCatalogId: item.linkedCatalogId } : {})
+      ...(item.linkedCatalogId ? { linkedCatalogId: item.linkedCatalogId } : {}),
+      ...(item.isRaid ? { isRaid: true } : {})
     }
   }
 

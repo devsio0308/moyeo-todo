@@ -29,6 +29,7 @@ export default function QuestManager(): React.JSX.Element {
   const [targetCount, setTargetCount] = useState(1)
   const [category, setCategory] = useState<QuestCategory | ''>('')
   const [location, setLocation] = useState('')
+  const [isRaid, setIsRaid] = useState(false)
   const [confirmId, setConfirmId] = useState<string | null>(null)
   /** 드래그로 순서 변경 중인 커스텀 퀘스트 (#quest-order) — 카탈로그 퀘스트는 대상 아님 */
   const [dragTaskId, setDragTaskId] = useState<string | null>(null)
@@ -40,6 +41,7 @@ export default function QuestManager(): React.JSX.Element {
     category: QuestCategory | ''
     targetCount: number
     location: string
+    isRaid: boolean
   } | null>(null)
 
   if (!data || !activeId || !data.characters[activeId]) {
@@ -52,11 +54,20 @@ export default function QuestManager(): React.JSX.Element {
   const submit = (): void => {
     const trimmed = name.trim()
     if (!trimmed) return
-    void addTask(activeId, trimmed, period, targetCount, category || null, location.trim() || null)
+    void addTask(
+      activeId,
+      trimmed,
+      period,
+      targetCount,
+      category || null,
+      location.trim() || null,
+      isRaid
+    )
     setName('')
     setTargetCount(1)
     setCategory('')
     setLocation('')
+    setIsRaid(false)
   }
 
   /** 인라인 수정 저장 (#21) */
@@ -67,7 +78,8 @@ export default function QuestManager(): React.JSX.Element {
       period: editing.period,
       category: editing.category || null,
       targetCount: editing.targetCount,
-      location: editing.location.trim() || null
+      location: editing.location.trim() || null,
+      isRaid: editing.isRaid
     })
     setEditing(null)
   }
@@ -175,6 +187,14 @@ export default function QuestManager(): React.JSX.Element {
                     value={editing.location}
                     onChange={(e) => setEditing({ ...editing, location: e.target.value })}
                   />
+                  <label className="raid-check-label" title="대시보드 '레이드' 섹션에 표시">
+                    <input
+                      type="checkbox"
+                      checked={editing.isRaid}
+                      onChange={(e) => setEditing({ ...editing, isRaid: e.target.checked })}
+                    />
+                    레이드
+                  </label>
                   <button
                     className="add-task-btn"
                     disabled={!editing.name.trim()}
@@ -225,6 +245,11 @@ export default function QuestManager(): React.JSX.Element {
                     </span>
                   )}
                 </span>
+                {task.isRaid && (
+                  <span className="raid-badge" title="대시보드 '레이드' 섹션에 표시됨">
+                    🐉 레이드
+                  </span>
+                )}
                 {task.catalogId && (
                   <span className="catalog-badge" title="Firebase 카탈로그 퀘스트 — 삭제해도 다음 동기화 때 다시 추가됩니다">
                     ☁
@@ -247,7 +272,8 @@ export default function QuestManager(): React.JSX.Element {
                         period: task.period,
                         category: task.category ?? '',
                         targetCount: task.targetCount ?? 1,
-                        location: task.location ?? ''
+                        location: task.location ?? '',
+                        isRaid: task.isRaid ?? false
                       })
                     }
                   >
@@ -365,6 +391,17 @@ export default function QuestManager(): React.JSX.Element {
               value={location}
               onChange={(e) => setLocation(e.target.value)}
             />
+          </div>
+          <div className="form-field">
+            <label>&nbsp;</label>
+            <label className="raid-check-label" title="대시보드 '레이드' 섹션에 표시">
+              <input
+                type="checkbox"
+                checked={isRaid}
+                onChange={(e) => setIsRaid(e.target.checked)}
+              />
+              레이드
+            </label>
           </div>
           <button className="add-task-btn form-submit" type="submit" disabled={!name.trim()}>
             ＋ 추가

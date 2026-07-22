@@ -63,7 +63,8 @@ export function registerIpcHandlers(broadcastAll: (channel: string, payload: unk
       period: TaskPeriod,
       targetCount?: number,
       category?: import('../shared/types').QuestCategory | null,
-      location?: string | null
+      location?: string | null,
+      isRaid?: boolean
     ) => {
       clearHistory()
       const state = dashboardStore.addTask(
@@ -73,7 +74,8 @@ export function registerIpcHandlers(broadcastAll: (channel: string, payload: unk
         null,
         targetCount,
         category ?? null,
-        location ?? null
+        location ?? null,
+        isRaid ?? false
       )
       broadcast()
       return state
@@ -113,7 +115,9 @@ export function registerIpcHandlers(broadcastAll: (channel: string, payload: unk
       _e,
       characterId: string,
       taskId: string,
-      patch: Partial<Pick<TaskState, 'displayName' | 'period' | 'category' | 'targetCount' | 'location'>>
+      patch: Partial<
+        Pick<TaskState, 'displayName' | 'period' | 'category' | 'targetCount' | 'location' | 'isRaid'>
+      >
     ) => {
       clearHistory()
       const state = dashboardStore.updateTask(characterId, taskId, patch)

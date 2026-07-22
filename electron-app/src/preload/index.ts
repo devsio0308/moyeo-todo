@@ -41,7 +41,8 @@ const api = {
       period: TaskPeriod,
       targetCount?: number,
       category?: QuestCategory | null,
-      location?: string | null
+      location?: string | null,
+      isRaid?: boolean
     ): Promise<StoreShape> =>
       ipcRenderer.invoke(
         'store:add-task',
@@ -50,7 +51,8 @@ const api = {
         period,
         targetCount,
         category ?? null,
-        location ?? null
+        location ?? null,
+        isRaid ?? false
       ),
     incrementTask: (characterId: string, taskId: string, delta: number): Promise<StoreShape> =>
       ipcRenderer.invoke('store:increment-task', characterId, taskId, delta),
@@ -65,7 +67,9 @@ const api = {
     updateTask: (
       characterId: string,
       taskId: string,
-      patch: Partial<Pick<TaskState, 'displayName' | 'period' | 'category' | 'targetCount' | 'location'>>
+      patch: Partial<
+        Pick<TaskState, 'displayName' | 'period' | 'category' | 'targetCount' | 'location' | 'isRaid'>
+      >
     ): Promise<StoreShape> => ipcRenderer.invoke('store:update-task', characterId, taskId, patch),
     setTaskDone: (characterId: string, taskId: string, done: boolean): Promise<StoreShape> =>
       ipcRenderer.invoke('store:set-task-done', characterId, taskId, done),
