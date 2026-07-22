@@ -35,7 +35,8 @@ describe('parseQuestDocuments', () => {
         location: null,
         dailyPool: false,
         linkedCatalogId: null,
-        order: 1
+        order: 1,
+        isRaid: false
       },
       {
         id: 'raid',
@@ -46,7 +47,8 @@ describe('parseQuestDocuments', () => {
         location: null,
         dailyPool: false,
         linkedCatalogId: null,
-        order: 2
+        order: 2,
+        isRaid: false
       }
     ])
   })
@@ -79,6 +81,22 @@ describe('parseQuestDocuments', () => {
     const [item] = parseQuestDocuments(body)
     expect(item.dailyPool).toBe(true)
     expect(item.targetCount).toBe(14)
+  })
+
+  it('isRaid 불리언 필드를 파싱한다 (#raid-flag)', () => {
+    const body = {
+      documents: [
+        doc('raid-boss', {
+          name: { stringValue: '타바르타스' },
+          period: { stringValue: 'weekly' },
+          isRaid: { booleanValue: true }
+        }),
+        doc('normal', { name: { stringValue: '일반 퀘스트' } })
+      ]
+    }
+    const items = parseQuestDocuments(body)
+    expect(items.find((i) => i.id === 'raid-boss')?.isRaid).toBe(true)
+    expect(items.find((i) => i.id === 'normal')?.isRaid).toBe(false)
   })
 
   it('category 필드를 파싱하고 허용 외 값은 무시한다 (#13)', () => {

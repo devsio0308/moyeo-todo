@@ -14,8 +14,24 @@ const KEY_WEEKLY_QUESTS = [
   '심층던전 매우 어려움'
 ]
 
-/** 레이드 — 별도 섹션으로 레이드별 미클리어 캐릭터 나열 */
-const RAID_QUESTS = ['타바르타스', '에이렐', '화이트 서큐버스']
+/**
+ * 레이드 — 별도 섹션으로 레이드별 미클리어 캐릭터 나열 (#raid-flag).
+ * 하드코딩된 이름 목록 대신, isRaid:true로 태그된 퀘스트 이름을 카탈로그(Firestore)와
+ * 캐릭터의 커스텀 퀘스트 양쪽에서 모아 동적으로 구성한다 — 콘솔/관리 화면에서 체크박스로
+ * 추가/삭제만 하면 되고 코드 수정이 필요 없다.
+ */
+function raidQuestNames(data: StoreShape): string[] {
+  const names = new Set<string>()
+  for (const item of data.questCatalog ?? []) {
+    if (item.isRaid) names.add(item.name)
+  }
+  for (const character of Object.values(data.characters)) {
+    for (const task of Object.values(character.tasks)) {
+      if (task.isRaid) names.add(task.displayName)
+    }
+  }
+  return [...names]
+}
 
 interface Incomplete {
   characterId: string
@@ -110,6 +126,8 @@ export default function DashboardView(): React.JSX.Element {
     )
   }
 
+  const raidNames = raidQuestNames(data)
+
   return (
     <div className="dashboard">
       <section className="dash-section">
@@ -121,14 +139,16 @@ export default function DashboardView(): React.JSX.Element {
         </div>
       </section>
 
-      <section className="dash-section">
-        <h2 className="dash-section-title">레이드</h2>
-        <div className="dash-grid">
-          {RAID_QUESTS.map((k) => (
-            <QuestCard key={k} data={data} keyword={k} />
-          ))}
-        </div>
-      </section>
+      {raidNames.length > 0 && (
+        <section className="dash-section">
+          <h2 className="dash-section-title">레이드</h2>
+          <div className="dash-grid">
+            {raidNames.map((k) => (
+              <QuestCard key={k} data={data} keyword={k} />
+            ))}
+          </div>
+        </section>
+      )}
     </div>
   )
 }

@@ -20,7 +20,8 @@ interface DashboardState {
     period: TaskPeriod,
     targetCount?: number,
     category?: QuestCategory | null,
-    location?: string | null
+    location?: string | null,
+    isRaid?: boolean
   ) => Promise<void>
   incrementTask: (characterId: string, taskId: string, delta: number) => Promise<void>
   setTaskExcluded: (characterId: string, taskId: string, excluded: boolean) => Promise<void>
@@ -28,7 +29,9 @@ interface DashboardState {
   updateTask: (
     characterId: string,
     taskId: string,
-    patch: Partial<Pick<TaskState, 'displayName' | 'period' | 'category' | 'targetCount' | 'location'>>
+    patch: Partial<
+      Pick<TaskState, 'displayName' | 'period' | 'category' | 'targetCount' | 'location' | 'isRaid'>
+    >
   ) => Promise<void>
   setTaskDone: (characterId: string, taskId: string, done: boolean) => Promise<void>
   updateSettings: (patch: Partial<Settings>) => Promise<void>
@@ -65,7 +68,7 @@ export const useDashboardStore = create<DashboardState>((set, get) => {
     reorderCharacters: async (order) => apply(await window.api.store.reorderCharacters(order)),
     reorderTasks: async (characterId, orderedTaskIds) =>
       apply(await window.api.store.reorderTasks(characterId, orderedTaskIds)),
-    addTask: async (characterId, displayName, period, targetCount, category, location) =>
+    addTask: async (characterId, displayName, period, targetCount, category, location, isRaid) =>
       apply(
         await window.api.store.addTask(
           characterId,
@@ -73,7 +76,8 @@ export const useDashboardStore = create<DashboardState>((set, get) => {
           period,
           targetCount,
           category,
-          location
+          location,
+          isRaid
         )
       ),
     incrementTask: async (characterId, taskId, delta) =>

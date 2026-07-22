@@ -1174,6 +1174,34 @@ body {
   color: #7ec8ff;
 }
 
+/* 레이드 태그 (#raid-flag) — 대시보드 '레이드' 섹션 표시 대상 */
+.raid-badge {
+  flex-shrink: 0;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(255, 138, 101, 0.16);
+  color: #ff9d76;
+  font-size: 10px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.raid-check-label {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 0 4px;
+  font-size: 12px;
+  color: #b6b6c2;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.raid-check-label input[type='checkbox'] {
+  accent-color: #ff9d76;
+  cursor: pointer;
+}
+
 .settings-input-wide {
   flex: 1;
   min-width: 0;
