@@ -1,4 +1,5 @@
-import type { StoreShape, TaskState } from '../../shared/types'
+import { useEffect, useState } from 'react'
+import type { StoreShape, TaskState, VersionUpdateNotice } from '../../shared/types'
 import { useDashboardStore } from '../store/useDashboardStore'
 
 /**
@@ -14,8 +15,24 @@ const KEY_WEEKLY_QUESTS = [
   '심층던전 매우 어려움'
 ]
 
-/** 레이드 — 별도 섹션으로 레이드별 미클리어 캐릭터 나열 */
-const RAID_QUESTS = ['타바르타스', '에이렐', '화이트 서큐버스']
+/**
+ * 레이드 — 별도 섹션으로 레이드별 미클리어 캐릭터 나열 (#raid-flag).
+ * 하드코딩된 이름 목록 대신, isRaid:true로 태그된 퀘스트 이름을 카탈로그(Firestore)와
+ * 캐릭터의 커스텀 퀘스트 양쪽에서 모아 동적으로 구성한다 — 콘솔/관리 화면에서 체크박스로
+ * 추가/삭제만 하면 되고 코드 수정이 필요 없다.
+ */
+function raidQuestNames(data: StoreShape): string[] {
+  const names = new Set<string>()
+  for (const item of data.questCatalog ?? []) {
+    if (item.isRaid) names.add(item.name)
+  }
+  for (const character of Object.values(data.characters)) {
+    for (const task of Object.values(character.tasks)) {
+      if (task.isRaid) names.add(task.displayName)
+    }
+  }
+  return [...names]
+}
 
 interface Incomplete {
   characterId: string
@@ -98,20 +115,62 @@ function QuestCard({
   )
 }
 
+/** 새 버전 설치 후 첫 실행 안내 배너 (#version-update-notice) — 대시보드 마운트 시 1회 조회 */
+function useVersionUpdateNotice(): [VersionUpdateNotice | null, () => void] {
+  const [notice, setNotice] = useState<VersionUpdateNotice | null>(null)
+  useEffect(() => {
+    void window.api.app.getVersionUpdateNotice().then(setNotice)
+  }, [])
+  return [notice, () => setNotice(null)]
+}
+
+function VersionUpdateBanner({
+  notice,
+  onDismiss
+}: {
+  notice: VersionUpdateNotice
+  onDismiss: () => void
+}): React.JSX.Element {
+  return (
+    <div className="version-update-banner">
+      <span>🎉 v{notice.toVersion}로 업데이트되었습니다!</span>
+      <button
+        className="version-update-link"
+        onClick={() => void window.api.app.openReleasePage(notice.toVersion)}
+      >
+        릴리즈 노트 보러가기 →
+      </button>
+      <button className="version-update-close" title="닫기" onClick={onDismiss}>
+        ✕
+      </button>
+    </div>
+  )
+}
+
 export default function DashboardView(): React.JSX.Element {
   const data = useDashboardStore((s) => s.data)
+  const [versionNotice, dismissVersionNotice] = useVersionUpdateNotice()
+  const banner = versionNotice && (
+    <VersionUpdateBanner notice={versionNotice} onDismiss={dismissVersionNotice} />
+  )
 
-  if (!data) return <></>
+  if (!data) return <>{banner}</>
   if (data.characterOrder.length === 0) {
     return (
-      <p className="placeholder">
-        캐릭터 메뉴에서 캐릭터를 추가하면 주간 현황이 여기에 표시됩니다.
-      </p>
+      <>
+        {banner}
+        <p className="placeholder">
+          캐릭터 메뉴에서 캐릭터를 추가하면 주간 현황이 여기에 표시됩니다.
+        </p>
+      </>
     )
   }
 
+  const raidNames = raidQuestNames(data)
+
   return (
     <div className="dashboard">
+      {banner}
       <section className="dash-section">
         <h2 className="dash-section-title">주요 주간 퀘스트</h2>
         <div className="dash-grid">
@@ -121,14 +180,16 @@ export default function DashboardView(): React.JSX.Element {
         </div>
       </section>
 
-      <section className="dash-section">
-        <h2 className="dash-section-title">레이드</h2>
-        <div className="dash-grid">
-          {RAID_QUESTS.map((k) => (
-            <QuestCard key={k} data={data} keyword={k} />
-          ))}
-        </div>
-      </section>
+      {raidNames.length > 0 && (
+        <section className="dash-section">
+          <h2 className="dash-section-title">레이드</h2>
+          <div className="dash-grid">
+            {raidNames.map((k) => (
+              <QuestCard key={k} data={data} keyword={k} />
+            ))}
+          </div>
+        </section>
+      )}
     </div>
   )
 }

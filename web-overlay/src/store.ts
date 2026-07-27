@@ -7,7 +7,7 @@ import { useSyncExternalStore } from 'react'
 import { applyPeriodReset } from './shared/period-reset'
 import { poolTodayMax } from './shared/pool-quest'
 import { computeResets, dailyPeriodStart } from './shared/reset-logic'
-import type { CloudPlayerData } from './shared/types'
+import type { Character, CloudPlayerData } from './shared/types'
 import {
   NotRegisteredError,
   getPlayerData,
@@ -18,12 +18,18 @@ import {
 const PROJECT_ID = import.meta.env.VITE_FIREBASE_PROJECT_ID as string | undefined
 const ACCOUNT_ID_STORAGE_KEY = 'dobi-sync-id'
 
+/** 실행취소 스냅샷 최대 보관 개수 (#undo) — electron-app history.ts와 동일 정책 */
+const MAX_HISTORY = 50
+
 export interface WebStoreState {
   gameAccountId: string | null
   data: CloudPlayerData | null
   activeCharacterId: string | null
   status: 'idle' | 'loading' | 'ready' | 'not-registered' | 'error'
   errorMessage: string | null
+  /** 실행취소/다시실행 (#undo) — 체크/카운트 조작 대상 */
+  canUndo: boolean
+  canRedo: boolean
 }
 
 type Listener = () => void
@@ -34,9 +40,14 @@ class WebStore {
     data: null,
     activeCharacterId: null,
     status: 'idle',
-    errorMessage: null
+    errorMessage: null,
+    canUndo: false,
+    canRedo: false
   }
   private listeners = new Set<Listener>()
+  /** 실행취소/다시실행 스냅샷 스택 (#undo) — 메모리 전용, 탭을 닫으면 초기화 */
+  private undoStack: Array<Record<string, Character>> = []
+  private redoStack: Array<Record<string, Character>> = []
 
   getState = (): WebStoreState => this.state
 
@@ -82,6 +93,7 @@ class WebStore {
 
   changeAccount(): void {
     localStorage.removeItem(ACCOUNT_ID_STORAGE_KEY)
+    this.clearHistory()
     this.set({ gameAccountId: null, data: null, activeCharacterId: null, status: 'idle' })
   }
 
@@ -156,6 +168,8 @@ class WebStore {
           ? this.state.activeCharacterId
           : (finalData.characterOrder[0] ?? null)
 
+      // 원격에서 새로 불러온 상태 위에 오래된 실행취소 스냅샷을 되살리지 않도록 초기화 (#undo)
+      this.clearHistory()
       this.set({ data: finalData, activeCharacterId: activeId, status: 'ready' })
       return true
     } catch (e) {
@@ -184,13 +198,15 @@ class WebStore {
     const task = data.characters[characterId]?.tasks[taskId]
     if (!task) return
 
+    this.recordHistory() // 실행취소 지점 (#undo)
+
     if (task.dailyPool) {
       // 풀형: 체크 = 오늘 가능분 전부, 해제 = 오늘 사용분 취소
       const now = Math.floor(Date.now() / 1000)
       const settings = { dailyResetHour: data.dailyResetHour, weeklyResetDay: data.weeklyResetDay }
       const used = task.dailyUsed ?? 0
       const todayMax = poolTodayMax(task, now, settings)
-      return this.incrementTask(characterId, taskId, done ? todayMax - used : -used)
+      return this.applyIncrement(characterId, taskId, done ? todayMax - used : -used)
     }
 
     const target = task.targetCount ?? 1
@@ -212,6 +228,18 @@ class WebStore {
   }
 
   async incrementTask(characterId: string, taskId: string, delta: number): Promise<void> {
+    const { data, gameAccountId } = this.state
+    if (!data || !gameAccountId || !this.projectId) return
+    const task = data.characters[characterId]?.tasks[taskId]
+    if (!task) return
+
+    this.recordHistory() // 실행취소 지점 (#undo)
+    return this.applyIncrement(characterId, taskId, delta)
+  }
+
+  /** setTaskDone(풀형)/incrementTask 공용 실제 증감 로직 — recordHistory는 호출자 책임
+   *  (setTaskDone의 풀형 분기가 이걸 직접 호출하므로 이중 기록 방지) */
+  private async applyIncrement(characterId: string, taskId: string, delta: number): Promise<void> {
     const { data, gameAccountId } = this.state
     if (!data || !gameAccountId || !this.projectId) return
     const task = data.characters[characterId]?.tasks[taskId]
@@ -321,6 +349,93 @@ class WebStore {
       }
     }
     this.set({ data: nextData })
+  }
+
+  // ── 실행취소/다시실행 (#undo) — electron-app main/history.ts와 동일한 스냅샷 방식 ──
+
+  /** 체크/카운트 조작 직전에 호출 — 현재 characters 전체를 실행취소 지점으로 기록 */
+  private recordHistory(): void {
+    const { data } = this.state
+    if (!data) return
+    this.undoStack.push(structuredClone(data.characters))
+    if (this.undoStack.length > MAX_HISTORY) this.undoStack.shift()
+    this.redoStack = []
+    this.set({ canUndo: true, canRedo: false })
+  }
+
+  /** 체크/카운트 외의 변경(원격 재로드·계정 변경) 시 호출 — 스택 전체 폐기 */
+  private clearHistory(): void {
+    if (this.undoStack.length === 0 && this.redoStack.length === 0) return
+    this.undoStack = []
+    this.redoStack = []
+    this.set({ canUndo: false, canRedo: false })
+  }
+
+  async undo(): Promise<void> {
+    const prev = this.undoStack.pop()
+    if (!prev) return
+    const { data } = this.state
+    if (!data) return
+    this.redoStack.push(structuredClone(data.characters))
+    await this.restoreCharacters(prev)
+  }
+
+  async redo(): Promise<void> {
+    const next = this.redoStack.pop()
+    if (!next) return
+    const { data } = this.state
+    if (!data) return
+    this.undoStack.push(structuredClone(data.characters))
+    await this.restoreCharacters(next)
+  }
+
+  /**
+   * 스냅샷을 화면에 즉시 반영하고, 이전 상태와 달라진 태스크 필드만 Firestore에
+   * 패치한다(patchTaskFields와 동일한 필드 단위 반영 — 문서 전체 덮어쓰기로 다른 기기의
+   * 무관한 변경을 지우지 않기 위함). 연동 퀘스트(#linked)로 함께 바뀐 태스크도
+   * characters 스냅샷에 이미 포함돼 있어 한 번에 되돌아간다.
+   */
+  private async restoreCharacters(target: Record<string, Character>): Promise<void> {
+    const { data, gameAccountId } = this.state
+    if (!data || !gameAccountId || !this.projectId) return
+    const before = data.characters
+
+    this.set({
+      data: { ...data, characters: target },
+      canUndo: this.undoStack.length > 0,
+      canRedo: this.redoStack.length > 0
+    })
+
+    const charIds = new Set([...Object.keys(before), ...Object.keys(target)])
+    const patches: Array<Promise<void>> = []
+    for (const charId of charIds) {
+      const beforeTasks = before[charId]?.tasks ?? {}
+      const afterTasks = target[charId]?.tasks ?? {}
+      const taskIds = new Set([...Object.keys(beforeTasks), ...Object.keys(afterTasks)])
+      for (const taskId of taskIds) {
+        const b = beforeTasks[taskId]
+        const a = afterTasks[taskId]
+        if (!a) continue // 실행취소 대상엔 태스크 삭제가 없음 (웹앱은 CRUD 없음)
+        if (
+          b &&
+          b.done === a.done &&
+          b.count === a.count &&
+          b.dailyUsed === a.dailyUsed &&
+          b.lastDoneAt === a.lastDoneAt
+        ) {
+          continue
+        }
+        patches.push(
+          patchTaskFields(this.projectId, gameAccountId, charId, taskId, {
+            done: a.done,
+            lastDoneAt: a.lastDoneAt,
+            count: a.count,
+            dailyUsed: a.dailyUsed
+          }).catch((e) => console.warn('[store] 실행취소 반영 실패:', e))
+        )
+      }
+    }
+    await Promise.all(patches)
   }
 }
 

@@ -67,13 +67,10 @@ export function parseQuestDocuments(body: unknown): QuestCatalogItem[] {
     // 연동 퀘스트 — 이 일일 퀘스트의 체크가 linkedTo(주간 문서 id) 카운트에 ±1 반영
     const linkedCatalogId = d.fields.linkedTo?.stringValue?.trim() || null
 
-    items.push({ id, name, period, targetCount, category, location, dailyPool, linkedCatalogId, order })
-  }
+    // 레이드 보스 퀘스트 여부 (#raid-flag) — 대시보드 '레이드' 섹션 대상 판정용
+    const isRaid = d.fields.isRaid?.booleanValue === true
 
-  // order → 이름 순 정렬 (order는 그대로 캐릭터 태스크에 저장돼 관리 화면/오버레이 정렬에 쓰인다 #quest-order)
-  items.sort((a, b) => a.order - b.order || a.name.localeCompare(b.name, 'ko'))
-  return items.map(
-    ({ id, name, period, targetCount, category, location, dailyPool, linkedCatalogId, order }) => ({
+    items.push({
       id,
       name,
       period,
@@ -82,7 +79,25 @@ export function parseQuestDocuments(body: unknown): QuestCatalogItem[] {
       location,
       dailyPool,
       linkedCatalogId,
-      order
+      order,
+      isRaid
+    })
+  }
+
+  // order → 이름 순 정렬 (order는 그대로 캐릭터 태스크에 저장돼 관리 화면/오버레이 정렬에 쓰인다 #quest-order)
+  items.sort((a, b) => a.order - b.order || a.name.localeCompare(b.name, 'ko'))
+  return items.map(
+    ({ id, name, period, targetCount, category, location, dailyPool, linkedCatalogId, order, isRaid }) => ({
+      id,
+      name,
+      period,
+      targetCount,
+      category,
+      location,
+      dailyPool,
+      linkedCatalogId,
+      order,
+      isRaid
     })
   )
 }

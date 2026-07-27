@@ -10,7 +10,8 @@ import type {
   StoreShape,
   TaskPeriod,
   TaskState,
-  UpdateDownloadedNotice
+  UpdateDownloadedNotice,
+  VersionUpdateNotice
 } from '../shared/types'
 
 /** 렌더러에 노출하는 최소 API 표면 */
@@ -41,7 +42,8 @@ const api = {
       period: TaskPeriod,
       targetCount?: number,
       category?: QuestCategory | null,
-      location?: string | null
+      location?: string | null,
+      isRaid?: boolean
     ): Promise<StoreShape> =>
       ipcRenderer.invoke(
         'store:add-task',
@@ -50,7 +52,8 @@ const api = {
         period,
         targetCount,
         category ?? null,
-        location ?? null
+        location ?? null,
+        isRaid ?? false
       ),
     incrementTask: (characterId: string, taskId: string, delta: number): Promise<StoreShape> =>
       ipcRenderer.invoke('store:increment-task', characterId, taskId, delta),
@@ -65,7 +68,9 @@ const api = {
     updateTask: (
       characterId: string,
       taskId: string,
-      patch: Partial<Pick<TaskState, 'displayName' | 'period' | 'category' | 'targetCount' | 'location'>>
+      patch: Partial<
+        Pick<TaskState, 'displayName' | 'period' | 'category' | 'targetCount' | 'location' | 'isRaid'>
+      >
     ): Promise<StoreShape> => ipcRenderer.invoke('store:update-task', characterId, taskId, patch),
     setTaskDone: (characterId: string, taskId: string, done: boolean): Promise<StoreShape> =>
       ipcRenderer.invoke('store:set-task-done', characterId, taskId, done),
@@ -124,7 +129,13 @@ const api = {
   },
   app: {
     /** 설정 화면에 표시할 현재 실행 중인 버전 */
-    getVersion: (): Promise<string> => ipcRenderer.invoke('app:get-version')
+    getVersion: (): Promise<string> => ipcRenderer.invoke('app:get-version'),
+    /** 대시보드 마운트 시 1회 조회 — 새 버전 설치 후 첫 실행이면 배너용 정보 반환 (#version-update-notice) */
+    getVersionUpdateNotice: (): Promise<VersionUpdateNotice | null> =>
+      ipcRenderer.invoke('app:get-version-update-notice'),
+    /** 배너의 '릴리즈 노트 보러가기' — 기본 브라우저로 GitHub 릴리즈 페이지를 연다 */
+    openReleasePage: (version: string): Promise<void> =>
+      ipcRenderer.invoke('app:open-release-page', version)
   }
 }
 

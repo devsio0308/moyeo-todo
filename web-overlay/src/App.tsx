@@ -17,6 +17,8 @@ export default function App(): React.JSX.Element {
   const status = useWebStore((s) => s.status)
   const gameAccountId = useWebStore((s) => s.gameAccountId)
   const errorMessage = useWebStore((s) => s.errorMessage)
+  const canUndo = useWebStore((s) => s.canUndo)
+  const canRedo = useWebStore((s) => s.canRedo)
   const activeAlarms = useAlarms()
   const [refreshing, setRefreshing] = useState(false)
   const [refreshError, setRefreshError] = useState<string | null>(null)
@@ -41,6 +43,24 @@ export default function App(): React.JSX.Element {
     if (showInstallGuide) return
     // 최초 진입 시 자동 로드도 요청 1회이므로, 열자마자 연타하지 못하게 쿨다운을 같이 건다
     void webStore.init().then(armCooldown)
+  }, [showInstallGuide])
+
+  // 실행취소/다시실행 단축키 (#undo) — 데스크톱 브라우저용, 모바일은 titlebar 버튼으로
+  useEffect(() => {
+    if (showInstallGuide) return
+    const onKey = (e: KeyboardEvent): void => {
+      if (!(e.ctrlKey || e.metaKey)) return
+      const k = e.key.toLowerCase()
+      if (k === 'z' && !e.shiftKey) {
+        e.preventDefault()
+        void webStore.undo()
+      } else if ((k === 'z' && e.shiftKey) || k === 'y') {
+        e.preventDefault()
+        void webStore.redo()
+      }
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
   }, [showInstallGuide])
 
   if (showInstallGuide) {
@@ -89,6 +109,22 @@ export default function App(): React.JSX.Element {
     <div className="overlay-root">
       <header className="titlebar">
         <span className="titlebar-title">📝 뭐해야하더라</span>
+        <button
+          className="titlebar-icon-btn"
+          title="실행취소 (Ctrl+Z)"
+          onClick={() => void webStore.undo()}
+          disabled={!canUndo}
+        >
+          ↩
+        </button>
+        <button
+          className="titlebar-icon-btn"
+          title="다시 실행 (Ctrl+Shift+Z)"
+          onClick={() => void webStore.redo()}
+          disabled={!canRedo}
+        >
+          ↪
+        </button>
         <button
           className="titlebar-icon-btn"
           title={

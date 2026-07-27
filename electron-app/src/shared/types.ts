@@ -58,6 +58,9 @@ export interface TaskState {
    *  Firestore quests 문서의 order 필드로 매 동기화마다 갱신되어 고정되고, 커스텀
    *  퀘스트는 관리 화면에서 드래그로 직접 조정한다 (#quest-order). 없으면 맨 뒤 취급 */
   order?: number
+  /** 레이드 보스 퀘스트 여부 (#raid-flag) — true면 대시보드의 '레이드' 섹션에 표시된다.
+   *  카테고리(전투/물물교환/알바/구매)와는 별개 태그 — 대시보드 전용 분류다 */
+  isRaid?: boolean
 }
 
 /** order 미지정 항목은 맨 뒤로 — 같은 (period, category) 그룹 내 정렬용 (#quest-order) */
@@ -82,6 +85,8 @@ export interface QuestCatalogItem {
   linkedCatalogId?: string | null
   /** 관리 화면/오버레이 표시 순서 — Firestore 문서의 order 필드 (#quest-order). 없으면 맨 뒤 */
   order?: number
+  /** 레이드 보스 퀘스트 여부 (#raid-flag) — 대시보드 '레이드' 섹션 대상 판정용 */
+  isRaid?: boolean
 }
 
 /** 카탈로그 동기화 결과 (#4) */
@@ -108,6 +113,12 @@ export interface CatalogNotice {
 /** 백그라운드 다운로드가 끝난 새 버전 안내 (#auto-update-notice) — 관리 창 말풍선으로 표시 */
 export interface UpdateDownloadedNotice {
   version: string
+}
+
+/** 새 버전 설치 후 첫 실행임을 알리는 정보 (#version-update-notice) — 대시보드 상단 배너용 */
+export interface VersionUpdateNotice {
+  fromVersion: string
+  toVersion: string
 }
 
 /** 게임계정 ID 등록 결과 (#26) */
@@ -175,6 +186,9 @@ export interface StoreShape {
   /** 다운로드는 끝났지만 설치 대기 중인 버전 (#auto-update-notice, 기기 로컬 전용).
    *  유저가 알림의 '업데이트' 버튼을 누르기 전까진 재시작해도 계속 남아 안내를 띄운다 */
   pendingUpdateVersion?: string | null
+  /** 마지막으로 실행을 확인한 버전 (#version-update-notice, 기기 로컬 전용) — 시작 시
+   *  app.getVersion()과 다르면 새 버전 설치 후 첫 실행으로 판단해 대시보드에 안내한다 */
+  lastSeenVersion?: string | null
   /** 스토어 마이그레이션 버전 (내부용) */
   metaVersion?: number
 }
