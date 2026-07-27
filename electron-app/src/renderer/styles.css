@@ -347,6 +347,51 @@ body {
   gap: 28px;
 }
 
+/* 새 버전 설치 후 첫 실행 안내 (#version-update-notice) */
+.version-update-banner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  border-radius: 10px;
+  background: rgba(94, 129, 255, 0.14);
+  border: 1px solid rgba(94, 129, 255, 0.3);
+  font-size: 13px;
+  color: #d6e0ff;
+}
+
+.version-update-link {
+  padding: 4px 10px;
+  border: none;
+  border-radius: 999px;
+  background: rgba(94, 129, 255, 0.28);
+  color: #cfe0ff;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.version-update-link:hover {
+  background: rgba(94, 129, 255, 0.42);
+}
+
+.version-update-close {
+  margin-left: auto;
+  width: 20px;
+  height: 20px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: #8a8a98;
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.version-update-close:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+}
+
 .dash-section-title {
   font-size: 14px;
   font-weight: 700;

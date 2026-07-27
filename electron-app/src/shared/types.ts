@@ -115,6 +115,12 @@ export interface UpdateDownloadedNotice {
   version: string
 }
 
+/** 새 버전 설치 후 첫 실행임을 알리는 정보 (#version-update-notice) — 대시보드 상단 배너용 */
+export interface VersionUpdateNotice {
+  fromVersion: string
+  toVersion: string
+}
+
 /** 게임계정 ID 등록 결과 (#26) */
 export interface CloudRegisterResult {
   ok: boolean
@@ -180,6 +186,9 @@ export interface StoreShape {
   /** 다운로드는 끝났지만 설치 대기 중인 버전 (#auto-update-notice, 기기 로컬 전용).
    *  유저가 알림의 '업데이트' 버튼을 누르기 전까진 재시작해도 계속 남아 안내를 띄운다 */
   pendingUpdateVersion?: string | null
+  /** 마지막으로 실행을 확인한 버전 (#version-update-notice, 기기 로컬 전용) — 시작 시
+   *  app.getVersion()과 다르면 새 버전 설치 후 첫 실행으로 판단해 대시보드에 안내한다 */
+  lastSeenVersion?: string | null
   /** 스토어 마이그레이션 버전 (내부용) */
   metaVersion?: number
 }
