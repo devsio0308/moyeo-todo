@@ -619,6 +619,16 @@ export class DashboardStore {
     this.store.set('pendingUpdateVersion', null)
   }
 
+  /** 마지막으로 실행을 확인한 버전 (#version-update-notice, 기기 로컬 전용).
+   *  시작 시 app.getVersion()과 달라져 있으면 "새 버전 설치 후 첫 실행"으로 판단한다 */
+  getLastSeenVersion(): string | null {
+    return this.store.get('lastSeenVersion', null) ?? null
+  }
+
+  markVersionSeen(version: string): void {
+    this.store.set('lastSeenVersion', version)
+  }
+
   // ── 내부 유틸 ────────────────────────────────────────────
 
   /** character_01, task_03 형태의 순차 id 생성 (템플릿 폴더명과 일치해야 하므로 사람이 읽기 쉬운 형태 유지) */

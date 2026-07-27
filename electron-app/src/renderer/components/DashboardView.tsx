@@ -1,4 +1,5 @@
-import type { StoreShape, TaskState } from '../../shared/types'
+import { useEffect, useState } from 'react'
+import type { StoreShape, TaskState, VersionUpdateNotice } from '../../shared/types'
 import { useDashboardStore } from '../store/useDashboardStore'
 
 /**
@@ -114,15 +115,54 @@ function QuestCard({
   )
 }
 
+/** 새 버전 설치 후 첫 실행 안내 배너 (#version-update-notice) — 대시보드 마운트 시 1회 조회 */
+function useVersionUpdateNotice(): [VersionUpdateNotice | null, () => void] {
+  const [notice, setNotice] = useState<VersionUpdateNotice | null>(null)
+  useEffect(() => {
+    void window.api.app.getVersionUpdateNotice().then(setNotice)
+  }, [])
+  return [notice, () => setNotice(null)]
+}
+
+function VersionUpdateBanner({
+  notice,
+  onDismiss
+}: {
+  notice: VersionUpdateNotice
+  onDismiss: () => void
+}): React.JSX.Element {
+  return (
+    <div className="version-update-banner">
+      <span>🎉 v{notice.toVersion}로 업데이트되었습니다!</span>
+      <button
+        className="version-update-link"
+        onClick={() => void window.api.app.openReleasePage(notice.toVersion)}
+      >
+        릴리즈 노트 보러가기 →
+      </button>
+      <button className="version-update-close" title="닫기" onClick={onDismiss}>
+        ✕
+      </button>
+    </div>
+  )
+}
+
 export default function DashboardView(): React.JSX.Element {
   const data = useDashboardStore((s) => s.data)
+  const [versionNotice, dismissVersionNotice] = useVersionUpdateNotice()
+  const banner = versionNotice && (
+    <VersionUpdateBanner notice={versionNotice} onDismiss={dismissVersionNotice} />
+  )
 
-  if (!data) return <></>
+  if (!data) return <>{banner}</>
   if (data.characterOrder.length === 0) {
     return (
-      <p className="placeholder">
-        캐릭터 메뉴에서 캐릭터를 추가하면 주간 현황이 여기에 표시됩니다.
-      </p>
+      <>
+        {banner}
+        <p className="placeholder">
+          캐릭터 메뉴에서 캐릭터를 추가하면 주간 현황이 여기에 표시됩니다.
+        </p>
+      </>
     )
   }
 
@@ -130,6 +170,7 @@ export default function DashboardView(): React.JSX.Element {
 
   return (
     <div className="dashboard">
+      {banner}
       <section className="dash-section">
         <h2 className="dash-section-title">주요 주간 퀘스트</h2>
         <div className="dash-grid">
